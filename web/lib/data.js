@@ -77,5 +77,6 @@ export async function getHealth() {
     mode: settings.viewing?.mode ?? 'shadow',
     autopilot: settings.viewing?.autopilot ?? 'on',
     dailyCap: settings.viewing?.dailyCap ?? 15,
+    minScore: settings.viewing?.minScore ?? 65,
   };
 }

@@ -1,42 +1,85 @@
 import './globals.css';
 import Link from 'next/link';
-import { Home, ListChecks, Settings, Send } from 'lucide-react';
+import { getHealth } from '@/lib/data';
 
 export const metadata = {
-  title: 'OpenRent Sourcing — Control Panel',
-  description: 'Property sourcing bot dashboard',
+  title: 'OpenRent Sourcing — Control',
+  description: 'Property sourcing bot control panel',
 };
 
 const nav = [
-  { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/queue', label: 'Viewing Queue', icon: Send },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/', label: 'Board' },
+  { href: '/queue', label: 'Queue' },
+  { href: '/settings', label: 'Settings' },
 ];
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  let health = {};
+  try {
+    health = await getHealth();
+  } catch {}
+  const live = health.mode === 'live';
+
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body>
-        <div className="min-h-screen flex">
-          <aside className="w-56 border-r border-border p-4 space-y-1 shrink-0">
-            <div className="flex items-center gap-2 px-2 py-3 mb-2">
-              <ListChecks className="h-5 w-5 text-primary" />
-              <span className="font-semibold">OpenRent Bot</span>
+        {/* live-wire: ambient signal that the system is armed */}
+        {live && <div className="live-wire" aria-hidden="true" />}
+
+        <div style={{ display: 'flex', minHeight: '100vh' }}>
+          {/* left rail */}
+          <aside
+            style={{
+              width: 208,
+              borderRight: '1px solid var(--mist-line)',
+              padding: '22px 16px',
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '0 8px 20px' }}>
+              <span className="font-display" style={{ fontSize: 21, color: 'var(--brass)' }}>
+                Sourcing
+              </span>
             </div>
-            {nav.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-card transition-colors"
-              >
-                <Icon className="h-4 w-4" /> {label}
-              </Link>
-            ))}
-            <div className="pt-4 mt-4 border-t border-border px-3 text-xs text-muted">
-              SaaS: har user apne login/session pe chalta hai.
+
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {nav.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="nav-link"
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 'var(--r-pill)',
+                    color: 'var(--paper)',
+                    textDecoration: 'none',
+                    fontSize: 14,
+                    fontWeight: 500,
+                  }}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+
+            <div
+              style={{
+                marginTop: 'auto',
+                paddingTop: 18,
+                borderTop: '1px solid var(--mist-line)',
+                fontSize: 11.5,
+                lineHeight: 1.6,
+                color: 'var(--mist)',
+                padding: '18px 8px 0',
+              }}
+            >
+              Each user runs on their own login. Requests go from their account, never a shared one.
             </div>
           </aside>
-          <main className="flex-1 p-8 max-w-6xl">{children}</main>
+
+          <main style={{ flex: 1, padding: '30px 34px', maxWidth: 1040 }}>{children}</main>
         </div>
       </body>
     </html>
