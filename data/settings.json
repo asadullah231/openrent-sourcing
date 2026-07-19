@@ -21,10 +21,10 @@
   "freshWithinHours": 24,
   "alertThreshold": 55,
   "viewing": {
-    "mode": "shadow",
+    "mode": "live",
     "autopilot": "on",
     "minScore": 65,
-    "dailyCap": 15,
+    "dailyCap": 1,
     "subject": "Viewing request",
     "availabilityText": "this Saturday afternoon",
     "messageTemplate": "Hi, I'm interested in the property on {place} and would like to arrange a viewing. I'm free {availability} and happy to work around what suits you. Thanks."

@@ -8,7 +8,8 @@ export const metadata = {
 };
 
 const nav = [
-  { href: '/', label: 'Board' },
+  { href: '/', label: 'New & pending' },
+  { href: '/sent', label: 'Requested' },
   { href: '/queue', label: 'Queue' },
   { href: '/settings', label: 'Settings' },
 ];
@@ -30,20 +31,24 @@ export default async function RootLayout({ children }) {
           {/* left rail */}
           <aside
             style={{
-              width: 208,
+              width: 220,
               borderRight: '1px solid var(--mist-line)',
-              padding: '22px 16px',
+              padding: '20px 14px',
               flexShrink: 0,
               display: 'flex',
               flexDirection: 'column',
+              position: 'sticky',
+              top: 0,
+              height: '100vh',
+              background: 'var(--surface)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '0 8px 20px' }}>
-              <span className="font-display" style={{ fontSize: 21, color: 'var(--brass)' }}>
-                Sourcing
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 10px 24px' }}>
+              <span style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(145deg,#edc06a,var(--brass))', display: 'grid', placeItems: 'center', color: '#1a1204', fontWeight: 700, fontSize: 14, boxShadow: '0 2px 6px rgba(0,0,0,.35)' }}>S</span>
+              <span style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: '-0.02em' }}>Sourcing</span>
             </div>
 
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mist)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 12px 8px' }}>Menu</div>
             <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {nav.map(({ href, label }) => (
                 <Link
@@ -52,10 +57,9 @@ export default async function RootLayout({ children }) {
                   className="nav-link"
                   style={{
                     padding: '8px 12px',
-                    borderRadius: 'var(--r-pill)',
-                    color: 'var(--paper)',
+                    borderRadius: 'var(--r-ctrl)',
                     textDecoration: 'none',
-                    fontSize: 14,
+                    fontSize: 13.5,
                     fontWeight: 500,
                   }}
                 >
@@ -64,22 +68,12 @@ export default async function RootLayout({ children }) {
               ))}
             </nav>
 
-            <div
-              style={{
-                marginTop: 'auto',
-                paddingTop: 18,
-                borderTop: '1px solid var(--mist-line)',
-                fontSize: 11.5,
-                lineHeight: 1.6,
-                color: 'var(--mist)',
-                padding: '18px 8px 0',
-              }}
-            >
-              Each user runs on their own login. Requests go from their account, never a shared one.
+            <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--mist-line)', fontSize: 11.5, lineHeight: 1.6, color: 'var(--mist)' }}>
+              <div style={{ padding: '14px 10px 0' }}>Each user runs on their own login. Requests go from their account.</div>
             </div>
           </aside>
 
-          <main style={{ flex: 1, padding: '30px 34px', maxWidth: 1040 }}>{children}</main>
+          <main style={{ flex: 1, padding: '32px 40px', maxWidth: 1120, width: '100%' }}>{children}</main>
         </div>
       </body>
     </html>

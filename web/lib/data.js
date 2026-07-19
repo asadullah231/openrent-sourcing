@@ -42,6 +42,20 @@ export async function getListings() {
   return Object.values(map).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 }
 
+// Jinpe abhi tak request nahi gayi (naye/pending) — action lene layak
+export async function getPending() {
+  const all = await getListings();
+  return all.filter((l) => (l.viewing_status || 'new') !== 'requested');
+}
+
+// Jinpe request ja chuki (sent) — history, requested_at pe sorted (naya upar)
+export async function getSent() {
+  const all = await getListings();
+  return all
+    .filter((l) => l.viewing_status === 'requested')
+    .sort((a, b) => new Date(b.requested_at || 0) - new Date(a.requested_at || 0));
+}
+
 export async function getSettings() {
   return readJson('settings.json', {});
 }
@@ -52,6 +66,25 @@ export async function saveSettings(next) {
   const merged = { ...cur, ...next, viewing: { ...cur.viewing, ...next.viewing }, filters: { ...cur.filters, ...next.filters } };
   await writeFile(resolve(DATA, 'settings.json'), JSON.stringify(merged, null, 2));
   return merged;
+}
+
+// Ek listing + uska bheja gaya message (drafts/log se) — detail page ke liye
+export async function getListing(id) {
+  const map = await readJson('listings.json', {});
+  const l = map[id];
+  if (!l) return null;
+
+  // Exact message jo bheja gaya (ya draft) — drafts file me poora message hota hai
+  const drafts = await readJsonl('viewing-drafts.jsonl');
+  const draft = drafts.reverse().find((d) => String(d.listing_id) === String(id));
+
+  // Send log se status/time
+  const log = await readJsonl('viewing-log.jsonl');
+  const sends = log.filter((x) => String(x.listing_id) === String(id));
+  const lastSend = sends[sends.length - 1] || null;
+
+  // priority: store me sent_message (live send se) > draft message
+  return { ...l, sentMessage: l.sent_message || draft?.message || null, lastSend };
 }
 
 export async function getDrafts() {

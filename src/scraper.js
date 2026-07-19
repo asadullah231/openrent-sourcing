@@ -31,10 +31,24 @@ function buildSearchUrl(area, filters) {
   return `${config.base}/properties-to-rent/${area.slug}?${params.toString()}`;
 }
 
+// Transient network fail pe retry (timeout/reset). 3 tries, backoff. Hard-fail se bachata hai.
+export async function fetchWithRetry(url, opts = {}, tries = 3) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fetch(url, { signal: AbortSignal.timeout(20000), ...opts });
+    } catch (err) {
+      lastErr = err;
+      if (i < tries - 1) await sleep(1500 * (i + 1)); // 1.5s, 3s backoff
+    }
+  }
+  throw lastErr;
+}
+
 // Ek area scrape karo → listing objects ka array (poora area, phir hum fresh filter karenge)
 export async function scrapeArea(area) {
   const url = buildSearchUrl(area, config.filters);
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     headers: {
       'User-Agent': config.userAgent,
       'Accept-Language': 'en-GB,en;q=0.9',

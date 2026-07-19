@@ -3,6 +3,7 @@
 // M2 me scoring isi response_rate ko use karega. Sirf naye listings pe chalao (rate-limit dost).
 
 import { config } from './config.js';
+import { fetchWithRetry } from './scraper.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -12,7 +13,7 @@ function extract(html, re, group = 1) {
 }
 
 export async function enrichListing(listing) {
-  const res = await fetch(listing.url, {
+  const res = await fetchWithRetry(listing.url, {
     headers: {
       'User-Agent': config.userAgent,
       'Accept-Language': 'en-GB,en;q=0.9',
@@ -59,7 +60,7 @@ export async function enrichListing(listing) {
   for (const m of html.matchAll(/<p>([^<]{40,400})<\/p>/gi)) {
     const t = m[1];
     // boilerplate/legal/OpenRent standard text skip — asli property blurb chahiye
-    if (/Wenlock Road|OpenRent Ltd|cookie|©|anyone is welcome to submit|first come first|register your interest/i.test(t)) continue;
+    if (/Wenlock Road|OpenRent Ltd|cookie|©|anyone is welcome to submit|first come first|register your interest|wish to be considered|unable to accept|to arrange a viewing|contact the landlord/i.test(t)) continue;
     description = t;
     break;
   }

@@ -10,7 +10,7 @@ import { scoreListing } from './score.js';
 import { sendAlert, sendError } from './alert.js';
 import { processViewings } from './viewing.js';
 import { login } from './auth.js';
-import { upsert, count, updateStatus } from './store.js';
+import { upsert, count, updateStatus, all } from './store.js';
 
 function withinWorkingHours() {
   const h = new Date().getHours();
@@ -47,32 +47,33 @@ async function runOnce() {
   console.log(`  Scraped: ${listings.length} | fresh (<${config.freshWithinHours}h): ${fresh.length}`);
   console.log(`  NEW saved: ${added.length} | already-seen skipped: ${seenBefore} | store total: ${total}`);
 
-  if (!added.length) return;
+  // Naye listings ho to enrich + score + alert (sirf naye pe alert = spam nahi)
+  if (added.length) {
+    const enriched = await enrichNew(added);
+    const scored = enriched.map(scoreListing);
+    await upsert(scored.map((l) => ({ ...l, _forceUpdate: true })));
 
-  // Sirf naye listings enrich karo (purane dobara fetch na hon)
-  const enriched = await enrichNew(added);
-  // Score do
-  const scored = enriched.map(scoreListing);
-  // Enriched + scored store me merge
-  await upsert(scored.map((l) => ({ ...l, _forceUpdate: true })));
+    for (const l of scored.slice(0, 10)) {
+      const rr = l.response_rate != null ? `${l.response_rate}%` : 'n/a';
+      console.log(`    + [${l.score}] ${l.listing_id} | £${l.price}/mo | ${l.beds}bed | ${l.hours_live}h | rr:${rr} | ${l.address || l.url}`);
+    }
+    if (scored.length > 10) console.log(`    ... +${scored.length - 10} more`);
 
-  for (const l of scored.slice(0, 10)) {
-    const rr = l.response_rate != null ? `${l.response_rate}%` : 'n/a';
-    console.log(`    + [${l.score}] ${l.listing_id} | £${l.price}/mo | ${l.beds}bed | ${l.hours_live}h | rr:${rr} | ${l.address || l.url}`);
-  }
-  if (scored.length > 10) console.log(`    ... +${scored.length - 10} more`);
-
-  // Alert: sirf threshold ke upar wale naye listings (ye sab pehli baar dekhe gaye = duplicate-alert nahi)
-  const worthy = scored.filter((l) => l.score >= config.alertThreshold).sort((a, b) => b.score - a.score);
-  console.log(`  Above threshold (${config.alertThreshold}): ${worthy.length}`);
-  if (worthy.length) {
-    const result = await sendAlert(worthy);
-    console.log(`  📧 Alert: ${result.sent ? 'SENT id=' + result.id : result.reason}`);
+    const worthy = scored.filter((l) => l.score >= config.alertThreshold).sort((a, b) => b.score - a.score);
+    console.log(`  Above threshold (${config.alertThreshold}): ${worthy.length}`);
+    if (worthy.length) {
+      const result = await sendAlert(worthy);
+      console.log(`  📧 Alert: ${result.sent ? 'SENT id=' + result.id : result.reason}`);
+    }
   }
 
-  // ── M3: viewing requests (shadow/live per config) ──
-  // Score gate minScore > alertThreshold, isliye sirf top listings yahan aate hain.
-  const viewingCandidates = scored.filter((l) => l.score >= config.viewing.minScore);
+  // ── M3: viewing requests ──
+  // Candidates STORE se (sirf is run ke naye nahi) — jo eligible hain aur abhi tak
+  // request nahi gayi, un pe chale. Idempotent status hi double se bachata hai.
+  const allStored = await all();
+  const viewingCandidates = allStored
+    .filter((l) => (l.score ?? 0) >= config.viewing.minScore)
+    .filter((l) => (l.viewing_status || 'new') !== 'requested');
   if (viewingCandidates.length) {
     console.log(`\n  🎯 Viewing (${config.viewing.mode}): ${viewingCandidates.length} candidate(s) ≥${config.viewing.minScore}`);
     try {

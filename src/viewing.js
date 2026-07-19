@@ -26,14 +26,16 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
-// Aaj ki bheji gayi (ya draft) requests count — daily cap ke liye
+// Aaj asli (LIVE) bheji gayi requests count — daily cap sirf live sends pe lagta hai.
+// Shadow drafts cap me nahi ginte (warna shadow week cap kha jata hai).
 async function sentToday() {
   if (!existsSync(LOG_FILE)) return 0;
   const lines = (await readFile(LOG_FILE, 'utf-8')).trim().split('\n').filter(Boolean);
   const today = todayKey();
   return lines.filter((l) => {
     try {
-      return JSON.parse(l).day === today;
+      const e = JSON.parse(l);
+      return e.day === today && e.mode === 'live'; // sirf live count
     } catch {
       return false;
     }
@@ -72,7 +74,11 @@ function buildRequest(listing, token) {
   body.set('RequestViewing', 'true');
   body.set('Subject', v.subject);
   body.set('Message', message);
+  // ⚠️ Availability REQUIRED field — bina iske OpenRent "Availability is required" deta hai.
+  // (Ye woh availability text hai jo landlord ko batata hai kab free ho.)
+  body.set('Availability', v.availabilityText);
   body.set('SendCopyToTenant', 'true');
+  body.set('RedirectFromHousingAssociationRentNow', 'false');
   body.set('__RequestVerificationToken', token);
   return {
     url: `${config.base}/messagelandlord/${listing.listing_id}`,
@@ -153,8 +159,13 @@ export async function processViewings(listings, jar, updateStatus) {
       continue;
     }
 
-    // 🔴 LIVE: idempotent send. Status pehle 'requested', phir POST.
-    if (updateStatus) await updateStatus(l.listing_id, { viewing_status: 'requested', requested_at: new Date().toISOString() });
+    // 🔴 LIVE: idempotent send. Status pehle 'requested' + exact message store, phir POST.
+    if (updateStatus)
+      await updateStatus(l.listing_id, {
+        viewing_status: 'requested',
+        requested_at: new Date().toISOString(),
+        sent_message: req.preview.message, // exact message jo landlord ko gaya
+      });
     try {
       const res = await authFetch(req.url, jar, {
         method: 'POST',
@@ -162,14 +173,38 @@ export async function processViewings(listings, jar, updateStatus) {
         body: req.body,
         redirect: 'manual',
       });
-      const ok = res.status === 302 || res.status === 200;
-      await logAttempt({ mode: 'live', listing_id: l.listing_id, score: l.score, status: res.status, address: req.preview.address });
+
+      // ⚠️ ASLI SUCCESS DETECTION (200 pe andha bharosa nahi):
+      // OpenRent success pe 302 redirect deta hai (POST-redirect-GET).
+      // 200 = wahi form page wapas = request accept NAHI hui (validation/gate).
+      let ok = res.status === 302 || res.status === 303;
+      let reason = `status ${res.status}`;
+      if (res.status === 200) {
+        // 200 aaya — body dekho: gate ya validation error to fail
+        const body = await res.text();
+        if (/Verify Number/i.test(body)) {
+          ok = false;
+          reason = '200 but Verify-Number gate — request NOT sent';
+        } else if (/field-validation-error|is required/i.test(body)) {
+          ok = false;
+          reason = '200 but validation error';
+        } else if (/request has been sent|viewing request sent|message sent|thank/i.test(body)) {
+          ok = true;
+          reason = '200 with success marker';
+        } else {
+          ok = false; // ambiguous 200 = treat as NOT sent (safe)
+          reason = '200 ambiguous — treating as NOT sent';
+        }
+      }
+
+      await logAttempt({ mode: 'live', listing_id: l.listing_id, score: l.score, status: res.status, ok, reason, address: req.preview.address });
       if (ok) {
-        console.log(`    ✅ SENT [${l.score}] ${req.preview.address} (status ${res.status})`);
+        console.log(`    ✅ SENT [${l.score}] ${req.preview.address} (${reason})`);
         result.sent++;
       } else {
-        console.log(`    ❌ ${l.listing_id}: POST status ${res.status}`);
-        if (updateStatus) await updateStatus(l.listing_id, { viewing_status: 'send_failed' });
+        console.log(`    ❌ ${l.listing_id}: NOT sent — ${reason}`);
+        // status wapas 'new' taake gate/verify hone pe dobara try ho (send_failed dead-end nahi)
+        if (updateStatus) await updateStatus(l.listing_id, { viewing_status: 'new', last_fail: reason });
       }
     } catch (err) {
       console.log(`    ❌ ${l.listing_id}: send error ${err.message}`);

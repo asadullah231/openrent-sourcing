@@ -2,4 +2,7 @@ node_modules/
 .next/
 install.log
 .env*
-home.html
+
+# local scratch / preview / screenshots (not part of the app)
+*.html
+*.png
