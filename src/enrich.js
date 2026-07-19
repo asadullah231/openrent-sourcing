@@ -44,6 +44,40 @@ export async function enrichListing(listing) {
   // deta hai (grade nahi) — us case me null (jhoota grade nahi banate).
   const epc = tableField('EPC Rating') || tableField('EPC') || null;
 
+  // Property photo(s) — card ke liye. Listing images CDN pattern:
+  // imagescdn.openrent.co.uk/listings/{id}/... (staticMap wali skip)
+  const allImgs = [...html.matchAll(/https:\/\/imagescdn\.openrent\.co\.uk\/listings\/\d+\/[^"' ]+\.(?:jpg|jpeg|png)/gi)]
+    .map((m) => m[0])
+    .filter((u) => !/staticMap/i.test(u));
+  const images = [...new Set(allImgs)];
+  const image = images[0] || null;
+
+  // Description snippet — OpenRent listing text ek plain <p> me hoti hai.
+  // (og:description OpenRent ka boilerplate address deta hai, wo skip.)
+  // Pehla lamba <p> jisme property-jaisa text ho (address/boilerplate nahi).
+  let description = null;
+  for (const m of html.matchAll(/<p>([^<]{40,400})<\/p>/gi)) {
+    const t = m[1];
+    // boilerplate/legal/OpenRent standard text skip — asli property blurb chahiye
+    if (/Wenlock Road|OpenRent Ltd|cookie|©|anyone is welcome to submit|first come first|register your interest/i.test(t)) continue;
+    description = t;
+    break;
+  }
+  if (description) {
+    description = description
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&#x[0-9a-f]+;/gi, '') // emoji entities
+      .replace(/&#\d+;/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&pound;/gi, '£')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 160);
+  }
+
+  // baths search arrays se aata hai (listing table me nahi) — jo aaya wahi rakho
+  const baths = listing.baths ?? null;
+
   // Postcode area title se (aakhri "- To Rent" se pehle wala segment)
   const address = title ? title.replace(/ - To Rent.*$/i, '').replace(/^London - /, '').trim() : null;
 
@@ -56,6 +90,10 @@ export async function enrichListing(listing) {
     furnishing,
     available: availableRaw ? availableRaw.trim() : null,
     epc,
+    image,
+    images,
+    description,
+    baths,
     enriched_at: new Date().toISOString(),
   };
 }

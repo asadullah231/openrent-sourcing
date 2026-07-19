@@ -80,6 +80,23 @@ textarea {
   background: var(--ink-raise);
 }
 
+.listing-card {
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.listing-card:hover {
+  border-color: var(--brass-dim);
+  transform: translateY(-1px);
+}
+@media (max-width: 560px) {
+  .listing-card {
+    flex-direction: column;
+  }
+  .listing-card > div:first-child {
+    width: 100% !important;
+    height: 180px;
+  }
+}
+
 /* buttons */
 .btn-brass {
   background: var(--brass);
