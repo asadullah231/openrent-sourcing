@@ -1,0 +1,32 @@
+{
+  "_note": "Mo ka control panel. Dashboard (P3) is file ko likhega. Bot har run pe ise parhta hai. Hardcode NAHI.",
+  "areas": [
+    {
+      "name": "Tower Hamlets",
+      "slug": "tower-hamlets",
+      "term": "Tower Hamlets",
+      "radiusKm": 3
+    }
+  ],
+  "filters": {
+    "bedsMin": 2,
+    "bedsMax": 4,
+    "priceMax": null
+  },
+  "origin": {
+    "lat": 51.5203,
+    "lng": -0.0293,
+    "_note": "Mo ki base/work location — proximity scoring"
+  },
+  "freshWithinHours": 24,
+  "alertThreshold": 55,
+  "viewing": {
+    "mode": "shadow",
+    "autopilot": "on",
+    "minScore": 65,
+    "dailyCap": 15,
+    "subject": "Viewing request",
+    "availabilityText": "this Saturday afternoon",
+    "messageTemplate": "Hi, I'm interested in the property on {place} and would like to arrange a viewing. I'm free {availability} and happy to work around what suits you. Thanks."
+  }
+}

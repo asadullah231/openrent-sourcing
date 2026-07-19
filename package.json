@@ -1,0 +1,16 @@
+{
+  "name": "openrent-sourcing",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "OpenRent property sourcing bot for Mo (M1: scraper + dedupe store). Plain HTTP, no browser.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "scrape": "node src/main.js",
+    "test": "node src/main.js --once"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}

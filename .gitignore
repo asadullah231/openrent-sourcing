@@ -1,0 +1,18 @@
+# secrets — kabhi push nahi
+.env
+*.env
+
+# Mo ka private data — login cookies, uske listings/drafts/requests
+data/session.json
+data/listings.json
+data/viewing-drafts.jsonl
+data/viewing-log.jsonl
+
+# deps / build
+node_modules/
+storage/
+web/node_modules/
+web/.next/
+*.log
+
+# settings.json TRACK hota hai (default config, no secrets)
