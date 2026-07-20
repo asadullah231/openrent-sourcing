@@ -40,6 +40,19 @@ export async function middleware(request) {
   // /auth/callback = OAuth return — login se pehle hit hota hai, public rehna chahiye
   const isPublic = isAuthPage || path.startsWith("/auth/");
 
+  // Google se koi bhi Gmail wala login kar sakta hai, is liye email ki allowlist.
+  // Bina iske jis kisi ke paas URL hai wo /api/settings se bot ko 'live' kar ke
+  // landlords ko asli messages bhijwa sakta hai.
+  const ALLOWED = (process.env.ALLOWED_EMAILS || "")
+    .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+  if (user && ALLOWED.length && !ALLOWED.includes((user.email || "").toLowerCase())) {
+    await supabase.auth.signOut();
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("error", "not_allowed");
+    return NextResponse.redirect(url);
+  }
+
   // logged out + koi bhi dashboard page/API -> login
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
