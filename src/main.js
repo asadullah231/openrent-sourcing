@@ -3,7 +3,7 @@
 // M2 me: scoring + Mo ko alert. M3 me: auto viewing request.
 
 import 'dotenv/config';
-import { config } from './config.js';
+import { config, hydrateConfig } from './config.js';
 import { scrapeAll } from './scraper.js';
 import { enrichNew } from './enrich.js';
 import { scoreListing } from './score.js';
@@ -19,6 +19,10 @@ function withinWorkingHours() {
 }
 
 async function runOnce() {
+  // Mo ki dashboard settings NocoDB se lo — bina iske bot defaults pe chalta rahega
+  // aur dashboard pe kiye gaye changes ignore ho jayenge.
+  await hydrateConfig();
+
   const stamp = new Date().toLocaleString('en-GB');
   console.log(`\n[${stamp}] OpenRent scrape start (areas: ${config.areas.map((a) => a.name).join(', ')})`);
 

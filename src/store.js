@@ -1,62 +1,97 @@
-// Local JSON store — dedupe by listing_id. NocoDB-shaped, taake M2 me seedha NocoDB pe swap ho.
-// Ek file: data/listings.json  = { [listing_id]: listingObject }
+// NocoDB store — dedupe by listing_id.
+// Pehle local data/listings.json thi; ab NocoDB, kyunki dashboard Vercel pe hai
+// (read-only filesystem) aur dono ko EK hi source chahiye — warna Mo dashboard pe
+// kuch badalta aur bot purani file parhta rehta.
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+const BASE = process.env.NOCODB_BASE_URL;
+const TOKEN = process.env.NOCODB_TOKEN;
+const TABLE = process.env.NOCODB_OR_LISTINGS_TABLE_ID;
+const H = { 'xc-token': TOKEN, 'Content-Type': 'application/json' };
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_FILE = resolve(__dirname, '../data/listings.json');
-
-async function load() {
-  if (!existsSync(DATA_FILE)) return {};
-  try {
-    return JSON.parse(await readFile(DATA_FILE, 'utf-8'));
-  } catch {
-    return {};
+/** NocoDB 1000 rows/page pe capped — sab chahiye to page karo. */
+async function fetchAll() {
+  const out = [];
+  for (let page = 0; page < 20; page++) {
+    const res = await fetch(`${BASE}/api/v2/tables/${TABLE}/records?limit=1000&offset=${page * 1000}`, { headers: H });
+    if (!res.ok) break;
+    const list = (await res.json()).list || [];
+    out.push(...list);
+    if (list.length < 1000) break;
   }
+  return out;
 }
 
-async function save(map) {
-  await mkdir(dirname(DATA_FILE), { recursive: true });
-  await writeFile(DATA_FILE, JSON.stringify(map, null, 2));
+/** JS object -> NocoDB row (arrays JSON string, _distance_km -> distance_km). */
+function toRow(l) {
+  const { _forceUpdate, _distance_km, images, ...rest } = l;
+  return {
+    ...rest,
+    ...(images !== undefined ? { images: JSON.stringify(images) } : {}),
+    ...(_distance_km !== undefined ? { distance_km: _distance_km } : {}),
+  };
+}
+
+/** NocoDB row -> wahi shakl jo bot ka baaki code expect karta hai. */
+function fromRow(r) {
+  let images = [];
+  try { images = r.images ? JSON.parse(r.images) : []; } catch { images = r.image ? [r.image] : []; }
+  return { ...r, images, _distance_km: r.distance_km ?? null };
 }
 
 // Naye listings merge karo. Purane ka viewing_status/enrichment preserve, sirf naye add.
 // Returns: { added: [...], total, seenBefore }
 export async function upsert(listings) {
-  const map = await load();
-  const added = [];
+  const rows = await fetchAll();
+  const byId = new Map(rows.map((r) => [String(r.listing_id), r]));
+
+  const toInsert = [];
+  const toPatch = [];
+
   for (const l of listings) {
+    const existing = byId.get(String(l.listing_id));
     if (l._forceUpdate) {
       // Enrichment update — mojooda record ke upar merge, viewing_status preserve.
-      const { _forceUpdate, ...clean } = l;
-      map[l.listing_id] = { ...map[l.listing_id], ...clean };
+      if (existing) toPatch.push({ Id: existing.Id, ...toRow(l) });
       continue;
     }
-    if (map[l.listing_id]) continue; // dedupe — pehle se hai to chhoro
-    map[l.listing_id] = l;
-    added.push(l);
+    if (existing) continue; // dedupe — pehle se hai to chhoro
+    toInsert.push(toRow(l));
   }
-  await save(map);
-  return { added, total: Object.keys(map).length, seenBefore: listings.length - added.length };
+
+  if (toInsert.length) {
+    await fetch(`${BASE}/api/v2/tables/${TABLE}/records`, {
+      method: 'POST', headers: H, body: JSON.stringify(toInsert),
+    });
+  }
+  if (toPatch.length) {
+    await fetch(`${BASE}/api/v2/tables/${TABLE}/records`, {
+      method: 'PATCH', headers: H, body: JSON.stringify(toPatch),
+    });
+  }
+
+  return {
+    added: toInsert.map(fromRow),
+    total: rows.length + toInsert.length,
+    seenBefore: listings.length - toInsert.length,
+  };
 }
 
 export async function count() {
-  return Object.keys(await load()).length;
+  return (await fetchAll()).length;
 }
 
 // Ek listing ka status/patch update karo (viewing_status waghera) — merge, save.
 export async function updateStatus(listingId, patch) {
-  const map = await load();
-  if (!map[listingId]) return false;
-  map[listingId] = { ...map[listingId], ...patch };
-  await save(map);
-  return true;
+  const rows = await fetchAll();
+  const row = rows.find((r) => String(r.listing_id) === String(listingId));
+  if (!row) return false;
+  const res = await fetch(`${BASE}/api/v2/tables/${TABLE}/records`, {
+    method: 'PATCH', headers: H, body: JSON.stringify([{ Id: row.Id, ...toRow(patch) }]),
+  });
+  return res.ok;
 }
 
 // Store se scored listings load karo (viewing processing ke liye)
 export async function all() {
-  return Object.values(await load());
+  return (await fetchAll()).map(fromRow);
 }

@@ -11,45 +11,49 @@
 // One-shot form: OpenRent har property pe SIRF EK BAAR submit hone deta hai, undo nahi.
 // Isliye status pehle 'requested' likhte hain (idempotency), phir hi bhejte hain — kabhi double nahi.
 
-import { readFile, writeFile, mkdir, appendFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { authFetch } from './auth.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DRAFTS_FILE = resolve(__dirname, '../data/viewing-drafts.jsonl');
-const LOG_FILE = resolve(__dirname, '../data/viewing-log.jsonl');
+// Drafts aur send-log dono NocoDB ki EK table me hain, `kind` se alag:
+// kind='draft' (banaya gaya) · kind='sent' (bhejne ki koshish hui).
+// Pehle ye do .jsonl files thin — dashboard Vercel pe hai jahan likha nahi ja sakta.
+const NC = {
+  base: () => process.env.NOCODB_BASE_URL,
+  token: () => process.env.NOCODB_TOKEN,
+  table: () => process.env.NOCODB_OR_LOG_TABLE_ID,
+};
+const H = () => ({ 'xc-token': NC.token(), 'Content-Type': 'application/json' });
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+async function addRow(row) {
+  await fetch(`${NC.base()}/api/v2/tables/${NC.table()}/records`, {
+    method: 'POST', headers: H(), body: JSON.stringify([row]),
+  }).catch(() => {});
+}
+
 // Aaj asli (LIVE) bheji gayi requests count — daily cap sirf live sends pe lagta hai.
 // Shadow drafts cap me nahi ginte (warna shadow week cap kha jata hai).
 async function sentToday() {
-  if (!existsSync(LOG_FILE)) return 0;
-  const lines = (await readFile(LOG_FILE, 'utf-8')).trim().split('\n').filter(Boolean);
-  const today = todayKey();
-  return lines.filter((l) => {
-    try {
-      const e = JSON.parse(l);
-      return e.day === today && e.mode === 'live'; // sirf live count
-    } catch {
-      return false;
-    }
-  }).length;
+  try {
+    const res = await fetch(`${NC.base()}/api/v2/tables/${NC.table()}/records?limit=1000`, { headers: H() });
+    if (!res.ok) return 0;
+    const rows = (await res.json()).list || [];
+    const today = todayKey();
+    return rows.filter((e) => e.kind === 'sent' && e.day === today && e.mode === 'live').length;
+  } catch {
+    return 0;
+  }
 }
 
 async function logAttempt(entry) {
-  await mkdir(dirname(LOG_FILE), { recursive: true });
-  await appendFile(LOG_FILE, JSON.stringify({ ...entry, day: todayKey() }) + '\n');
+  await addRow({ ...entry, day: todayKey(), kind: 'sent' });
 }
 
 async function writeDraft(entry) {
-  await mkdir(dirname(DRAFTS_FILE), { recursive: true });
-  await appendFile(DRAFTS_FILE, JSON.stringify(entry) + '\n');
+  await addRow({ ...entry, kind: 'draft' });
 }
 
 // "3 Bed Maisonette, Swaton Road, E3" → "Swaton Road, E3" (bed-type prefix hata do)

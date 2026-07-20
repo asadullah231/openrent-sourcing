@@ -5,23 +5,31 @@
 // kill switch, mode. Wo values `data/settings.json` me likhi jati hain (dashboard write karega).
 // Ye file un par DEFAULTS hai + wo cheezein jo Mo nahi chhuega (cadence, UA, distance origin).
 
-import { readFileSync, existsSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+// Settings ab NocoDB me hain (dashboard Vercel pe hai — wahan local file likhi
+// nahi ja sakti, aur dono ko EK source chahiye).
+//
+// `config` sync export hi raha hai (7 files ise sync import karti hain). Isliye
+// main.js har run ke SHURU me `await hydrateConfig()` chalata hai — wo NocoDB se
+// values laa kar isi object me bhar deta hai. Bina hydrate ke defaults chalte hain.
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const SETTINGS_FILE = resolve(__dirname, '../data/settings.json');
-
-// Dashboard-editable values settings.json se (agar maujood), warna defaults.
-function loadSettings() {
-  if (!existsSync(SETTINGS_FILE)) return {};
+async function fetchSettings() {
+  const BASE = process.env.NOCODB_BASE_URL;
+  const TOKEN = process.env.NOCODB_TOKEN;
+  const TABLE = process.env.NOCODB_OR_SETTINGS_TABLE_ID;
+  if (!BASE || !TOKEN || !TABLE) return {};
   try {
-    return JSON.parse(readFileSync(SETTINGS_FILE, 'utf-8'));
+    const res = await fetch(`${BASE}/api/v2/tables/${TABLE}/records?limit=100`, {
+      headers: { 'xc-token': TOKEN },
+    });
+    if (!res.ok) return {};
+    const row = ((await res.json()).list || []).find((r) => r.key === 'main');
+    return row?.value ? JSON.parse(row.value) : {};
   } catch {
     return {};
   }
 }
-const s = loadSettings();
+
+let s = {};
 
 export const config = {
   // Mo ke monitored areas (dashboard se editable).
@@ -74,6 +82,22 @@ export const config = {
 };
 
 // Proximity/commute scoring ka reference point (afiodorov ka core idea: kaam/base se nazdeeki).
-// Mo apni base/work location dashboard se set karega (settings.json → origin).
+// Mo apni base/work location dashboard se set karega (NocoDB settings → origin).
 // Default: Tower Hamlets centre.
-export const originLatLng = s.origin ?? { lat: 51.5203, lng: -0.0293 };
+export const originLatLng = { lat: 51.5203, lng: -0.0293 };
+
+/**
+ * NocoDB se dashboard-editable values laa kar `config` me bhar do.
+ * main.js me har run ke SHURU me ek dafa chalao — warna Mo ki dashboard settings
+ * ignore ho jayengi aur bot defaults pe chalta rahega.
+ */
+export async function hydrateConfig() {
+  s = await fetchSettings();
+  if (s.areas) config.areas = s.areas;
+  if (s.filters) config.filters = s.filters;
+  if (s.freshWithinHours != null) config.freshWithinHours = s.freshWithinHours;
+  if (s.alertThreshold != null) config.alertThreshold = s.alertThreshold;
+  if (s.viewing) config.viewing = { ...config.viewing, ...s.viewing };
+  if (s.origin) { originLatLng.lat = s.origin.lat; originLatLng.lng = s.origin.lng; }
+  return config;
+}
