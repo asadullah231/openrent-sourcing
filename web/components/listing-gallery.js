@@ -1,18 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { ListingCard } from './listing-card';
-
-// Map client-only — SSR pe leaflet crash karta hai
-const PropertyMap = dynamic(() => import('./property-map').then((m) => m.PropertyMap), {
-  ssr: false,
-  loading: () => (
-    <div style={{ height: 340, borderRadius: 12, border: '1px solid var(--mist-line)', display: 'grid', placeItems: 'center', color: 'var(--mist)', fontSize: 13 }}>
-      Loading map…
-    </div>
-  ),
-});
 
 const SORTS = {
   score: { label: 'Best score', fn: (a, b) => (b.score ?? 0) - (a.score ?? 0) },
@@ -29,7 +19,6 @@ export function ListingGallery({ listings, sent = false }) {
   const [beds, setBeds] = useState('any');
   const [furnished, setFurnished] = useState('any');
   const [minScore, setMinScore] = useState('');
-  const [showMap, setShowMap] = useState(true);
 
   const filtered = useMemo(() => {
     let out = [...listings];
@@ -55,21 +44,16 @@ export function ListingGallery({ listings, sent = false }) {
 
   return (
     <div>
-      {/* MAP — filtered listings, sync with filters */}
-      {showMap && filtered.some((l) => l.lat != null) && (
-        <div style={{ marginBottom: 16 }}>
-          <PropertyMap listings={filtered} />
-        </div>
-      )}
-
-      {/* filter bar */}
+      {/* filter bar
+          Map yahan se hata diya (22 Jul) — 340px ka dabba na theek map tha na
+          cards ko jagah deta tha. Ab apna poora page hai: /map */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
-        <button
-          onClick={() => setShowMap((s) => !s)}
-          style={{ background: 'var(--ink-raise)', border: '1px solid var(--mist-line)', borderRadius: 8, color: 'var(--paper)', padding: '7px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+        <Link
+          href="/map"
+          style={{ background: 'var(--ink-raise)', border: '1px solid var(--mist-line)', borderRadius: 8, color: 'var(--paper)', padding: '7px 12px', fontSize: 13, textDecoration: 'none', fontFamily: 'inherit' }}
         >
-          {showMap ? 'Hide map' : 'Show map'}
-        </button>
+          Open map
+        </Link>
         <select value={sort} onChange={(e) => setSort(e.target.value)} style={{ ...field, fontWeight: 500 }}>
           {Object.entries(SORTS).map(([k, v]) => (
             <option key={k} value={k}>{v.label}</option>
