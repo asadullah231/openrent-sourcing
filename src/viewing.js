@@ -28,6 +28,23 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Shared room / HMO pehchano — poore flat se farq karne ke liye.
+//
+// Kyun: OpenRent shared flat ka `beds` POORE flat ka deta hai. "Room in a Shared
+// Flat, Stewart Road, E15" ka beds=3 hai magar kiraye pe sirf EK kamra hai (£750).
+// Beds filter (2-4) ise paas kar deta hai, aur sasta rent price-fit score bhi upar
+// le jata hai. Mo poora flat dhoondh raha hai, is liye ye viewing gate pe rukta hai.
+//
+// Jaan boojh kar sirf saaf-saaf pattern: "room in a shared", "shared flat/house",
+// "double/single room". "Studio" ya "1 bed" yahan NAHI — wo poori property hoti hai
+// aur beds filter unhein waise bhi sambhal leta hai. Zyada aggressive filter theek
+// listings maar deta.
+const SHARED_RE = /\b(room in a shared|shared (flat|house|accommodation)|double room|single room|room to rent|houseshare|house share|hmo)\b/i;
+
+export function isSharedRoom(l) {
+  return SHARED_RE.test(`${l.title || ''} ${l.address || ''}`);
+}
+
 async function addRow(row) {
   await fetch(`${NC.base()}/api/v2/tables/${NC.table()}/records`, {
     method: 'POST', headers: H(), body: JSON.stringify([row]),
@@ -113,10 +130,22 @@ export async function processViewings(listings, jar, updateStatus) {
     return result;
   }
 
-  // Gate: score + status
+  // Gate: score + status + property ki qism
   const eligible = listings
     .filter((l) => l.score >= v.minScore)
     .filter((l) => (l.viewing_status || 'new') !== 'requested')
+    .filter((l) => {
+      // ⚠️ Shared room ≠ poora flat. OpenRent shared flat ka `beds` POORE flat ka
+      // deta hai (3 bed), jabke kiraye pe sirf ek kamra hai — is liye beds filter
+      // (2-4) inhe paas kar deta hai aur sasta rent score bhi upar le jata hai.
+      // Mo ko poora flat chahiye, room nahi. (22 Jul: £750 "Room in a Shared Flat"
+      // Stewart Rd E15 score 65 pe minScore paar kar gaya tha — asli request jane
+      // wali thi.)
+      if (!isSharedRoom(l)) return true;
+      console.log(`    ⏭️  skip [${l.score}] ${l.listing_id} — shared room hai, poora flat nahi`);
+      result.skipped++;
+      return false;
+    })
     .sort((a, b) => b.score - a.score);
 
   let budget = v.dailyCap - (await sentToday());
