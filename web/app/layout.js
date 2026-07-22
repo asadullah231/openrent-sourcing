@@ -1,6 +1,17 @@
 import './globals.css';
 import Link from 'next/link';
 import { getHealth } from '@/lib/data';
+import { ThemeToggle } from '@/components/theme-toggle';
+
+// Ye script HTML me sab se pehle chalti hai, React se bhi pehle.
+// Kyun zaroori hai: theme localStorage me hai, jo server pe nahi hota. Agar
+// hum React ka intezaar karein to dark mode wale ko har refresh pe aadhe
+// second ka SAFED FLASH dikhta hai — aankhon me chubhta hai. Ye script paint
+// se pehle data-theme laga deti hai, is liye flash hota hi nahi.
+const NO_FLASH = `(function(){try{var t=localStorage.getItem('theme');
+if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
+document.documentElement.setAttribute('data-theme',t);}catch(e){
+document.documentElement.setAttribute('data-theme','dark');}})();`;
 
 export const metadata = {
   title: 'OpenRent Sourcing — Control',
@@ -23,7 +34,10 @@ export default async function RootLayout({ children }) {
   const live = health.mode === 'live';
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: NO_FLASH }} />
+      </head>
       <body>
         {/* live-wire: ambient signal that the system is armed */}
         {live && <div className="live-wire" aria-hidden="true" />}
@@ -70,7 +84,10 @@ export default async function RootLayout({ children }) {
             </nav>
 
             <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--mist-line)', fontSize: 11.5, lineHeight: 1.6, color: 'var(--mist)' }}>
-              <div style={{ padding: '14px 10px 0' }}>Each user runs on their own login. Requests go from their account.</div>
+              <div style={{ padding: '14px 2px 12px' }}>
+                <ThemeToggle />
+              </div>
+              <div style={{ padding: '0 10px' }}>Each user runs on their own login. Requests go from their account.</div>
             </div>
           </aside>
 

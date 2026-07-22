@@ -3,8 +3,22 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Modern SaaS dark — layered neutral surfaces (Linear/Vercel feel) */
+/* ── THEME ───────────────────────────────────────────────────────────
+   Do modes: dark (default, kaam wala) aur light (Airbnb jaisa, demo wala).
+   Asad ne 22 Jul ko toggle manga (wrujel/airbnb-clone ka UI pasand aaya).
+
+   Usool: neeche kisi bhi component me pakka rang (#fff, rgba(10,11,13..))
+   mat likho. Sirf ye variables. Warna ek mode theek lagta hai aur dusre
+   me text apne hi background pe ghayab ho jata hai.
+
+   Rang do khaanon me bante hain:
+     1. Surfaces/text — dono modes me poori tarah alag
+     2. Signal rang (green/rust/accent) — light me thoda gehra, kyunke
+        white pe wahi rang jo black pe chamakta hai, dhundla lagta hai. */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
   --ink: #0a0b0d; /* app background — near-black, slight cool */
   --surface: #141518; /* card surface */
   --surface-2: #1c1e22; /* elevated (hover, inputs) */
@@ -22,18 +36,55 @@
   --green: #3fb27f; /* positive / requested */
   --rust: #f0623c; /* live / danger */
 
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
-
-  /* radii — consistent, modern (12 cards, 8 controls, pill, seal) */
-  --r-tile: 12px;
-  --r-card: 12px;
-  --r-ctrl: 8px;
-  --r-pill: 999px;
-  --r-seal: 50%;
+  /* photo ke upar hamesha gehra parda — dono modes me photo dark hi hoti hai */
+  --on-photo: #ffffff;
+  --photo-veil: linear-gradient(to top, rgba(10, 11, 13, 0.6), transparent 45%);
+  --skeleton: #1c1e22;
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15);
   --shadow-lift: 0 8px 28px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --ink: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f7f7f7;
+  --ink-raise: #f7f7f7;
+
+  --paper: #222222; /* Airbnb ka text kaala nahi, 222 hai — narm lagta hai */
+  --paper-2: #5e5e5e;
+  --mist: #717171;
+  --mist-line: #e4e4e4;
+  --mist-line-2: #c9c9c9;
+
+  /* white pe ye teenon gehre karne pare, warna contrast gir jata hai */
+  --brass: #a8720f;
+  --brass-dim: #c79a4a;
+  --accent: #1668d6;
+  --green: #1a7f56;
+  --rust: #c4351a;
+
+  --on-photo: #ffffff;
+  --photo-veil: linear-gradient(to top, rgba(0, 0, 0, 0.4), transparent 45%);
+  --skeleton: #ebebeb;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-lift: 0 6px 20px rgba(0, 0, 0, 0.14);
+}
+
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* radii — Airbnb ki tarah photo pe bara rounding (12), controls chhota */
+  --r-tile: 12px;
+  --r-card: 12px;
+  --r-photo: 12px;
+  --r-ctrl: 8px;
+  --r-pill: 999px;
+  --r-seal: 50%;
 }
 
 * {
@@ -44,6 +95,8 @@ body {
   margin: 0;
   background: var(--ink);
   color: var(--paper);
+  /* toggle dabane pe jhatka na lage. 0.18s se zyada rakhoge to sust lagega. */
+  transition: background 0.18s ease, color 0.18s ease;
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
@@ -106,20 +159,76 @@ select {
   color: var(--paper) !important;
 }
 
-/* gallery grid */
+/* gallery grid — gap 16 se 24 kiya, Airbnb ke cards khule khule saans lete hain */
 .grid-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
-  gap: 16px;
+  gap: 24px 20px;
 }
+
+/* ── Airbnb-style card ────────────────────────────────────────────────
+   Purana card ek dabba tha: border + background + hover pe upar uthta tha.
+   Airbnb ka card border-less hai — photo khud card hai, text neeche khula
+   baithta hai. Hover pe card nahi hilta, sirf photo andar zoom hoti hai
+   (overflow:hidden isi liye). Ye zyada mehnga nahi lagta, sirf zinda lagta hai. */
 .gcard {
-  box-shadow: var(--shadow-card);
-  transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+  transition: transform 0.16s ease;
 }
-.gcard:hover {
+.gcard-photo {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: var(--r-photo);
+  background: var(--skeleton);
+}
+.gcard-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.gcard:hover .gcard-photo img {
+  transform: scale(1.06);
+}
+
+/* Heart/status button photo ke upar. Blur ke saath, taake photo chahe
+   jitni bhi rangeen ho, button hamesha nazar aaye. */
+.photo-btn {
+  position: absolute;
+  border: none;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  color: var(--on-photo);
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+.photo-btn:hover {
+  background: rgba(0, 0, 0, 0.65);
+  transform: scale(1.07);
+}
+
+/* theme toggle — rail ke neeche */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--r-ctrl);
+  border: 1px solid var(--mist-line);
+  background: var(--surface-2);
+  color: var(--paper-2);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.theme-toggle:hover {
+  color: var(--paper);
   border-color: var(--mist-line-2);
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lift);
 }
 
 /* primary button */
@@ -222,6 +331,36 @@ select {
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--rust) 20%, var(--rust) 80%, transparent);
   animation: livepulse 2.4s ease-in-out infinite;
+}
+
+/* ── Leaflet ke apne parts ────────────────────────────────────────────
+   Popup aur zoom buttons Leaflet ki apni CSS se aate hain — hamesha safed.
+   Dark mode me ye safed dabbe hamesha se ajeeb lagte thay; ab dono themes
+   me surface ke rang le lete hain. */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--surface);
+  color: var(--paper);
+  box-shadow: var(--shadow-lift);
+}
+.leaflet-popup-content-wrapper {
+  border-radius: var(--r-ctrl);
+  border: 1px solid var(--mist-line);
+}
+.leaflet-popup-close-button {
+  color: var(--mist) !important;
+}
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: var(--paper) !important;
+}
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background: var(--surface);
+  color: var(--paper);
+  border-bottom-color: var(--mist-line);
+}
+.leaflet-bar a:hover {
+  background: var(--surface-2);
 }
 
 /* responsive: rail becomes a top bar on mobile */

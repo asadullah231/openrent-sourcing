@@ -1,4 +1,17 @@
-// Gallery card — photo top, info neeche. Vercel-clean. Dono pages (/new, /sent) reuse.
+// Gallery card — Airbnb wale patterrn pe (Asad ne 22 Jul ko wrujel/airbnb-clone
+// bhej kar kaha "is terhan ka design").
+//
+// Purane card se kya badla aur kyun:
+//   • Border + background hataya. Airbnb me photo HI card hai; text neeche
+//     khula baithta hai. Dabbe hatate hi grid bohot saaf ho jata hai.
+//   • Hover pe card upar uthta tha → ab photo andar zoom hoti hai. Wahi un ki
+//     signature harkat hai (group-hover:scale-110).
+//   • Text ki tarteeb ulti kar di. Airbnb pehle JAGAH batata hai, phir tafseel,
+//     phir daam sab se neeche mota. Pehle hamara daam sab se upar tha — wo
+//     spreadsheet ki tarteeb hai, listing ki nahi.
+//   • Score seal 44px ka gola tha photo pe. Ab chhota text-pill hai neeche.
+//     Wajah: minScore 0 ke baad score kisi ko rokta nahi (har landlord ek lead
+//     hai), to use photo ki sab se qeemti jagah dena ghalat tha.
 // Click → apna detail page (/listing/{id}), seedha OpenRent nahi.
 import Link from 'next/link';
 
@@ -11,7 +24,20 @@ function timeAgo(hours) {
 }
 
 export function ListingCard({ l, rank = 1, sent = false }) {
-  const hot = (l.score ?? 0) >= 70;
+  // Airbnb ki pehli line = jagah. Hamare paas address enrich hone ke baad hi
+  // aata hai, is liye jo mil jaye: address → area → title → id.
+  //
+  // Title ka shuru wala hissa ("2 Bed Flat, " / "Room in a Shared Flat, ")
+  // har card pe wahi hota hai, aur beds/type to neeche wali line me pehle se
+  // likha hai. Wo prefix rakhne se asli pata (Stewart Road) kat jata tha —
+  // "Room in a Shared Flat, Stewart Roa…" (screenshot pe pakra, 22 Jul).
+  // Prefix hata do, jagah asli naam ko mil jati hai.
+  const raw = l.address || l.area || l.title || `#${l.listing_id}`;
+  const place = raw.replace(/^(?:\d+\s+)?(?:bed\s+)?(?:room in a |studio |flat |house |maisonette )?[^,]*?(?:flat|house|maisonette|studio|room|apartment)\s*,\s*/i, '');
+
+  const meta = [l.beds != null && `${l.beds} bed`, l.baths != null && `${l.baths} bath`, l.furnishing]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <Link
@@ -20,72 +46,101 @@ export function ListingCard({ l, rank = 1, sent = false }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        border: '1px solid var(--mist-line)',
-        borderRadius: 'var(--r-card)',
-        overflow: 'hidden',
+        gap: 8,
         textDecoration: 'none',
         color: 'var(--paper)',
-        background: 'var(--surface)',
       }}
     >
-      {/* photo */}
-      <div style={{ position: 'relative', aspectRatio: '16 / 10', background: 'var(--ink)', overflow: 'hidden' }}>
+      <div className="gcard-photo">
         {l.image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={l.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img src={l.image} alt="" loading="lazy" />
         ) : (
-          <div className="text-muted" style={{ display: 'grid', placeItems: 'center', height: '100%', fontSize: 12 }}>no photo</div>
+          <div
+            className="text-muted"
+            style={{ display: 'grid', placeItems: 'center', height: '100%', fontSize: 12 }}
+          >
+            no photo
+          </div>
         )}
-        {/* subtle bottom gradient for legibility */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,11,13,0.55), transparent 45%)' }} />
-        {/* Score badge */}
-        <div
-          className={`seal ${hot ? '' : 'seal--muted'} ${rank === 0 && !sent ? 'seal--stamp' : ''}`}
-          style={{ position: 'absolute', top: 10, left: 10, width: 36, height: 36, fontSize: 14 }}
-          aria-label={`score ${l.score}`}
-        >
-          {l.score ?? '—'}
-        </div>
-        {/* status pill */}
-        {sent && (
+
+        {/* Parda sirf tab jab uske upar kuch likha ho, warna photo bewajah gehri lagti hai */}
+        {sent && <div style={{ position: 'absolute', inset: 0, background: 'var(--photo-veil)' }} />}
+
+        {/* Airbnb me yahan heart hota hai. Hamare kaam me "pasand" ka koi matlab
+            nahi — asli sawal hai REQUEST GAYI YA NAHI. Wahi jagah, wahi wazan. */}
+        {sent ? (
           <span
             style={{
-              position: 'absolute', top: 12, right: 12, fontSize: 11, fontWeight: 500,
-              padding: '4px 10px', borderRadius: 999, background: 'rgba(63,178,127,0.95)', color: '#06140d',
-              backdropFilter: 'blur(4px)',
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              fontSize: 11,
+              fontWeight: 600,
+              padding: '5px 10px',
+              borderRadius: 999,
+              background: 'var(--green)',
+              color: '#fff',
+              boxShadow: '0 2px 8px rgba(0,0,0,.3)',
             }}
           >
             Requested
           </span>
-        )}
+        ) : null}
+        {/* Yahan pehle ek khali "○" tha jo kuch nahi kehta tha (screenshot pe
+            pakra, 22 Jul). "Requested nahi hai" ki khabar khamoshi se milti
+            hai — jis pe green pill nahi, wo pending hai. Ek aur badge sirf
+            shor tha. */}
       </div>
 
-      {/* info */}
-      <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: 7, flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span className="font-mono" style={{ fontSize: 17, fontWeight: 600, color: 'var(--paper)' }}>£{Number(l.price).toLocaleString('en-GB')}</span>
-          <span className="text-muted" style={{ fontSize: 12 }}>/mo</span>
-          <span className="text-muted" style={{ marginLeft: 'auto', fontSize: 11.5 }}>
+      {/* info — Airbnb tarteeb: jagah → tafseel → daam */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span
+            style={{
+              fontSize: 14.5,
+              fontWeight: 600,
+              lineHeight: 1.3,
+              letterSpacing: '-0.01em',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {place}
+          </span>
+          <span className="text-muted" style={{ marginLeft: 'auto', fontSize: 11.5, flexShrink: 0 }}>
             {sent && l.requested_at ? new Date(l.requested_at).toLocaleDateString('en-GB') : timeAgo(l.hours_live)}
           </span>
         </div>
 
-        <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35, letterSpacing: '-0.01em' }}>
-          {l.address || l.title || l.listing_id}
+        <div className="text-muted" style={{ fontSize: 13, lineHeight: 1.4 }}>
+          {meta || '—'}
         </div>
 
-        {l.description && (
-          <p className="text-muted" style={{ fontSize: 12, margin: 0, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {l.description}
-          </p>
-        )}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 2 }}>
+          <span className="font-mono" style={{ fontSize: 15, fontWeight: 600 }}>
+            £{Number(l.price ?? 0).toLocaleString('en-GB')}
+          </span>
+          <span className="text-muted" style={{ fontSize: 13 }}>month</span>
 
-        <div style={{ display: 'flex', gap: 6, marginTop: 'auto', paddingTop: 8, fontSize: 11.5, flexWrap: 'wrap' }}>
-          {[`${l.beds} bed`, l.baths != null && `${l.baths} bath`, l.furnishing, l.response_rate != null && `${l.response_rate}% resp`, l._distance_km != null && `${l._distance_km}km`]
-            .filter(Boolean)
-            .map((chip, i) => (
-              <span key={i} style={{ padding: '3px 8px', borderRadius: 6, background: 'var(--surface-2)', color: 'var(--paper-2)', border: '1px solid var(--mist-line)' }}>{chip}</span>
-            ))}
+          {/* score ab yahan — mojood hai to dikhta hai, warna jagah nahi ghairta */}
+          {l.score != null && (
+            <span
+              className="font-mono text-muted"
+              style={{
+                marginLeft: 'auto',
+                fontSize: 11,
+                padding: '2px 7px',
+                borderRadius: 999,
+                background: 'var(--surface-2)',
+                border: '1px solid var(--mist-line)',
+              }}
+              title={`Score ${l.score}`}
+            >
+              {l.score}
+            </span>
+          )}
         </div>
       </div>
     </Link>

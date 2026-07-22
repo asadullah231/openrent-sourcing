@@ -37,9 +37,12 @@ export function ListingGallery({ listings, sent = false }) {
     setMinPrice(''); setMaxPrice(''); setBeds('any'); setFurnished('any'); setMinScore('');
   };
 
+  // Airbnb ke controls goal (pill) hain aur thore bare — ungli/mouse dono ke
+  // liye asaan. Rang sab variables se, taake light mode me bhi theek rahein.
   const field = {
-    background: 'var(--ink-raise)', border: '1px solid var(--mist-line)', borderRadius: 8,
-    color: 'var(--paper)', padding: '7px 10px', fontSize: 13, fontFamily: 'inherit',
+    background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 999,
+    color: 'var(--paper)', padding: '8px 14px', fontSize: 13, fontFamily: 'inherit',
+    height: 38,
   };
 
   return (
@@ -50,9 +53,9 @@ export function ListingGallery({ listings, sent = false }) {
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
         <Link
           href="/map"
-          style={{ background: 'var(--ink-raise)', border: '1px solid var(--mist-line)', borderRadius: 8, color: 'var(--paper)', padding: '7px 12px', fontSize: 13, textDecoration: 'none', fontFamily: 'inherit' }}
+          style={{ ...field, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 500 }}
         >
-          Open map
+          <span aria-hidden="true">◉</span> Map
         </Link>
         <select value={sort} onChange={(e) => setSort(e.target.value)} style={{ ...field, fontWeight: 500 }}>
           {Object.entries(SORTS).map(([k, v]) => (
