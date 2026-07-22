@@ -1,73 +1,33 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
 /**
- * Har request pe Supabase session refresh + poore dashboard ki hifazat.
+ * Dashboard KHULA hai — login nahi (client ka faisla, 22 Jul).
  *
- * Car Arbitrage se farq: yahan "/" KHUD dashboard hai (naye listings), isliye wo
- * public NAHI hai. Bina login sirf /login aur /auth/* khulte hain.
+ * Pehle poora dashboard Supabase auth ke peeche tha. Client ne kaha login ki
+ * zaroorat nahi, bas frontend + backend chale. Isliye gate hata diya.
  *
- * Ye zaroori hai kyunki /api/settings se bot ka mode 'live' kiya ja sakta hai —
- * yani khula chhorne ka matlab koi bhi landlords ko asli messages bhijwa sakta hai.
+ * ⚠️ LEKIN: bot ka `mode` (shadow/live) ab bhi khule API se badla ja sakta tha,
+ * aur live mode me wo Mo ke asli OpenRent account se landlords ko viewing
+ * requests bhejta hai. URL kisi ke haath lag jaye to wo Mo ka account
+ * ban karwa sakta tha. Isliye mode-change ab API se hota hi nahi —
+ * dekho app/api/settings/route.js. Baaki sab (listings, filters, settings)
+ * khula hai.
+ *
+ * Login wapas chahiye ho to: git log me commit 35c46d2 aur c9fdddb —
+ * middleware ka auth gate, /login page aur /auth/callback wahan mojood hain.
  */
-export async function middleware(request) {
-  let response = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+export function middleware(request) {
   const path = request.nextUrl.pathname;
-  const isAuthPage = path === "/login";
-  // /auth/callback = OAuth return — login se pehle hit hota hai, public rehna chahiye
-  const isPublic = isAuthPage || path.startsWith("/auth/");
 
-  // Google se koi bhi Gmail wala login kar sakta hai, is liye email ki allowlist.
-  // Bina iske jis kisi ke paas URL hai wo /api/settings se bot ko 'live' kar ke
-  // landlords ko asli messages bhijwa sakta hai.
-  const ALLOWED = (process.env.ALLOWED_EMAILS || "")
-    .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-  if (user && ALLOWED.length && !ALLOWED.includes((user.email || "").toLowerCase())) {
-    await supabase.auth.signOut();
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("error", "not_allowed");
-    return NextResponse.redirect(url);
-  }
-
-  // logged out + koi bhi dashboard page/API -> login
-  if (!user && !isPublic) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  // logged in + login page -> dashboard (yahan "/" hi dashboard hai)
-  if (user && isAuthPage) {
+  // /login ab kuch nahi karta — purana bookmark ya redirect aaye to seedha dashboard.
+  if (path === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = "/";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
-  return response;
+  return NextResponse.next({ request });
 }
 
 export const config = {

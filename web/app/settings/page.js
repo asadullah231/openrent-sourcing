@@ -20,19 +20,12 @@ export default function SettingsPage() {
   const setF = (patch) => setS({ ...s, filters: { ...(s.filters || {}), ...patch } });
 
   async function save() {
-    let confirmLive = false;
-    if (v.mode === 'live') {
-      confirmLive = window.confirm(
-        'Switch to live? The bot will send real viewing requests from your account. This cannot be undone per property.'
-      );
-      if (!confirmLive) return;
-    }
     setSaving(true);
     setMsg('');
     const res = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...s, confirmLive }),
+      body: JSON.stringify(s),
     });
     setSaving(false);
     setMsg(res.ok ? 'Saved. The bot picks this up on its next run.' : 'Could not save.');
@@ -75,21 +68,23 @@ export default function SettingsPage() {
           </button>
         </div>
 
+        {/* Mode sirf dikhta hai, badalta nahi — dashboard khula hai (no login),
+            aur live mode asli account se messages bhejta hai. */}
         <label style={label}>Mode</label>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {[
-            ['shadow', 'Shadow', 'var(--brass)'],
-            ['live', 'Live', 'var(--rust)'],
-          ].map(([m, txt, c]) => (
-            <button
-              key={m}
-              onClick={() => setV({ mode: m })}
-              className="seg"
-              style={v.mode === m ? { borderColor: c, color: c } : {}}
-            >
-              {txt}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span
+            className="seg"
+            style={{
+              cursor: 'default',
+              borderColor: live ? 'var(--rust)' : 'var(--brass)',
+              color: live ? 'var(--rust)' : 'var(--brass)',
+            }}
+          >
+            {live ? 'Live' : 'Shadow'}
+          </span>
+          <span className="text-muted" style={{ fontSize: 12 }}>
+            Locked — ask your developer to change this.
+          </span>
         </div>
         {live && (
           <div
