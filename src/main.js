@@ -85,6 +85,39 @@ async function runOnce() {
     .filter((l) => (l.viewing_status || 'new') !== 'requested');
   if (viewingCandidates.length) {
     console.log(`\n  🎯 Viewing (${config.viewing.mode}): ${viewingCandidates.length} candidate(s) ≥${config.viewing.minScore}`);
+
+    // ⚠️ Bhejne se PEHLE lazy enrich (22 Jul, minScore 0 hone ke baad).
+    //
+    // Kyun: enrich sirf NAYE listings pe chalta hai. Pehle minScore 65 tha, to purani
+    // listings kabhi enrich hoti hi nahi thin — zaroorat nahi thi. Ab score gate hata
+    // diya (Mo: har landlord ek lead hai), to 40 aisi listings qatar me aa gayin jin
+    // ke paas na address hai, na landlord ka NAAM.
+    //
+    // Naam ke baghair message "Hi," se shuru hota hai, "Hi Kate," ke bajaye — aur naam
+    // hi wo cheez hai jo is message ko personal banati hai. Mo ki company ki taraf se
+    // ja raha hai, is liye ye ahem hai.
+    //
+    // Sirf utni enrich karte hain jitni is run me bhejni hain (perRunCap), poori 40 nahi
+    // — warna ek saath 40 requests OpenRent pe chali jatin.
+    const needEnrich = viewingCandidates
+      .filter((l) => !l.enriched_at || !l.landlord_name)
+      .slice(0, (config.viewing.perRunCap ?? 3) + 1);
+    if (needEnrich.length) {
+      console.log(`  🔎 ${needEnrich.length} candidate enrich kar raha hoon (naam/address ke liye)`);
+      try {
+        const fresh = await enrichNew(needEnrich);
+        const rescored = fresh.map(scoreListing);
+        await upsert(rescored.map((l) => ({ ...l, _forceUpdate: true })));
+        // in-memory bhi update karo, warna is run me purana (khali) data hi jayega
+        for (const f of rescored) {
+          const i = viewingCandidates.findIndex((c) => c.listing_id === f.listing_id);
+          if (i !== -1) viewingCandidates[i] = { ...viewingCandidates[i], ...f };
+        }
+      } catch (err) {
+        console.log(`  ⚠️  lazy enrich fail: ${err.message} — purane data pe hi chalta hoon`);
+      }
+    }
+
     try {
       const jar = await login();
       const vr = await processViewings(viewingCandidates, jar, updateStatus);

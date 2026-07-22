@@ -194,6 +194,23 @@ export async function processViewings(listings, jar, updateStatus) {
     return result;
   }
 
+  // ── PER-RUN CAP — yehi cheez "robot jaisa na lage" ko mumkin banati hai ──
+  //
+  // Mo ka mutalba: sab ko bhejo, aur aage se jo naya scrape ho usi waqt message
+  // chala jaye — magar robot na lage.
+  //
+  // Bina is ke daily cap akela kaafi nahi: bot subah 7 baje ki pehli run me poora
+  // din ka cap (misal 12) ek saath phenk deta, phir 15 ghante khamosh. Wo insaani
+  // nahi lagta — asli aadmi din bhar me thoda thoda karta hai.
+  //
+  // Per-run cap se har cron run (har 30 min) me sirf chand jate hain, to messages
+  // poore din me qudrati tor pe phail jate hain. Yehi wo "drip" hai jo Mo chahta hai.
+  //
+  // Backlog isi tarah khud ba khud khatam hota hai: 30 runs/din × perRunCap, jab tak
+  // daily cap na bhar jaye. Alag "backlog mode" ki zaroorat nahi.
+  const perRun = v.perRunCap ?? 3;
+  if (budget > perRun) budget = perRun;
+
   let sentInThisRun = 0;
 
   for (const l of eligible) {

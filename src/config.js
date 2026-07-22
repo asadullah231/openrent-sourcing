@@ -72,6 +72,10 @@ export const config = {
     autopilot: s.viewing?.autopilot ?? 'on', // kill switch: 'off'=kuch nahi
     minScore: s.viewing?.minScore ?? 65,
     dailyCap: s.viewing?.dailyCap ?? 15,
+    // Ek cron run me zyada se zyada itni. Daily cap ke SATH chalta hai:
+    // asli hadd dono me se jo pehle lag jaye. Isi se messages din bhar me
+    // phailte hain (30 runs/din) bajaye subah ek saath jane ke.
+    perRunCap: s.viewing?.perRunCap ?? 3,
     subject: s.viewing?.subject ?? 'Viewing request',
     availabilityText: s.viewing?.availabilityText ?? 'this Saturday afternoon',
     messageTemplate:
