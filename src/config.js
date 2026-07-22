@@ -45,11 +45,20 @@ export const config = {
   alertThreshold: s.alertThreshold ?? 55,
 
   // Alerts email pe (Mo ne 19 Jul confirm kiya). Resend se.
-  // ⚠️ ABHI: Resend test-mode — sirf owner email pe ja sakta hai. Isliye alerts owner pe.
-  //    BAAD ME: domain verify karke alertEmail = 'meldeeb0993@gmail.com' + alertFrom Mo ke domain pe.
-  alertEmail: 'automatesystem3@gmail.com', // TODO: domain verify ke baad → Mo ki email
+  //
+  // ⚠️ Resend abhi TEST MODE me hai (koi verified domain nahi). Us ka matlab:
+  //    email SIRF account owner ke pate pe ja sakti hai, aur kahin nahi (403).
+  //
+  // 🐛 22 Jul: yahan `automatesystem3@gmail.com` likha tha — magar Resend account
+  //    ab `asadbahi5033@gmail.com` ka hai. Yani har alert 403 kha kar chup ho jati,
+  //    na Asad ko milti na Mo ko. Live test se pakda (dono pate pe 403 aaya).
+  //
+  //    Mo ko seedha alert bhejne ke liye domain verify karna PARE GA
+  //    (resend.com/domains → SPF/DKIM) — phir alertEmail Mo ki email pe
+  //    aur alertFrom us domain pe. Car Arbitrage/Omar pe bhi yehi fix lagega.
+  alertEmail: 'asadbahi5033@gmail.com', // Resend owner — test mode me sirf yahi chalta hai
   alertFrom: 'OpenRent Bot <onboarding@resend.dev>', // TODO: verified domain pe switch
-  errorEmail: 'automatesystem3@gmail.com', // pipeline toot jaye to (same, test-mode ki wajah se)
+  errorEmail: 'asadbahi5033@gmail.com', // pipeline toot jaye to
 
   // Human cadence — M0 me protection zero mila, lekin volume pe reputation na gire.
   cadence: {
