@@ -19,6 +19,11 @@ function withinWorkingHours() {
 }
 
 async function runOnce() {
+  // ⚠️ VPS pe ye script SEEDHA mat chalao — `./run.sh` se chalao.
+  // Wajah: OpenRent datacenter IPs pe 405 deta hai (test kiya, 22 Jul).
+  // run.sh proxy set karta hai node chalne se PEHLE — Node ka proxy support
+  // env vars sirf process shuru hote waqt parhta hai, baad me nahi.
+
   // Mo ki dashboard settings NocoDB se lo — bina iske bot defaults pe chalta rahega
   // aur dashboard pe kiye gaye changes ignore ho jayenge.
   await hydrateConfig();
