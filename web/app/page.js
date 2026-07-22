@@ -1,5 +1,6 @@
 import { getPending, getHealth } from '@/lib/data';
 import { ListingGallery } from '@/components/listing-gallery';
+import { SearchBar } from '@/components/search-bar';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,14 +41,27 @@ function Ticker({ health }) {
 export default async function NewListings() {
   const [pending, health] = await Promise.all([getPending(), getHealth()]);
 
+  // Pehle yahan "Tower Hamlets · live" HARD-CODED tha. Ab Mo jitni chahe
+  // searches rakh sakta hai, to wo jhoot ban jata. Asli list dikhao.
+  const names = (health.areas || []).filter(Boolean);
+  const areaLabel =
+    names.length === 0 ? 'koi search nahi' : names.length <= 2 ? names.join(' · ') : `${names.length} searches`;
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
         <h1 style={{ fontSize: 30, margin: 0, fontWeight: 600 }}>New &amp; pending</h1>
-        <span className="text-muted font-mono" style={{ fontSize: 12 }}>Tower Hamlets · live</span>
+        <span className="text-muted font-mono" style={{ fontSize: 12 }} title={names.join(', ')}>
+          {areaLabel} · {health.mode}
+        </span>
       </div>
 
       <Ribbon health={health} />
+
+      {/* Search bar sab se upar — Mo apna OpenRent link paste kar ke foran
+          result dekh sakta hai, bina Settings me jaye (Asad, 22 Jul). */}
+      <SearchBar />
+
       <Ticker health={health} />
 
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 14 }}>

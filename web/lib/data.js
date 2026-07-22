@@ -148,5 +148,8 @@ export async function getHealth() {
     autopilot: settings.viewing?.autopilot ?? 'on',
     dailyCap: settings.viewing?.dailyCap ?? 15,
     minScore: settings.viewing?.minScore ?? 65,
+    // Chalu searches ke naam — home page ka header dikhata hai. Pehle wahan
+    // "Tower Hamlets" hard-coded tha, jo kai searches ke baad jhoot ban jata.
+    areas: (settings.areas || []).filter((a) => a?.enabled !== false).map((a) => a?.name).filter(Boolean),
   };
 }
