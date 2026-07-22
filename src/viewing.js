@@ -85,13 +85,52 @@ function shortPlace(listing) {
 }
 
 // Ek listing ka viewing-request payload banao (POST se pehle wala sab).
+// Template ke placeholders bharo.
+//
+// ⚠️ Ye function ka poora maqsad: message me KABHI khali `{beds}` ya `[Name]` na jaye,
+// aur kabhi jhoota data na jaye. Har cheez ka safe fallback hai:
+//   - naam na mile              -> "Hi," (koi farzi naam nahi)
+//   - beds na milen             -> "property" ("undefined-bed" nahi)
+//   - area na mile              -> street ya khali
+// Aur `replace` ke bajaye global regex — warna template me dobara aane wala
+// placeholder bina bhare reh jata (JS ka `.replace(string)` sirf pehla badalta hai).
+export function fillTemplate(tpl, listing, v) {
+  const name = listing.landlord_name || null;
+  const beds = listing.beds != null ? `${listing.beds}-bed` : 'property';
+  const area = listing.area || null;
+  const place = shortPlace(listing);
+
+  const vals = {
+    // Greeting poora, taake template me "Hi {name}," likhne par khali comma na bache
+    greeting: name ? `Hi ${name},` : 'Hi,',
+    name: name || 'there',
+    beds,
+    area: area || place,
+    place,
+    price: listing.price != null ? `£${Number(listing.price).toLocaleString('en-GB')}` : '',
+    availability: v.availabilityText || '',
+  };
+
+  return tpl.replace(/\{(\w+)\}/g, (m, k) => (k in vals ? vals[k] : m));
+}
+
 function buildRequest(listing, token) {
   const v = config.viewing;
   const place = shortPlace(listing);
-  const message = v.messageTemplate
-    .replace('{place}', place)
-    .replace('{availability}', v.availabilityText);
+  const message = fillTemplate(v.messageTemplate, listing, v);
   const body = new URLSearchParams();
+  // ⚠️ RequestViewing=true hi rehta hai, chahe message ab viewing ka nahi balke
+  //    guaranteed-rent offer ka hai (22 Jul, Mo ka naya template).
+  //
+  //    Kyun nahi badla: M0 recon me mila tha ke plain "Send Message" mode me OpenRent
+  //    message se PHONE/EMAIL hata deta hai ("personal details remove"). Mo ke naye
+  //    message ka poora maqsad hi number exchange karna hai (apna number neeche hai
+  //    aur landlord ka number maang raha hai) — us mode me wo hissa kat sakta hai.
+  //    RequestViewing wala raasta test-shuda hai (302 mila tha, 19 Jul).
+  //
+  //    ⚠️ PEHLI LIVE SEND PE KHUD CHECK KARO: landlord tak number pahuncha ya kat gaya?
+  //    (Mo ke inbox me copy jati hai — SendCopyToTenant=true). Agar kat raha ho to
+  //    RequestViewing=false try karo aur dono ka farq dekho.
   body.set('RequestViewing', 'true');
   body.set('Subject', v.subject);
   body.set('Message', message);

@@ -111,11 +111,20 @@ export default function SettingsPage() {
         <label style={label}>When you&apos;re free</label>
         <input className="field" value={v.availabilityText || ''} onChange={(e) => setV({ availabilityText: e.target.value })} style={{ marginBottom: 16 }} />
         <label style={label}>
-          Template <span className="text-muted" style={{ fontWeight: 400 }}>· {'{place}'} and {'{availability}'} fill in automatically</span>
+          Template{' '}
+          <span className="text-muted" style={{ fontWeight: 400 }}>
+            · these fill in per property
+          </span>
         </label>
+        <div className="text-muted" style={{ fontSize: 11.5, lineHeight: 1.7, marginBottom: 8 }}>
+          <code>{'{greeting}'}</code> Hi Kate, (or just &quot;Hi,&quot; if the name isn&apos;t listed) ·{' '}
+          <code>{'{name}'}</code> Kate · <code>{'{beds}'}</code> 2-bed ·{' '}
+          <code>{'{area}'}</code> Tower Hamlets · <code>{'{place}'}</code> Digby Street, E2 ·{' '}
+          <code>{'{price}'}</code> £2,000 · <code>{'{availability}'}</code>
+        </div>
         <textarea
           className="field"
-          style={{ height: 96, resize: 'vertical', lineHeight: 1.6 }}
+          style={{ height: 200, resize: 'vertical', lineHeight: 1.6 }}
           value={v.messageTemplate || ''}
           onChange={(e) => setV({ messageTemplate: e.target.value })}
         />

@@ -31,6 +31,21 @@ export async function enrichListing(listing) {
   const rrText = extract(html, /Response Rate:.*?<dd[^>]*>\s*([\d]+)%/s);
   const responseRate = rrText ? Number(rrText) : null;
 
+  // Landlord ka naam — profile card me, hamesha "Kate H." shakl me (pehla naam + initial).
+  // Message me "Hi Kate," likhne ke liye chahiye; naam na mile to "Hi," (jhoota naam kabhi nahi).
+  // Test: 4/4 listings pe mila (Kate H., Daniel G., Hassan K., Michael L., Patrick N.)
+  const landlordFull = extract(
+    html,
+    /<p class="mb-0 text-center fs-body-large-1 fw-medium">\s*([^<]{1,40}?)\s*<\/p>/
+  );
+  // Sirf pehla naam rakho ("Kate H." -> "Kate"). Agar ajeeb sa nikle (numbers, bohot lamba,
+  // ya "Landlord" jaisa generic) to null — tab greeting bina naam ke jayegi.
+  const landlordName =
+    landlordFull && /^[A-Z][a-zA-Z'’-]{1,19}(\s+[A-Z]\.?)?$/.test(landlordFull) &&
+    !/^(landlord|agent|owner)$/i.test(landlordFull)
+      ? landlordFull.split(/\s+/)[0]
+      : null;
+
   // Detail table: <td class="fw-medium">LABEL</td> <td>VALUE</td>
   // (Scrapy repo se seekha: deposit, furnishing, tenancy quality signals hain)
   const tableField = (label) =>
@@ -87,6 +102,7 @@ export async function enrichListing(listing) {
     title,
     address,
     response_rate: responseRate,
+    landlord_name: landlordName,
     deposit,
     furnishing,
     available: availableRaw ? availableRaw.trim() : null,
