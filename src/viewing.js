@@ -194,10 +194,26 @@ export async function processViewings(listings, jar, updateStatus) {
     return result;
   }
 
+  let sentInThisRun = 0;
+
   for (const l of eligible) {
     if (budget <= 0) {
       result.capped++;
       continue;
+    }
+
+    // ⏱️ Insaani wafqa do sends ke darmiyan (22 Jul, cap 1 -> 12 karte waqt add hua).
+    //
+    // Kyun zaroori hai: cap 1 pe loop me kabhi do send hote hi nahi thay, is liye ye
+    // kabhi masla nahi bana. Cap 12 pe bina delay ke 12 messages taqreeban EK SECOND
+    // me chale jate — ek hi account se, ek hi minute me. OpenRent ko ye saaf bot
+    // dikhta hai, aur Mo ka account ban ho sakta hai (jo undo nahi hota).
+    //
+    // 45-90 second random. 12 requests ~ 10-18 minute me phailti hain.
+    if (sentInThisRun > 0 && v.mode === 'live') {
+      const waitMs = 45_000 + Math.floor(Math.random() * 45_000);
+      console.log(`    ⏱️  ${Math.round(waitMs / 1000)}s ruk raha hoon (insaani cadence)...`);
+      await new Promise((r) => setTimeout(r, waitMs));
     }
 
     // Idempotency: pehle status 'requested' likho (crash pe bhi double na jaye)
@@ -283,6 +299,9 @@ export async function processViewings(listings, jar, updateStatus) {
       if (updateStatus) await updateStatus(l.listing_id, { viewing_status: 'send_failed' });
     }
     budget--;
+    // Koshish ho gayi (kaamyab ho ya na ho) — agli se pehle wafqa lena hai.
+    // Nakaam koshish bhi OpenRent ke liye ek request hai, is liye yahan gina jata hai.
+    sentInThisRun++;
   }
 
   return result;
