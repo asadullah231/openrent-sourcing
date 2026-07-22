@@ -74,7 +74,12 @@ export default async function RootLayout({ children }) {
             </div>
           </aside>
 
-          <main style={{ flex: 1, padding: '32px 40px', maxWidth: 1120, width: '100%' }}>{children}</main>
+          {/* maxWidth 1120 tha — bari screen pe dayen ~600px khali reh jata tha
+              (Asad ne pakda, 22 Jul). 1600 pe cards ka grid khud 4-5 columns
+              bana leta hai (auto-fill minmax(272px,1fr)), aur map ko bhi poori
+              chaudai milti hai. Cap poori tarah hataya nahi — 2000px+ monitor pe
+              text ki lambi lines parhna mushkil ho jata hai. */}
+          <main style={{ flex: 1, padding: '32px 40px', maxWidth: 1600, width: '100%' }}>{children}</main>
         </div>
       </body>
     </html>
