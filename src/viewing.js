@@ -292,7 +292,18 @@ export async function processViewings(listings, jar, updateStatus) {
           reason = '200 but Verify-Number gate — request NOT sent';
         } else if (/field-validation-error|is required/i.test(body)) {
           ok = false;
-          reason = '200 but validation error';
+          // Asli error text bhi nikaalo — warna "validation error" se pata nahi chalta
+          // ke KAUNSA field toota. (22 Jul: Chagford House pe ye aaya aur wajah
+          // maloom karne ka koi zariya nahi tha.)
+          const msgs = [
+            ...body.matchAll(/(?:field-validation-error|validation-summary-errors)[^>]*>\s*([^<]{3,120})/gi),
+          ]
+            .map((m) => m[1].trim())
+            .filter(Boolean)
+            .slice(0, 3);
+          reason = msgs.length
+            ? `200 validation error: ${msgs.join(' | ')}`
+            : '200 but validation error (text nahi mila)';
         } else if (/request has been sent|viewing request sent|message sent|thank/i.test(body)) {
           ok = true;
           reason = '200 with success marker';
