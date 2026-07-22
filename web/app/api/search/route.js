@@ -1,5 +1,6 @@
 import { parseSearchUrl, filtersFromParams } from '@bot/search-url.js';
 import { scrapeArea } from '@bot/scraper.js';
+import { enrichListing } from '@bot/enrich.js';
 import { getListings } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
@@ -85,25 +86,55 @@ export async function POST(req) {
     return (a.hours_live ?? 9e9) - (b.hours_live ?? 9e9);
   });
 
+  // Upar wali kuch listings ENRICH karo — taake preview me asli photo aur pata
+  // aaye, bilkul neeche wale "Worth a look" cards jaisa (Asad ne kaha, 22 Jul).
+  //
+  // Search page me photo/address hote hi nahi; wo har listing ke apne page pe
+  // hain. Pehle maine socha tha ye bohot mehnga hai — magar naap kar dekha:
+  // parallel me 6 listings 1.5 sec, yani 12 taqreeban 3 sec. Qabool hai.
+  //
+  // 12 hi kyun, saari 60 kyun nahi: 60 ka matlab hai OpenRent pe 60 requests ek
+  // dam. Ye wahi account hai jis se bot asli messages bhejta hai — us pe rate
+  // limit (429) khana bohot mehnga sauda hai sirf preview ki khatir. 12 se ek
+  // poori screen bhar jati hai; baqi neeche patli list me.
+  const TOP = 12;
+  const top = withFlag.slice(0, TOP);
+  const rest = withFlag.slice(TOP, 60);
+
+  const enriched = await Promise.all(
+    top.map((l) =>
+      enrichListing(l)
+        .then((e) => ({ ...l, ...e }))
+        // Ek listing ka page na khule to poora search na gire — us ke liye
+        // photo ke baghair hi dikha do.
+        .catch(() => l)
+    )
+  );
+
+  const slim = (l) => ({
+    listing_id: l.listing_id,
+    url: l.url,
+    price: l.price,
+    beds: l.beds,
+    baths: l.baths,
+    hours_live: l.hours_live,
+    _isNew: l._isNew,
+    // ye sirf enrich hone ke baad milte hain
+    image: l.image ?? null,
+    address: l.address ?? null,
+    title: l.title ?? null,
+    furnishing: l.furnishing ?? null,
+  });
+
   return Response.json({
     search: parsed.search,
     total: listings.length, // OpenRent ne jitni deen
     matched: matched.length, // filter ke baad
     fresh: known ? withFlag.filter((l) => l._isNew).length : null,
-    // Poori list na bhejo — 400 listings ka JSON bara hota hai aur Mo waise
-    // bhi utni nahi dekhta. Pehli 60 kaafi hain andaza lagane ko.
-    //
-    // Sirf wo fields jo search page SE MILTE hain. Photo/address yahan hote hi
-    // nahi (enrich.js baad me har listing ka apna page khol kar laata hai), is
-    // liye unhe bhejna sirf khali dabbe dikhata hai.
-    listings: withFlag.slice(0, 60).map((l) => ({
-      listing_id: l.listing_id,
-      url: l.url,
-      price: l.price,
-      beds: l.beds,
-      baths: l.baths,
-      hours_live: l.hours_live,
-      _isNew: l._isNew,
-    })),
+    enrichedCount: enriched.filter((l) => l.image).length,
+    // Poori list na bhejo — 400 listings ka JSON bara hai aur Mo waise bhi utni
+    // nahi dekhta. Pehli 12 photo ke sath, agli 48 patli list me.
+    listings: enriched.map(slim),
+    more: rest.map(slim),
   });
 }

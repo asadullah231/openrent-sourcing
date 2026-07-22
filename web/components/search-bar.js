@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ListingCard } from './listing-card';
 
 // Home page ka search bar — Mo apna OpenRent link paste kare aur FORAN result dekhe.
 //
@@ -195,74 +196,100 @@ export function SearchBar() {
                   : res.fresh > 0
                     ? 'Nayi wali pehle'
                     : 'Sab pehle se store me hain'}
-                {res.matched > res.listings.length && ` · pehli ${res.listings.length} dikha raha hoon`}
-                {' · photo aur pata bot enrich karne ke baad aata hai'}
+                {res.matched > res.listings.length &&
+                  ` · upar ki ${res.listings.length} poori tafseel ke sath`}
               </div>
 
-              {/* ⚠️ Yahan pehle ListingCard use kiya tha — GALAT tha (screenshot pe
-                  pakra). Wo card photo + address dikhata hai, magar search page se
-                  ye dono aate hi nahi (enrich.js baad me har listing ka apna page
-                  khol kar laata hai). Nateeja: 60 khali "no photo" dabbe, aur har
-                  card ka naam "Tower Hamlets" — kuch pata hi nahi chalta tha.
-                  60 listings enrich karna bohot slow hai (har ek alag request).
-                  Is liye preview wahi dikhata hai jo search page SE MILTA hai:
-                  daam, beds/baths, aur kitni purani. Utna kaafi hai ye faisla
-                  karne ke liye ke search theek hai ya nahi. */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-                  gap: 8,
-                }}
-              >
+              {/* Upar wali 12 — poore photo cards, bilkul neeche "Worth a look"
+                  jaise (Asad: "yani aisa show ho jab me link paste karun wahan").
+                  Ye is liye mumkin hua ke enrich naapa: 6 listings parallel me
+                  1.5 sec. Pehle andaza tha ke bohot mehnga hai — ghalat tha. */}
+              <div className="grid-cards">
                 {res.listings.map((l) => (
-                  <a
-                    key={l.listing_id}
-                    href={l.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 8,
-                      padding: '9px 11px',
-                      border: '1px solid var(--mist-line)',
-                      borderRadius: 'var(--r-ctrl)',
-                      background: 'var(--ink)',
-                      textDecoration: 'none',
-                      color: 'inherit',
-                    }}
-                    title="OpenRent pe kholo"
-                  >
+                  <div key={l.listing_id} style={{ position: 'relative' }}>
                     {l._isNew && (
                       <span
                         style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
+                          position: 'absolute',
+                          top: 10,
+                          left: 10,
+                          zIndex: 2,
+                          fontSize: 10.5,
+                          fontWeight: 600,
+                          padding: '3px 9px',
+                          borderRadius: 999,
                           background: 'var(--green)',
-                          flexShrink: 0,
+                          color: '#fff',
+                          boxShadow: '0 2px 8px rgba(0,0,0,.3)',
                         }}
-                        title="nayi — store me nahi thi"
-                      />
+                      >
+                        nayi
+                      </span>
                     )}
-                    <span className="font-mono" style={{ fontSize: 13.5, fontWeight: 600 }}>
-                      £{Number(l.price ?? 0).toLocaleString('en-GB')}
-                    </span>
-                    <span className="text-muted" style={{ fontSize: 11.5 }}>
-                      {l.beds != null ? `${l.beds} bed` : ''}
-                      {l.baths != null ? ` · ${l.baths} bath` : ''}
-                    </span>
-                    <span className="text-muted" style={{ fontSize: 11, marginLeft: 'auto', flexShrink: 0 }}>
-                      {l.hours_live != null
-                        ? l.hours_live < 24
-                          ? `${l.hours_live}h`
-                          : `${Math.round(l.hours_live / 24)}d`
-                        : ''}
-                    </span>
-                  </a>
+                    <ListingCard l={l} />
+                  </div>
                 ))}
               </div>
+
+              {/* Baqi 48 — patli list. Inhe enrich nahi kiya (60 requests ek dam
+                  us hi account se jata hai jis se bot messages bhejta hai; 429
+                  khana bohot mehnga sauda hai sirf preview ke liye). */}
+              {res.more?.length > 0 && (
+                <>
+                  <div
+                    className="text-muted"
+                    style={{ fontSize: 11.5, margin: '18px 0 8px' }}
+                  >
+                    Aur {res.more.length} — photo ke baghair (bot inhe apne run me enrich karega)
+                  </div>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                      gap: 6,
+                    }}
+                  >
+                    {res.more.map((l) => (
+                      <a
+                        key={l.listing_id}
+                        href={l.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'baseline',
+                          gap: 7,
+                          padding: '7px 10px',
+                          border: '1px solid var(--mist-line)',
+                          borderRadius: 'var(--r-ctrl)',
+                          textDecoration: 'none',
+                          color: 'inherit',
+                        }}
+                        title="OpenRent pe kholo"
+                      >
+                        {l._isNew && (
+                          <span
+                            style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }}
+                          />
+                        )}
+                        <span className="font-mono" style={{ fontSize: 12.5, fontWeight: 600 }}>
+                          £{Number(l.price ?? 0).toLocaleString('en-GB')}
+                        </span>
+                        <span className="text-muted" style={{ fontSize: 11 }}>
+                          {l.beds != null ? `${l.beds} bed` : ''}
+                        </span>
+                        <span className="text-muted" style={{ fontSize: 10.5, marginLeft: 'auto', flexShrink: 0 }}>
+                          {l.hours_live != null
+                            ? l.hours_live < 24
+                              ? `${l.hours_live}h`
+                              : `${Math.round(l.hours_live / 24)}d`
+                            : ''}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
 
