@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { SearchList } from '@/components/search-list';
 
 export default function SettingsPage() {
   const [s, setS] = useState(null);
@@ -28,7 +29,22 @@ export default function SettingsPage() {
       body: JSON.stringify(s),
     });
     setSaving(false);
-    setMsg(res.ok ? 'Saved. The bot picks this up on its next run.' : 'Could not save.');
+    if (res.ok) {
+      // Server links parse kar ke naam/params bhar deta hai — wahi wapas dikhao,
+      // warna Mo ko "Naya — save karo" hi likha rehta aur wo samajhta ke bacha nahi.
+      try {
+        setS(await res.json());
+      } catch {}
+      setMsg('Saved. The bot picks this up on its next run.');
+      return;
+    }
+    // Kharab link pe server asli wajah bhejta hai — wo dikhao, "Could not save" nahi
+    let why = 'Could not save.';
+    try {
+      const j = await res.json();
+      if (j?.error) why = j.error;
+    } catch {}
+    setMsg(why);
   }
 
   const label = { fontSize: 12.5, fontWeight: 500, display: 'block', marginBottom: 6, color: 'var(--paper)' };
@@ -103,6 +119,17 @@ export default function SettingsPage() {
         )}
       </div>
 
+      {/* Searches — Mo ke paste kiye OpenRent link */}
+      <div style={section}>
+        <span className="font-display" style={{ fontSize: 19, display: 'block', marginBottom: 4 }}>
+          Searches
+        </span>
+        <p className="text-muted" style={{ fontSize: 12.5, margin: '0 0 16px', lineHeight: 1.6 }}>
+          Bot in searches ko har run pe dobara chalata hai. Jitne chaho add karo.
+        </p>
+        <SearchList searches={s.areas || []} onChange={(areas) => setS({ ...s, areas })} />
+      </div>
+
       {/* Message */}
       <div style={section}>
         <span className="font-display" style={{ fontSize: 19, display: 'block', marginBottom: 16 }}>
@@ -144,16 +171,27 @@ export default function SettingsPage() {
             <label style={label}>Requests per day</label>
             <input type="number" className="field" value={v.dailyCap ?? 15} onChange={(e) => setV({ dailyCap: Number(e.target.value) })} />
           </div>
-          <div>
-            <label style={label}>Beds (min)</label>
-            <input type="number" className="field" value={s.filters?.bedsMin ?? 2} onChange={(e) => setF({ bedsMin: Number(e.target.value) })} />
+          {/* Beds/price ke dabbe yahan se hata diye (22 Jul).
+              Wajah: ab ye har search ke apne LINK me hote hain. Dono jagah
+              rakhne se Mo ka link "2-4 bed" kehta aur ye dabba "3-5" — phir
+              kaunsa chalta? Ek hi jagah rehne do: link. */}
+          <div style={{ gridColumn: '1 / -1' }}>
+            <div
+              className="text-muted"
+              style={{
+                fontSize: 12,
+                padding: '10px 12px',
+                border: '1px solid var(--mist-line)',
+                borderRadius: 'var(--r-ctrl)',
+                lineHeight: 1.6,
+              }}
+            >
+              Beds, radius aur rent ab har search ke apne link me hote hain (upar Searches me).
+              Badalna ho to OpenRent pe nayi search banao aur us ka link paste kar do.
+            </div>
           </div>
           <div>
-            <label style={label}>Beds (max)</label>
-            <input type="number" className="field" value={s.filters?.bedsMax ?? 4} onChange={(e) => setF({ bedsMax: Number(e.target.value) })} />
-          </div>
-          <div>
-            <label style={label}>Max rent £/mo</label>
+            <label style={label}>Max rent £/mo <span className="text-muted" style={{ fontWeight: 400 }}>· sab pe</span></label>
             <input type="number" className="field" placeholder="no cap" value={s.filters?.priceMax ?? ''} onChange={(e) => setF({ priceMax: e.target.value ? Number(e.target.value) : null })} />
           </div>
           <div>

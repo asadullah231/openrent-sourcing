@@ -40,9 +40,17 @@ export function scoreListing(l) {
   }
 
   // 3) Distance (25) — Mo ki base ke jitna paas
+  //
+  // ⚠️ Yahan pehle `config.areas[0].radiusKm` tha. Do masle thay (22 Jul):
+  //   1. Naye paste-link format me `radiusKm` hota hi nahi (radius ab link ke
+  //      `area=3` param me hai), aur agar list khali ho to `[0]` crash karta.
+  //   2. Mo ka business ab R2R hai — landlord ki nazdeeki ka koi matlab nahi.
+  //      Ye pehle se dhundla score hai; abhi sirf tarteeb badalta hai, rokta nahi.
+  // Is liye ab mehfooz default (3km) — score.js ki poori nazrsani alag kaam hai
+  // aur Mo ke jawab ka muntazir hai (kaunse landlord haan kehte hain).
   const dist = distanceKm(originLatLng, l);
   if (dist != null) {
-    const near = clamp01(1 - dist / (config.areas[0].radiusKm || 3)) * 25;
+    const near = clamp01(1 - dist / (config.areas?.[0]?.radiusKm || 3)) * 25;
     score += near;
     l._distance_km = Math.round(dist * 100) / 100;
     if (dist <= 1.5) reasons.push(`${l._distance_km}km away`);
