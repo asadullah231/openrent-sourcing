@@ -152,15 +152,22 @@ function matchesFilters(l, f) {
 // cron ko le doobta tha — yani Tower Hamlets ki listings sirf is liye ruk jatin
 // ke Hackney ka link ghalat tha. Ab wo ek chhoot jati hai, baqi chalti rehti hain.
 export async function scrapeAll() {
+  // Portal dispatcher yahan lazy-import — warna scraper.js ↔ scraper-rm.js ka
+  // circular import ban jata (scraper-rm.js is file se fetchWithRetry leti hai).
+  const { scrapeSearch, filtersForSearch, matchesFilters: matchAny } = await import('./portals.js');
+
   const all = [];
   const errors = [];
   const searches = (config.areas || []).filter((a) => a.enabled !== false);
 
   for (const search of searches) {
     try {
-      const listings = await scrapeArea(search);
-      // Apna hard filter — OpenRent ke URL param pe bharosa nahi (neeche wajah).
-      all.push(...listings.filter((l) => matchesFilters(l, filtersFor(search))));
+      // Portal ke hisaab se sahi scraper (OpenRent ya Rightmove).
+      const listings = await scrapeSearch(search);
+      // Apna hard filter — portal ke URL param pe bharosa nahi.
+      const f = search.source ? filtersForSearch(search) : filtersFor(search);
+      const match = search.source ? matchAny : matchesFilters;
+      all.push(...listings.filter((l) => match(l, f)));
     } catch (err) {
       errors.push(`${search.name || search.slug}: ${err.message}`);
       console.error(`  ⚠️  ${search.name || search.slug} fail — ${err.message}`);

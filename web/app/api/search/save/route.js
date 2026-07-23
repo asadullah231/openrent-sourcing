@@ -1,4 +1,4 @@
-import { parseSearchUrl } from '@bot/search-url.js';
+import { parseAnyUrl } from '@bot/portals.js';
 import { getSettings, saveSettings } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,7 @@ export async function POST(req) {
     return Response.json({ error: 'Request theek nahi.' }, { status: 400 });
   }
 
-  const parsed = parseSearchUrl(body?.url);
+  const parsed = parseAnyUrl(body?.url);
   if (!parsed.ok) return Response.json({ error: parsed.error }, { status: 400 });
 
   const settings = (await getSettings()) || {};
@@ -35,7 +35,9 @@ export async function POST(req) {
       .filter(([k]) => !IGNORE.has(k))
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([k, v]) => p.set(k, v));
-    return `${s.slug}|${p.toString()}`;
+    // source bhi key me — taake OpenRent aur Rightmove ki search alag rahein
+    // (theoretically slug takra sakta hai; portal se distinct rakho).
+    return `${s.source || 'openrent'}|${s.slug}|${p.toString()}`;
   };
   const newKey = key(parsed.search);
 

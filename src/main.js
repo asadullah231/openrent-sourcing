@@ -81,6 +81,11 @@ async function runOnce() {
   // request nahi gayi, un pe chale. Idempotent status hi double se bachata hai.
   const allStored = await all();
   const viewingCandidates = allStored
+    // Rightmove Phase A = READ-ONLY (23 Jul). Rightmove pe OpenRent jaisa
+    // "request viewing" nahi hota — agent enquiry form/phone hoti hai. Jab tak
+    // wo flow na bane, Rightmove listings sirf dashboard pe dikhti hain, contact
+    // nahi jata. (source undefined = purani OpenRent listings, wo chalein.)
+    .filter((l) => (l.source || 'openrent') === 'openrent')
     .filter((l) => (l.score ?? 0) >= config.viewing.minScore)
     .filter((l) => (l.viewing_status || 'new') !== 'requested');
   if (viewingCandidates.length) {

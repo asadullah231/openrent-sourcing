@@ -99,7 +99,7 @@ export function SearchBar() {
       <div style={{ display: 'flex', gap: 8 }}>
         <input
           className="field"
-          placeholder="Paste an OpenRent search link — results show instantly"
+          placeholder="Paste an OpenRent or Rightmove search link — results show instantly"
           value={url}
           onChange={(e) => {
             setUrl(e.target.value);
@@ -212,8 +212,11 @@ export function SearchBar() {
               kha gaye. */}
           {res.total > res.matched && (
             <div className="text-muted" style={{ fontSize: 11.5, marginTop: 10 }}>
-              OpenRent returned {res.total}; {res.total - res.matched} didn&apos;t match your
-              filters (OpenRent&apos;s own bed filter doesn&apos;t run server-side, so we apply it).
+              {res.search?.source === 'rightmove' ? (
+                <>Rightmove has {res.total.toLocaleString('en-GB')} in this area; showing the {res.matched} freshest that match your filters.</>
+              ) : (
+                <>OpenRent returned {res.total}; {res.total - res.matched} didn&apos;t match your filters (OpenRent&apos;s own bed filter doesn&apos;t run server-side, so we apply it).</>
+              )}
             </div>
           )}
 
@@ -242,9 +245,9 @@ export function SearchBar() {
               <div className="grid-cards">
                 {res.listings.map((l) => (
                   <div key={l.listing_id} style={{ position: 'relative' }}>
-                    {/* Source badge — ye listing OpenRent se aayi. Asad (23 Jul):
-                        "new" ki jagah source "OpenRent". Har card pe lagta hai
-                        (sabhi OpenRent se hain), _isNew pe nahi. */}
+                    {/* Source badge — ye listing kaun se portal se aayi.
+                        23 Jul: ab OpenRent + Rightmove dono ho sakte hain, isliye
+                        l.source se label. */}
                     <span
                       style={{
                         position: 'absolute',
@@ -261,7 +264,7 @@ export function SearchBar() {
                         boxShadow: '0 2px 8px rgba(0,0,0,.3)',
                       }}
                     >
-                      OpenRent
+                      {l.source === 'rightmove' ? 'Rightmove' : 'OpenRent'}
                     </span>
                     <ListingCard l={l} />
                   </div>

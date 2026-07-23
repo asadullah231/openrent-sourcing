@@ -1,5 +1,4 @@
-import { parseSearchUrl, filtersFromParams } from '@bot/search-url.js';
-import { scrapeArea } from '@bot/scraper.js';
+import { parseAnyUrl, scrapeSearch, filtersForSearch, matchesFilters } from '@bot/portals.js';
 import { enrichListing } from '@bot/enrich.js';
 import { getListings } from '@/lib/data';
 
@@ -29,17 +28,19 @@ export async function POST(req) {
     return Response.json({ error: 'Request theek nahi.' }, { status: 400 });
   }
 
-  const parsed = parseSearchUrl(body?.url);
+  const parsed = parseAnyUrl(body?.url);
   if (!parsed.ok) return Response.json({ error: parsed.error }, { status: 400 });
+
+  const portal = parsed.search.source === 'rightmove' ? 'Rightmove' : 'OpenRent';
 
   let listings;
   try {
-    listings = await scrapeArea(parsed.search);
+    listings = await scrapeSearch(parsed.search);
   } catch (err) {
-    // OpenRent ka 429/405 ya page shape badalna — asli wajah dikhao, warna
-    // Mo samjhega ke us ka link kharab hai jabke masla hamari taraf hai.
+    // 429/405/timeout ya page shape badalna — asli wajah dikhao, warna Mo
+    // samjhega ke us ka link kharab hai jabke masla hamari taraf hai.
     return Response.json(
-      { error: `OpenRent se result nahi mila: ${err.message}` },
+      { error: `${portal} se result nahi mila: ${err.message}` },
       { status: 502 }
     );
   }
@@ -47,16 +48,10 @@ export async function POST(req) {
   // Link ke apne bed/price filter lagao.
   // ⚠️ Ye zaroori hai: OpenRent ke URL params results filter NAHI karte (unka
   // filter browser me JS se chalta hai). 22 Jul ko live test kiya — Mo ke link
-  // se 713 aayin jin me 267 range se bahar thin. Bina is ke Mo ko yahan bhi
-  // wahi 1-bed/15-bed ka kachra dikhta.
-  const f = filtersFromParams(parsed.search.params);
-  const matched = listings.filter((l) => {
-    if (f.bedsMin != null && (l.beds == null || l.beds < f.bedsMin)) return false;
-    if (f.bedsMax != null && (l.beds == null || l.beds > f.bedsMax)) return false;
-    if (f.priceMax != null && (l.price == null || l.price > f.priceMax)) return false;
-    if (f.priceMin != null && (l.price == null || l.price < f.priceMin)) return false;
-    return true;
-  });
+  // se 713 aayin jin me 267 range se bahar thin. Rightmove behtar filter karta
+  // hai lekin hum phir bhi apni taraf se lagate hain (ek hi jagah sach).
+  const f = filtersForSearch(parsed.search);
+  const matched = listings.filter((l) => matchesFilters(l, f));
 
   // "Nayi" = jo store me pehle se nahi. Mo ke liye sab se kaam ki ginti —
   // batati hai ke is search se asal me kitna FAIDA hoga.
@@ -101,34 +96,43 @@ export async function POST(req) {
   const top = withFlag.slice(0, TOP);
   const rest = withFlag.slice(TOP, 60);
 
-  const enriched = await Promise.all(
-    top.map((l) =>
-      enrichListing(l)
-        .then((e) => ({ ...l, ...e }))
-        // Ek listing ka page na khule to poora search na gire — us ke liye
-        // photo ke baghair hi dikha do.
-        .catch(() => l)
-    )
-  );
+  // Rightmove ke card pe photo + address pehle se hote hain — enrich ki zaroorat
+  // nahi. Sirf OpenRent ke liye enrich (uske search page pe photo hote hi nahi).
+  const enriched =
+    parsed.search.source === 'rightmove'
+      ? top
+      : await Promise.all(
+          top.map((l) =>
+            enrichListing(l)
+              .then((e) => ({ ...l, ...e }))
+              // Ek listing ka page na khule to poora search na gire — us ke liye
+              // photo ke baghair hi dikha do.
+              .catch(() => l)
+          )
+        );
 
   const slim = (l) => ({
     listing_id: l.listing_id,
+    source: l.source ?? parsed.search.source ?? 'openrent',
     url: l.url,
     price: l.price,
     beds: l.beds,
     baths: l.baths,
     hours_live: l.hours_live,
     _isNew: l._isNew,
-    // ye sirf enrich hone ke baad milte hain
+    // OpenRent pe enrich ke baad; Rightmove pe scrape me hi mil jate hain
     image: l.image ?? null,
     address: l.address ?? null,
     title: l.title ?? null,
     furnishing: l.furnishing ?? null,
   });
 
+  // Rightmove asli total (resultCount) deta hai; OpenRent pe jitni scrape hui.
+  const total = listings._resultCount != null ? listings._resultCount : listings.length;
+
   return Response.json({
     search: parsed.search,
-    total: listings.length, // OpenRent ne jitni deen
+    total, // portal ne jitni deen
     matched: matched.length, // filter ke baad
     fresh: known ? withFlag.filter((l) => l._isNew).length : null,
     enrichedCount: enriched.filter((l) => l.image).length,
