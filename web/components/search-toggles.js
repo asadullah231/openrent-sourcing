@@ -16,19 +16,6 @@ import Link from 'next/link';
 // runtime params they). Yahan naam pe dedup karke ek hi folder dikhate hain —
 // pehla wala rakh lete hain, baqi chhupa dete hain.
 
-// Canonical search key — server ke data.js areaKey() ki hu-ba-hu naql. Client
-// hai is liye inline (server code import nahi kar sakte). Dono me farq aaya to
-// dedup toot jayega — badalna ho to DONO jagah badlo.
-function areaKey(a) {
-  const IGNORE = new Set(['isLive', 'viewingProperty', 'viewingproperty', 'index']);
-  const p = new URLSearchParams();
-  Object.entries(a?.params || {})
-    .filter(([k]) => !IGNORE.has(k))
-    .sort(([x], [y]) => x.localeCompare(y))
-    .forEach(([k, v]) => p.set(k, v));
-  return `${a?.source || 'openrent'}|${a?.slug || a?.name || ''}|${p.toString()}`;
-}
-
 function describe(params = {}) {
   const bits = [];
   const bMin = params.bedrooms_min ?? params.beds_min;
@@ -112,19 +99,24 @@ export function SearchToggles() {
     return <div className="text-muted" style={{ fontSize: 12.5 }}>Loading…</div>;
   }
 
-  // Dedup canonical key pe (source|slug|params) — bilkul wahi jo server (data.js
-  // areaKey) use karta hai, warna UI aur bot alag folder ginte (ek chhup jaata,
-  // par bot dono scrape karta). Ek location PER SITE alag folder rehta hai.
-  // Har folder ka asli index (`i`) yaad rakhte hain taake toggle sahi row pe lage.
-  const seen = new Set();
-  const searches = (settings.areas || [])
-    .map((s, i) => ({ s, i }))
-    .filter(({ s }) => {
-      const key = areaKey(s);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+  // Folder dedup DISPLAY ke liye SOURCE + NAAM pe (params ignore).
+  //
+  // 🐛 (23 Jul, Asad ne screenshot bheja: 3 "Tower Hamlets" folders): purani
+  // settings me ek hi location ke thode-alag-params wale entries pade hain (jaise
+  // ek me viewingProperty:16 tha). Full areaKey (params samet) unhe alag samajh
+  // kar teen tile bana deta. Mo ke liye "ek location = ek folder" — is liye yahan
+  // sirf source+naam pe dedup. On/off toggle phir bhi sahi row (asli index) pe
+  // lagta hai; agar ek naam ke kai entries hon to sab ka enabled ek saath badal
+  // jata hai (neeche allIdx), taake bot ke us naam ke saare duplicates ek jaisa
+  // chalein/rukein — koi chhupa hua "on" twin peeche na reh jaye.
+  const dispKey = (s) => `${s?.source || 'openrent'}|${(s?.name || s?.slug || '').trim().toLowerCase()}`;
+  const groups = new Map(); // dispKey -> { s, i, allIdx:[...] }
+  (settings.areas || []).forEach((s, i) => {
+    const k = dispKey(s);
+    if (groups.has(k)) groups.get(k).allIdx.push(i);
+    else groups.set(k, { s, i, allIdx: [i] });
+  });
+  const searches = [...groups.values()];
 
   if (searches.length === 0) {
     return (
@@ -143,11 +135,14 @@ export function SearchToggles() {
     );
   }
 
-  // toggle asli index (settings.areas me) pe lagta hai — folder page bhi
-  // wahi row uthata hai. Dedup se dikhne wale index se nahi.
+  // toggle folder ke SAARE asli index (allIdx) pe lagta hai — agar ek naam ke
+  // kai duplicate entries hon to sab ek saath on/off, koi hidden "on" twin peeche
+  // na reh jaye (jo bot phir bhi scrape karta).
   const all = settings.areas || [];
-  const toggle = (realIdx, on) =>
-    commit(all.map((s, j) => (j === realIdx ? { ...s, enabled: on } : s)));
+  const toggle = (allIdx, on) => {
+    const set = new Set(allIdx);
+    commit(all.map((s, j) => (set.has(j) ? { ...s, enabled: on } : s)));
+  };
 
   return (
     <div>
@@ -158,8 +153,9 @@ export function SearchToggles() {
           gap: 12,
         }}
       >
-        {searches.map(({ s, i }) => {
-          const on = s.enabled !== false;
+        {searches.map(({ s, i, allIdx }) => {
+          // Group me koi bhi entry "on" ho to folder on (taake hidden twin sach dikhe).
+          const on = allIdx.some((j) => all[j]?.enabled !== false);
           const name = s.name || s.slug || 'New search';
           const source = s.source || 'openrent';
           const isRM = source === 'rightmove';
@@ -169,7 +165,7 @@ export function SearchToggles() {
 
           return (
             <div
-              key={`${source}|${s.pastedUrl || s.slug || i}`}
+              key={`${source}|${name.toLowerCase()}|${i}`}
               style={{
                 position: 'relative',
                 border: '1px solid var(--mist-line)',
@@ -182,7 +178,7 @@ export function SearchToggles() {
               {/* corner control — sirf on/off dot */}
               <div style={{ position: 'absolute', top: 9, right: 9, zIndex: 2 }}>
                 <button
-                  onClick={() => toggle(i, !on)}
+                  onClick={() => toggle(allIdx, !on)}
                   title={on ? 'Turn off' : 'Turn on'}
                   aria-label={on ? 'Turn off' : 'Turn on'}
                   style={{
