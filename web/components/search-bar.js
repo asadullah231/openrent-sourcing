@@ -49,11 +49,11 @@ export function SearchBar() {
         body: JSON.stringify({ url: v }),
       });
       const j = await r.json();
-      if (!r.ok) setErr(j?.error || 'Search nahi chali.');
+      if (!r.ok) setErr(j?.error || "Search didn't run.");
       else setRes(j);
     } catch {
       // fetch khud fail ho (net gaya, ya route 30s me na nipta)
-      setErr('Search nahi chali — dobara koshish karo.');
+      setErr("Search didn't run — try again.");
     }
     setBusy(false);
   }
