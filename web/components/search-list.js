@@ -19,7 +19,7 @@ function describe(params = {}) {
   const bMax = params.bedrooms_max ?? params.beds_max;
   if (bMin && bMax) bits.push(`${bMin}-${bMax} bed`);
   else if (bMin) bits.push(`${bMin}+ bed`);
-  else if (bMax) bits.push(`${bMax} bed tak`);
+  else if (bMax) bits.push(`up to ${bMax} bed`);
 
   // `area` OpenRent ka radius hai (miles me, unke apne search box ke mutabiq)
   if (params.area) bits.push(`${params.area} mile`);
@@ -27,10 +27,10 @@ function describe(params = {}) {
   const pMax = params.prices_max ?? params.price_max;
   const pMin = params.prices_min ?? params.price_min;
   if (pMin && pMax) bits.push(`£${pMin}–£${pMax}`);
-  else if (pMax) bits.push(`£${pMax} tak`);
-  else if (pMin) bits.push(`£${pMin} se`);
+  else if (pMax) bits.push(`up to £${pMax}`);
+  else if (pMin) bits.push(`from £${pMin}`);
 
-  return bits.length ? bits.join(' · ') : 'koi filter nahi';
+  return bits.length ? bits.join(' · ') : 'no filters';
 }
 
 export function SearchList({ searches = [], onChange }) {
@@ -43,11 +43,11 @@ export function SearchList({ searches = [], onChange }) {
     // Asal parsing server pe hoti hai (wahi parser jo bot use karta hai).
     // Yahan sirf itna dekho ke saaf ghalat cheez foran pakri jaye.
     if (!/openrent\.co\.uk/i.test(v)) {
-      setErr('Ye OpenRent ka link nahi lag raha.');
+      setErr("That doesn't look like an OpenRent link.");
       return;
     }
     if (searches.some((s) => s.pastedUrl === v)) {
-      setErr('Ye search pehle se list me hai.');
+      setErr('This search is already in the list.');
       return;
     }
     setErr('');
@@ -70,7 +70,7 @@ export function SearchList({ searches = [], onChange }) {
       <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
         <input
           className="field"
-          placeholder="OpenRent search ka poora link yahan paste karo"
+          placeholder="Paste the full OpenRent search link here"
           value={url}
           onChange={(e) => {
             setUrl(e.target.value);
@@ -88,8 +88,8 @@ export function SearchList({ searches = [], onChange }) {
         <div style={{ fontSize: 12, color: 'var(--rust)', marginBottom: 12 }}>{err}</div>
       ) : (
         <div className="text-muted" style={{ fontSize: 11.5, marginBottom: 14, lineHeight: 1.6 }}>
-          OpenRent pe search karo (area, radius, beds) — phir address bar ka poora link yahan paste karo.
-          Jo filter link me hain wohi chalenge.
+          Search on OpenRent (area, radius, beds), then paste the full address-bar link here.
+          Only the filters in the link are applied.
         </div>
       )}
 
@@ -104,7 +104,7 @@ export function SearchList({ searches = [], onChange }) {
             textAlign: 'center',
           }}
         >
-          Abhi koi search nahi. Ek link paste karo — bot usi ko monitor karega.
+          No searches yet. Paste a link and the bot will monitor it.
         </div>
       )}
 
@@ -126,8 +126,8 @@ export function SearchList({ searches = [], onChange }) {
           >
             <button
               onClick={() => patch(i, { enabled: !on })}
-              title={on ? 'Band karo' : 'Chalu karo'}
-              aria-label={on ? 'Band karo' : 'Chalu karo'}
+              title={on ? 'Turn off' : 'Turn on'}
+              aria-label={on ? 'Turn off' : 'Turn on'}
               style={{
                 width: 10,
                 height: 10,
@@ -142,15 +142,15 @@ export function SearchList({ searches = [], onChange }) {
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 13.5, fontWeight: 600 }}>
                 {/* Abhi add hua aur save nahi hua: naam/params server se aayenge */}
-                {s.name || s.slug || 'Nayi search'}
+                {s.name || s.slug || 'New search'}
               </div>
               <div className="text-muted" style={{ fontSize: 11.5, marginTop: 2 }}>
                 {s.params
                   ? describe(s.params)
                   : s.pastedUrl
-                    ? 'Save karo — phir filters yahan dikhenge'
-                    : 'purana area (link nahi)'}
-                {!on && ' · band hai'}
+                    ? 'Save to see its filters here'
+                    : 'legacy area (no link)'}
+                {!on && ' · off'}
               </div>
             </div>
             {s.pastedUrl && (
@@ -160,15 +160,15 @@ export function SearchList({ searches = [], onChange }) {
                 rel="noreferrer"
                 className="text-muted"
                 style={{ fontSize: 11.5, flexShrink: 0 }}
-                title="OpenRent pe khol kar dekho"
+                title="Open on OpenRent"
               >
-                kholo ↗
+                open ↗
               </a>
             )}
             <button
               onClick={() => remove(i)}
-              title="Hata do"
-              aria-label="Hata do"
+              title="Remove"
+              aria-label="Remove"
               style={{
                 border: 'none',
                 background: 'transparent',

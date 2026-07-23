@@ -125,7 +125,7 @@ export default function SettingsPage() {
           Searches
         </span>
         <p className="text-muted" style={{ fontSize: 12.5, margin: '0 0 16px', lineHeight: 1.6 }}>
-          Bot in searches ko har run pe dobara chalata hai. Jitne chaho add karo.
+          The bot runs these searches on every batch. Add as many as you like.
         </p>
         <SearchList searches={s.areas || []} onChange={(areas) => setS({ ...s, areas })} />
       </div>
@@ -186,12 +186,12 @@ export default function SettingsPage() {
                 lineHeight: 1.6,
               }}
             >
-              Beds, radius aur rent ab har search ke apne link me hote hain (upar Searches me).
-              Badalna ho to OpenRent pe nayi search banao aur us ka link paste kar do.
+              Beds, radius and rent now live inside each search&apos;s own link (Searches above).
+              To change them, build a new search on OpenRent and paste its link.
             </div>
           </div>
           <div>
-            <label style={label}>Max rent £/mo <span className="text-muted" style={{ fontWeight: 400 }}>· sab pe</span></label>
+            <label style={label}>Max rent £/mo <span className="text-muted" style={{ fontWeight: 400 }}>· all searches</span></label>
             <input type="number" className="field" placeholder="no cap" value={s.filters?.priceMax ?? ''} onChange={(e) => setF({ priceMax: e.target.value ? Number(e.target.value) : null })} />
           </div>
           <div>

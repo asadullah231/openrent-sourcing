@@ -31,8 +31,8 @@ export default async function SearchPage() {
         <StatusLine health={health} />
       </div>
       <p className="text-muted" style={{ marginTop: 0, marginBottom: 22, fontSize: 13, maxWidth: 560, lineHeight: 1.6 }}>
-        OpenRent pe search banao, us ka poora link yahan paste karo. Result foran
-        neeche dikhega — pasand aaye to Save karo, bot usi ko chalata rahega.
+        Build a search on OpenRent, paste its full link here. Results show below
+        instantly. Save the ones you like and the bot keeps running them.
       </p>
 
       <SearchBar />

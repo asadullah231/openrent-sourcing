@@ -10,9 +10,9 @@ export default function SearchesPage() {
     <div>
       <h1 style={{ fontSize: 30, margin: '0 0 6px', fontWeight: 600 }}>Searches</h1>
       <p className="text-muted" style={{ marginTop: 0, marginBottom: 24, fontSize: 13, maxWidth: 620, lineHeight: 1.6 }}>
-        Bot in searches ko har run pe dobara chalata hai. OpenRent pe search banao,
-        us ka poora link yahan paste karo. Jitni chaho add karo — jo band karni ho
-        us ka toggle off, hatani ho to ✕.
+        The bot runs these searches on every batch. Build a search on OpenRent,
+        paste its full link here. Add as many as you like. Toggle one off to pause
+        it, or ✕ to remove it.
       </p>
       <SearchesManager />
 
@@ -22,8 +22,8 @@ export default function SearchesPage() {
       <div style={{ marginTop: 36, paddingTop: 28, borderTop: '1px solid var(--mist-line)', maxWidth: 720 }}>
         <h2 style={{ fontSize: 18, margin: '0 0 4px', fontWeight: 600 }}>Start outreach</h2>
         <p className="text-muted" style={{ marginTop: 0, marginBottom: 16, fontSize: 12.5, lineHeight: 1.6 }}>
-          Bot in searches ko scrape kar ke ek batch requests bhejta hai. Cron waise
-          bhi apne waqt pe chalta rehta hai — ye foran chalane ke liye hai.
+          The bot scrapes these searches and sends one batch of requests. The cron
+          still runs on its own schedule — this is for running it right now.
         </p>
         <SendBatchButton />
       </div>

@@ -27,11 +27,11 @@ export function SendBatchButton() {
         setSummary(j.summary || []);
         setState('done');
       } else {
-        setErr(j?.error || 'Batch nahi chali.');
+        setErr(j?.error || "Batch didn't run.");
         setState('error');
       }
     } catch {
-      setErr('Trigger nahi hua — dobara koshish karo.');
+      setErr("Couldn't trigger — try again.");
       setState('error');
     }
   }
@@ -49,14 +49,14 @@ export function SendBatchButton() {
 
       {state === 'running' && (
         <div className="text-muted" style={{ fontSize: 12.5, marginTop: 10 }}>
-          Bot chal raha hai — scrape + bhej raha hai. 30-60 second lagte hain.
+          The bot is running — scraping and sending. Takes 30-60 seconds.
         </div>
       )}
 
       {state === 'done' && (
         <div style={{ marginTop: 12 }}>
           <div style={{ fontSize: 13, color: 'var(--green)', fontWeight: 500, marginBottom: 6 }}>
-            ✓ Batch ho gayi
+            ✓ Batch done
           </div>
           {summary.length > 0 ? (
             <div
@@ -75,7 +75,7 @@ export function SendBatchButton() {
             </div>
           ) : (
             <div className="text-muted" style={{ fontSize: 12.5 }}>
-              Tafseel Outreach page pe dekho.
+              See details on the Outreach page.
             </div>
           )}
         </div>

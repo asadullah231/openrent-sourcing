@@ -21,10 +21,10 @@ function describe(params = {}) {
   const bMax = params.bedrooms_max ?? params.beds_max;
   if (bMin && bMax) bits.push(`${bMin}-${bMax} bed`);
   else if (bMin) bits.push(`${bMin}+ bed`);
-  else if (bMax) bits.push(`${bMax} bed tak`);
+  else if (bMax) bits.push(`up to ${bMax} bed`);
   if (params.area) bits.push(`${params.area} mile`);
   const pMax = params.prices_max ?? params.price_max;
-  if (pMax) bits.push(`£${pMax} tak`);
+  if (pMax) bits.push(`up to £${pMax}`);
   return bits.join(' · ');
 }
 
@@ -79,7 +79,7 @@ export function SearchBar() {
       <div style={{ display: 'flex', gap: 8 }}>
         <input
           className="field"
-          placeholder="OpenRent search ka link paste karo — result foran dikhega"
+          placeholder="Paste an OpenRent search link — results show instantly"
           value={url}
           onChange={(e) => {
             setUrl(e.target.value);
@@ -94,7 +94,7 @@ export function SearchBar() {
           className="btn-brass"
           style={{ flexShrink: 0, borderRadius: 999, padding: '0 22px', height: 42 }}
         >
-          {busy ? 'Chal raha hai…' : 'Search'}
+          {busy ? 'Searching…' : 'Search'}
         </button>
       </div>
 
@@ -104,7 +104,7 @@ export function SearchBar() {
 
       {busy && (
         <div className="text-muted" style={{ fontSize: 12.5, marginTop: 10 }}>
-          OpenRent se poochh raha hoon… 5-10 second lagte hain.
+          Asking OpenRent… takes 5-10 seconds.
         </div>
       )}
 
@@ -122,7 +122,7 @@ export function SearchBar() {
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 14.5, fontWeight: 600 }}>{res.search?.name}</div>
               <div className="text-muted" style={{ fontSize: 12, marginTop: 2 }}>
-                {describe(res.search?.params) || 'koi filter nahi'}
+                {describe(res.search?.params) || 'no filters'}
               </div>
             </div>
 
@@ -132,7 +132,7 @@ export function SearchBar() {
                   {res.matched}
                 </span>
                 <span className="text-muted" style={{ fontSize: 11.5, marginLeft: 6 }}>
-                  mile
+                  matched
                 </span>
               </div>
               {res.fresh != null && (
@@ -144,7 +144,7 @@ export function SearchBar() {
                     {res.fresh}
                   </span>
                   <span className="text-muted" style={{ fontSize: 11.5, marginLeft: 6 }}>
-                    nayi
+                    new
                   </span>
                 </div>
               )}
@@ -152,7 +152,7 @@ export function SearchBar() {
 
             {saved === 'ok' ? (
               <span style={{ fontSize: 12.5, color: 'var(--green)', flexShrink: 0 }}>
-                ✓ Save ho gayi — ab har run pe chalegi
+                ✓ Saved — runs on every batch now
               </span>
             ) : (
               <button
@@ -161,7 +161,7 @@ export function SearchBar() {
                 className="btn-brass"
                 style={{ flexShrink: 0, borderRadius: 999 }}
               >
-                {saved === 'saving' ? 'Save ho raha…' : 'Save kar do'}
+                {saved === 'saving' ? 'Saving…' : 'Save this search'}
               </button>
             )}
           </div>
@@ -176,9 +176,8 @@ export function SearchBar() {
               kha gaye. */}
           {res.total > res.matched && (
             <div className="text-muted" style={{ fontSize: 11.5, marginTop: 10 }}>
-              OpenRent ne {res.total} deen; {res.total - res.matched} aap ke filter pe
-              poori nahi utrin (OpenRent ka apna bed filter server pe nahi chalta, hum
-              khud lagate hain).
+              OpenRent returned {res.total}; {res.total - res.matched} didn&apos;t match your
+              filters (OpenRent&apos;s own bed filter doesn&apos;t run server-side, so we apply it).
             </div>
           )}
 
@@ -192,12 +191,12 @@ export function SearchBar() {
                     NA ke "sab purani". Dono ko ek jaisa dikhana jhoot hai —
                     ye bug NocoDB ke ek timeout pe saamne aaya (22 Jul). */}
                 {res.fresh == null
-                  ? 'Store se milaa nahi ja saka — nayi/purani ka pata nahi'
+                  ? "Couldn't check the store — new/seen unknown"
                   : res.fresh > 0
-                    ? 'Nayi wali pehle'
-                    : 'Sab pehle se store me hain'}
+                    ? 'New ones first'
+                    : 'All already in the store'}
                 {res.matched > res.listings.length &&
-                  ` · upar ki ${res.listings.length} poori tafseel ke sath`}
+                  ` · top ${res.listings.length} with full detail`}
               </div>
 
               {/* Upar wali 12 — poore photo cards, bilkul neeche "Worth a look"
@@ -207,25 +206,27 @@ export function SearchBar() {
               <div className="grid-cards">
                 {res.listings.map((l) => (
                   <div key={l.listing_id} style={{ position: 'relative' }}>
-                    {l._isNew && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: 10,
-                          left: 10,
-                          zIndex: 2,
-                          fontSize: 10.5,
-                          fontWeight: 600,
-                          padding: '3px 9px',
-                          borderRadius: 999,
-                          background: 'var(--green)',
-                          color: '#fff',
-                          boxShadow: '0 2px 8px rgba(0,0,0,.3)',
-                        }}
-                      >
-                        nayi
-                      </span>
-                    )}
+                    {/* Source badge — ye listing OpenRent se aayi. Asad (23 Jul):
+                        "new" ki jagah source "OpenRent". Har card pe lagta hai
+                        (sabhi OpenRent se hain), _isNew pe nahi. */}
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 10,
+                        left: 10,
+                        zIndex: 2,
+                        fontSize: 10.5,
+                        fontWeight: 600,
+                        padding: '3px 9px',
+                        borderRadius: 999,
+                        background: 'rgba(0,0,0,.6)',
+                        color: '#fff',
+                        backdropFilter: 'blur(4px)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,.3)',
+                      }}
+                    >
+                      OpenRent
+                    </span>
                     <ListingCard l={l} />
                   </div>
                 ))}
@@ -240,7 +241,7 @@ export function SearchBar() {
                     className="text-muted"
                     style={{ fontSize: 11.5, margin: '18px 0 8px' }}
                   >
-                    Aur {res.more.length} — photo ke baghair (bot inhe apne run me enrich karega)
+                    {res.more.length} more, without photos (the bot enriches these on its run)
                   </div>
                   <div
                     style={{
@@ -265,7 +266,7 @@ export function SearchBar() {
                           textDecoration: 'none',
                           color: 'inherit',
                         }}
-                        title="OpenRent pe kholo"
+                        title="Open on OpenRent"
                       >
                         {l._isNew && (
                           <span
@@ -295,7 +296,7 @@ export function SearchBar() {
 
           {res.matched === 0 && (
             <div className="text-muted" style={{ fontSize: 12.5, marginTop: 12 }}>
-              Is search se kuch nahi mila. Link me filters thora khol kar dekho.
+              Nothing matched this search. Try loosening the filters in the link.
             </div>
           )}
         </div>

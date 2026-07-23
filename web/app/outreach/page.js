@@ -85,7 +85,7 @@ export default async function OutreachPage() {
 
       {(live ? liveToday : shadowToday).length === 0 ? (
         <div className="text-muted" style={{ padding: 40, textAlign: 'center', fontSize: 13, border: '1px solid var(--mist-line)', borderRadius: 12 }}>
-          Aaj abhi tak kuch nahi. Upar &quot;Send a batch now&quot; se shuru karo.
+          Nothing yet today. Hit &quot;Send a batch now&quot; above to start.
         </div>
       ) : (
         <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-tile)', overflow: 'hidden' }}>

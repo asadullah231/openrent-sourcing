@@ -170,7 +170,7 @@ export function MapExplorer({ listings }) {
                 <div className="text-muted" style={{ fontSize: 12, marginTop: 3, lineHeight: 1.4 }}>
                   {l.address ||
                     (l.hours_live != null
-                      ? `${l.hours_live}h pehle listed · #${l.listing_id}`
+                      ? `listed ${l.hours_live}h ago · #${l.listing_id}`
                       : `#${l.listing_id}`)}
                 </div>
               </Link>
@@ -181,7 +181,7 @@ export function MapExplorer({ listings }) {
 
       {noCoords > 0 && (
         <div className="text-muted" style={{ fontSize: 11.5, marginTop: 10 }}>
-          {noCoords} listing{noCoords > 1 ? 's' : ''} map pe nahi — location nahi mili.
+          {noCoords} listing{noCoords > 1 ? 's' : ''} not on the map — no location found.
         </div>
       )}
     </div>

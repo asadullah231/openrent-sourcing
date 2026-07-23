@@ -21,7 +21,7 @@ export function SearchesManager() {
     fetch('/api/settings')
       .then((r) => r.json())
       .then(setSettings)
-      .catch(() => setMsg('Settings load nahi huin — refresh karo.'));
+      .catch(() => setMsg('Could not load settings — refresh.'));
   }, []);
 
   if (!settings) {
@@ -51,9 +51,9 @@ export function SearchesManager() {
         try {
           setSettings(await res.json());
         } catch {}
-        setMsg('Saved. Bot agli run pe inhe use karega.');
+        setMsg('Saved. The bot uses these on its next run.');
       } else {
-        let why = 'Save nahi hui.';
+        let why = "Couldn't save.";
         try {
           const j = await res.json();
           if (j?.error) why = j.error;
@@ -61,7 +61,7 @@ export function SearchesManager() {
         setMsg(why);
       }
     } catch {
-      setMsg('Save nahi hui — dobara koshish karo.');
+      setMsg("Couldn't save — try again.");
     }
     setSaving(false);
   }
@@ -76,14 +76,14 @@ export function SearchesManager() {
         </button>
         {unsaved && !saving && (
           <span className="text-muted" style={{ fontSize: 12.5 }}>
-            Nayi search add ki hai — Save karo taake bot use kare.
+            New search added — Save so the bot uses it.
           </span>
         )}
         {msg && (
           <span
             style={{
               fontSize: 13,
-              color: /nahi|error|load/i.test(msg) ? 'var(--rust)' : 'var(--mist)',
+              color: /couldn|error|load/i.test(msg) ? 'var(--rust)' : 'var(--mist)',
             }}
           >
             {msg}
