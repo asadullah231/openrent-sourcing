@@ -1,6 +1,5 @@
 import { getHealth, getSendLog, getListings } from '@/lib/data';
 import { SendBatchButton } from '@/components/send-batch-button';
-import { SearchToggles } from '@/components/search-toggles';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,22 +56,9 @@ export default async function OutreachPage() {
         ))}
       </div>
 
-      {/* Saved searches — Search page se "Save this search" yahan aa kar jamti
-          hai (Asad, 23 Jul). Har search pe green dot = ON/OFF: outreach sirf
-          ON searches pe chalti hai. Mo yahin se ek search band/chalu kar sakta
-          hai bina Settings me gaye. */}
-      <div style={{ marginBottom: 26, padding: '18px 20px', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-tile)', background: 'var(--surface)' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 6 }}>
-          <h2 style={{ fontSize: 17, margin: 0, fontWeight: 600 }}>Searches</h2>
-          <span className="text-muted" style={{ fontSize: 11.5 }}>
-            green = on · outreach runs only on these
-          </span>
-        </div>
-        <p className="text-muted" style={{ fontSize: 12.5, margin: '0 0 14px', lineHeight: 1.6 }}>
-          Saved from the Search page. Toggle one off to pause it, ✕ to remove it — changes save on their own.
-        </p>
-        <SearchToggles />
-      </div>
+      {/* Searches ki list yahan se hata di (Asad, 23 Jul): "section bilkul hata
+          do". Searches ab sirf Search page pe hain (paste → Save). Outreach page
+          ab sirf do kaam ka: abhi ek batch bhejo + aaj kya hua. */}
 
       {/* send now */}
       <div style={{ marginBottom: 30, paddingTop: 4 }}>
