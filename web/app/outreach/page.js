@@ -1,6 +1,6 @@
 import { getHealth, getSendLog, getListings } from '@/lib/data';
 import { SendBatchButton } from '@/components/send-batch-button';
-import { SearchesManager } from '@/components/searches-manager';
+import { SearchToggles } from '@/components/search-toggles';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,9 +69,9 @@ export default async function OutreachPage() {
           </span>
         </div>
         <p className="text-muted" style={{ fontSize: 12.5, margin: '0 0 14px', lineHeight: 1.6 }}>
-          Saved from the Search page. Toggle one off to pause it, ✕ to remove it.
+          Saved from the Search page. Toggle one off to pause it, ✕ to remove it — changes save on their own.
         </p>
-        <SearchesManager />
+        <SearchToggles />
       </div>
 
       {/* send now */}
