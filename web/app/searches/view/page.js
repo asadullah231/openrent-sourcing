@@ -96,10 +96,19 @@ export default async function SearchFolderPage({ searchParams }) {
 
       {mine.length === 0 ? (
         <div
-          className="text-muted"
-          style={{ padding: 40, textAlign: 'center', fontSize: 13, border: '1px solid var(--mist-line)', borderRadius: 12 }}
+          style={{ padding: '36px 40px', textAlign: 'center', fontSize: 13, border: '1px solid var(--mist-line)', borderRadius: 12 }}
         >
-          Nothing here yet. Once the bot scrapes this search, its properties show up here.
+          <div className="text-muted" style={{ lineHeight: 1.7 }}>
+            This folder fills up on the bot&apos;s next run. The bot scrapes saved
+            searches on a schedule and saves the results here — it hasn&apos;t
+            scraped this one yet.
+          </div>
+          <Link
+            href="/"
+            style={{ display: 'inline-block', marginTop: 14, fontSize: 12.5, color: 'var(--brass)', textDecoration: 'none' }}
+          >
+            Want to see it live now? Paste the link on Search →
+          </Link>
         </div>
       ) : (
         <div className="grid-cards">
