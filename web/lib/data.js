@@ -51,10 +51,14 @@ export async function getListings() {
   return rows.map(toListing).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 }
 
-// Jinpe abhi tak request nahi gayi (naye/pending) — action lene layak
+// Jinpe abhi tak request nahi gayi (naye/pending) — action lene layak.
+// 🐛 FIX (23 Jul): sirf OpenRent (contactable). Rightmove Phase A me READ-ONLY
+// hai — us pe outreach nahi jaata, is liye use "action layak" dikhana galat.
 export async function getPending() {
   const all = await getListings();
-  return all.filter((l) => (l.viewing_status || 'new') !== 'requested');
+  return all.filter(
+    (l) => (l.source || 'openrent') === 'openrent' && (l.viewing_status || 'new') !== 'requested'
+  );
 }
 
 // Jinpe request ja chuki (sent) — history, requested_at pe sorted (naya upar)
@@ -76,15 +80,56 @@ export async function getSettings() {
   return safeParse(row?.value) ?? {};
 }
 
+// Ek search ki pehchaan: source + slug + asli filter params (runtime params
+// chhoro). Dono jagah (yahan aur save route) YEHI key — warna dedup match nahi karta.
+export function areaKey(a) {
+  const IGNORE = new Set(['isLive', 'viewingProperty', 'viewingproperty', 'index']);
+  const p = new URLSearchParams();
+  Object.entries(a?.params || {})
+    .filter(([k]) => !IGNORE.has(k))
+    .sort(([x], [y]) => x.localeCompare(y))
+    .forEach(([k, v]) => p.set(k, v));
+  return `${a?.source || 'openrent'}|${a?.slug || a?.name || ''}|${p.toString()}`;
+}
+
 export async function saveSettings(next) {
   const row = await settingsRow();
   const cur = safeParse(row?.value) ?? {};
-  // Merge over existing so unset fields bache rahein
+
+  // 🐛 FIX (23 Jul — "searches gayab" ka asli root cause): areas ko wholesale
+  // REPLACE mat karo. Client (Outreach toggle) apna PURANA cached areas array
+  // bhejta hai; agar hum us se server ka accha array overwrite karein, to kisi
+  // doosri tab/route se abhi-abhi add hui search UD jaati hai (lost update).
+  //
+  // Ab MERGE-BY-KEY: server + incoming dono ke areas ko key pe jodo. Incoming
+  // ka enabled/naam jeet jaye (Mo ne abhi badla), par koi maujooda search sirf
+  // is liye na mite ke client ke stale array me nahi thi.
+  let mergedAreas;
+  if (Array.isArray(next.areas)) {
+    const byKey = new Map();
+    for (const a of cur.areas || []) byKey.set(areaKey(a), a);
+    for (const a of next.areas) {
+      const k = areaKey(a);
+      byKey.set(k, byKey.has(k) ? { ...byKey.get(k), ...a } : a);
+    }
+    // Explicit delete: agar next me `_deleteKeys` ho (UI ne jaan boojh ke hataya)
+    // to sirf wahi hatao. Warna kuch delete nahi hota.
+    mergedAreas = [...byKey.values()];
+    if (Array.isArray(next._deleteKeys) && next._deleteKeys.length) {
+      const del = new Set(next._deleteKeys);
+      mergedAreas = mergedAreas.filter((a) => !del.has(areaKey(a)));
+    }
+  } else {
+    mergedAreas = cur.areas;
+  }
+
   const merged = {
     ...cur, ...next,
+    areas: mergedAreas,
     viewing: { ...cur.viewing, ...next.viewing },
     filters: { ...cur.filters, ...next.filters },
   };
+  delete merged._deleteKeys; // ye control field hai, store me na jaye
   const body = JSON.stringify(merged);
 
   if (row) {

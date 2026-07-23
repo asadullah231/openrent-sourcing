@@ -1,8 +1,7 @@
 import { getSettings, saveSettings } from '@/lib/data';
 // Bot ka wahi parser dashboard bhi use karta hai (`@bot/*` → ../src/*).
-// Do alag copies rakhna sab se pakka tareeqa hai ke ek din dono alag faisla
-// karein: dashboard link qubool kare aur bot usi pe fail ho jaye.
-import { parseSearchUrl } from '@bot/search-url.js';
+// parseAnyUrl OpenRent + Rightmove dono qubool karta hai (23 Jul auto-cross).
+import { parseAnyUrl } from '@bot/portals.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,27 +41,37 @@ export async function POST(req) {
   if (body?.viewing) body.viewing.mode = current?.viewing?.mode;
   delete body.confirmLive;
 
-  // Searches (Mo ke paste kiye link) — save karne se PEHLE parho.
-  // Kharab link yahan rok lena bohot behtar hai; warna wo NocoDB me baith jata
-  // hai aur agle cron pe fail hota hai, jahan Mo ko kabhi pata hi nahi chalta.
+  // Searches — save karte waqt saaf karo, lekin KABHI poora save na giraao.
+  //
+  // 🐛 BUG (23 Jul, Asad ne pakda: "wapas aaun to saari searches gayab"):
+  // Pehle yahan har area ko parseSearchUrl (OpenRent-only) se re-validate karte
+  // the, aur ek bhi fail hone pe POORA request 400 kar dete the. Auto-cross ke
+  // baad Rightmove searches aa gayin — unka pastedUrl Rightmove ka hai, jise
+  // OpenRent parser reject karta tha → har toggle/save 400 → kuch save hi na
+  // hota → reload pe list wapas purani/khaali. Ab:
+  //   • parseAnyUrl (dono portal), aur
+  //   • ek area re-parse na ho to use JAISE KA WAISE rakho (giraao mat) —
+  //     ek kharab entry ki saza poori list ko na mile.
   if (Array.isArray(body?.areas)) {
     const clean = [];
     for (const a of body.areas) {
-      // Purane hard-coded areas ({slug, term}) jaise ke waise chhor do —
-      // wo pehle se chal rahe hain, unhe naye qanoon pe tolna theek nahi.
+      // Bina pastedUrl (purane hard-coded, ya bot ke banaye crossed) jaise ke waise.
       if (!a?.pastedUrl) {
         clean.push(a);
         continue;
       }
-      const r = parseSearchUrl(a.pastedUrl);
+      const r = parseAnyUrl(a.pastedUrl);
       if (!r.ok) {
-        return Response.json({ error: `Link theek nahi: ${r.error}` }, { status: 400 });
+        // Re-parse fail — phir bhi save me rakho (drop mat karo). Toggle jaisi
+        // aam harkat pe pori list gawaana is se bahot bura hai.
+        clean.push(a);
+        continue;
       }
       clean.push({
         ...r.search,
         pastedUrl: a.pastedUrl,
         enabled: a.enabled !== false,
-        // Mo ne apna naam diya ho to wahi rakho, warna link se nikla hua
+        source: r.search.source || a.source || 'openrent',
         name: a.name?.trim() || r.search.name,
       });
     }

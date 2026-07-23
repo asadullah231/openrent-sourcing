@@ -48,9 +48,20 @@ export function parseAnyUrl(url) {
 /** Kisi bhi parsed search se ek portable shape: { name, bedsMin, bedsMax, priceMax, priceMin }. */
 function normalize(search) {
   const f = filtersForSearch(search);
-  // Area naam: OpenRent me params.term ya name; Rightmove me name (jo humne banaya).
-  // Rightmove ke auto-name me "Rightmove REGION 391 · ..." hota hai — usko lookup
-  // ke liye istemaal nahi kar sakte. Us surat me OpenRent-origin hi cross karega.
+  // Area naam. OpenRent me params.term ya name se saaf naam milta hai.
+  // 🐛 FIX (23 Jul): Rightmove-origin ka auto-name "Rightmove REGION 391 · 2-4 bed"
+  // hota hai — ye asli area naam NAHI. Use OpenRent ke term me daalne se bekaar
+  // search banti thi. Agar Rightmove-origin ho aur saaf naam na ho to name:''
+  // return karo — fanOut phir us portal ko skip kar dega (cross nahi hoga).
+  if (search.source === 'rightmove') {
+    const raw = String(search.name || '');
+    // Rightmove auto-name me "Rightmove REGION ..." aata hai — us se cross na karo.
+    if (/^rightmove\s+(region|outcode|postcode|station|street)/i.test(raw)) {
+      return { name: '', ...f };
+    }
+    // Mo ne rename kar diya ho (saaf naam) to wahi lo.
+    return { name: raw.split(',')[0].trim(), ...f };
+  }
   const name = (search.params?.term || search.name || '').split(',')[0].trim();
   return { name, ...f };
 }

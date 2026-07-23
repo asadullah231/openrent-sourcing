@@ -1,5 +1,5 @@
 import { parseAnyUrl, fanOut } from '@bot/portals.js';
-import { getSettings, saveSettings } from '@/lib/data';
+import { getSettings, saveSettings, areaKey } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,28 +38,25 @@ export async function POST(req) {
   const settings = (await getSettings()) || {};
   const areas = Array.isArray(settings.areas) ? [...settings.areas] : [];
 
-  // Wahi search dobara na add ho jaye. source + slug + ASLI filter params se milao.
-  // faltu/runtime params (isLive, viewingProperty, jo bot khud lagata hai) chhoro.
-  const IGNORE = new Set(['isLive', 'viewingProperty', 'viewingproperty']);
-  const key = (s) => {
-    const p = new URLSearchParams();
-    Object.entries(s.params || {})
-      .filter(([k]) => !IGNORE.has(k))
-      .sort(([a], [b]) => a.localeCompare(b))
-      .forEach(([k, v]) => p.set(k, v));
-    return `${s.source || 'openrent'}|${s.slug}|${p.toString()}`;
-  };
+  // Dedup ek hi canonical key pe (areaKey) — bilkul wahi jo data.js/UI use karte
+  // hain. Pehle yahan alag key thi (guard `a.params` require karta tha), jis se
+  // legacy entries kabhi dedup na hotin aur duplicate folder ban jaate.
+  const existingKeys = new Set(areas.map(areaKey));
 
   let added = 0;
   const savedNames = [];
   for (const search of toSave) {
-    const k = key(search);
-    if (areas.some((a) => a.params && key(a) === k)) continue; // pehle se hai
+    const k = areaKey(search);
+    if (existingKeys.has(k)) continue; // pehle se hai
+    existingKeys.add(k);
+    const isCrossed = !!search._crossed;
     areas.push({
       ...search,
-      pastedUrl: search._crossed ? undefined : body.url, // sirf paste wali ka asli link
+      _crossed: undefined, // internal flag store me na jaye
+      crossed: isCrossed, // 🐛 FIX (23 Jul): persist karo — warna UI ise "legacy" samajhta
+      pastedUrl: isCrossed ? undefined : body.url, // sirf paste wali ka asli link
       enabled: true,
-      name: body.name?.trim() && !search._crossed ? body.name.trim() : search.name,
+      name: body.name?.trim() && !isCrossed ? body.name.trim() : search.name,
     });
     added++;
     savedNames.push(`${search.source === 'rightmove' ? 'Rightmove' : 'OpenRent'} · ${search.name}`);

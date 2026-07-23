@@ -16,6 +16,19 @@ import Link from 'next/link';
 // runtime params they). Yahan naam pe dedup karke ek hi folder dikhate hain —
 // pehla wala rakh lete hain, baqi chhupa dete hain.
 
+// Canonical search key — server ke data.js areaKey() ki hu-ba-hu naql. Client
+// hai is liye inline (server code import nahi kar sakte). Dono me farq aaya to
+// dedup toot jayega — badalna ho to DONO jagah badlo.
+function areaKey(a) {
+  const IGNORE = new Set(['isLive', 'viewingProperty', 'viewingproperty', 'index']);
+  const p = new URLSearchParams();
+  Object.entries(a?.params || {})
+    .filter(([k]) => !IGNORE.has(k))
+    .sort(([x], [y]) => x.localeCompare(y))
+    .forEach(([k, v]) => p.set(k, v));
+  return `${a?.source || 'openrent'}|${a?.slug || a?.name || ''}|${p.toString()}`;
+}
+
 function describe(params = {}) {
   const bits = [];
   const bMin = params.bedrooms_min ?? params.beds_min;
@@ -99,16 +112,15 @@ export function SearchToggles() {
     return <div className="text-muted" style={{ fontSize: 12.5 }}>Loading…</div>;
   }
 
-  // Dedup PORTAL + naam pe (Asad, 23 Jul). Ek location ka ek folder PER SITE —
-  // yani Croydon-OpenRent aur Croydon-Rightmove DONO alag folder, kyunki dono
-  // alag site ki alag outreach hain. Sirf naam pe dedup galat tha: wo Rightmove
-  // ka Croydon chhupa deta (auto-cross ke baad ye masla saamne aata).
+  // Dedup canonical key pe (source|slug|params) — bilkul wahi jo server (data.js
+  // areaKey) use karta hai, warna UI aur bot alag folder ginte (ek chhup jaata,
+  // par bot dono scrape karta). Ek location PER SITE alag folder rehta hai.
   // Har folder ka asli index (`i`) yaad rakhte hain taake toggle sahi row pe lage.
   const seen = new Set();
   const searches = (settings.areas || [])
     .map((s, i) => ({ s, i }))
     .filter(({ s }) => {
-      const key = `${s.source || 'openrent'}|${(s.name || s.slug || '').trim().toLowerCase()}`;
+      const key = areaKey(s);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -152,7 +164,8 @@ export function SearchToggles() {
           const source = s.source || 'openrent';
           const isRM = source === 'rightmove';
           const c = counts ? counts[`${source}|${name.trim().toLowerCase()}`] : null;
-          const sub = s.params ? describe(s.params) : s.pastedUrl ? 'link' : 'legacy';
+          // sub: filter summary; crossed (bot ne khud banayi) pe "auto".
+          const sub = s.params ? describe(s.params) : s.crossed ? 'auto' : s.pastedUrl ? 'link' : 'saved';
 
           return (
             <div

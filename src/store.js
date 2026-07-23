@@ -31,6 +31,17 @@ function toRow(l) {
   };
 }
 
+// 🐛 FIX (23 Jul): enrichment PATCH (_forceUpdate) me ye fields KABHI na jaayein —
+// warna ek enriched object (jisme default viewing_status:'new') pehle se 'requested'
+// listing ka status wapas 'new' kar deta, aur bot us landlord ko DOBARA message
+// bhej deta. Status/history sirf viewing flow badalta hai, enrich nahi.
+const PROTECTED_ON_PATCH = ['viewing_status', 'requested_at', 'sent_message'];
+function toPatchRow(l) {
+  const row = toRow(l);
+  for (const k of PROTECTED_ON_PATCH) delete row[k];
+  return row;
+}
+
 /** NocoDB row -> wahi shakl jo bot ka baaki code expect karta hai. */
 function fromRow(r) {
   let images = [];
@@ -50,8 +61,9 @@ export async function upsert(listings) {
   for (const l of listings) {
     const existing = byId.get(String(l.listing_id));
     if (l._forceUpdate) {
-      // Enrichment update — mojooda record ke upar merge, viewing_status preserve.
-      if (existing) toPatch.push({ Id: existing.Id, ...toRow(l) });
+      // Enrichment update — mojooda record ke upar merge. toPatchRow status/history
+      // ko chhu nahi sakta (upar wajah), is liye 'requested' listing safe rehti hai.
+      if (existing) toPatch.push({ Id: existing.Id, ...toPatchRow(l) });
       continue;
     }
     if (existing) continue; // dedupe — pehle se hai to chhoro

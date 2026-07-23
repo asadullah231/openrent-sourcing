@@ -41,13 +41,23 @@ export async function rightmoveLocationId(name) {
   const regions = matches.filter((m) => m.type === 'REGION');
   if (!regions.length) return null;
 
-  // London area? to "London"/"Borough" wala region pehle (chhoti jagahon se bachne ko).
-  const qLower = q.toLowerCase();
+  // Behtar match (23 Jul fix). Pehle exact/normalized naam, phir London-hint,
+  // phir contains, phir jhak ke regions[0]. Pehle sirf startsWith tha — jo
+  // "London Borough of X" jaise naamon pe fail ho kar galat chhoti jagah utha leta.
+  const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const qn = norm(q);
+  const nameOf = (m) => norm(m.displayName.split(/[,(]/)[0]); // "Croydon, London" → "croydon"
+
+  const exact = regions.find((m) => nameOf(m) === qn);
+  if (exact) return `${exact.type}^${exact.id}`;
+
+  // London/borough wala jisme query naam mojood ho
   const londonHint = regions.find(
-    (m) =>
-      /london|borough/i.test(m.displayName) &&
-      m.displayName.toLowerCase().startsWith(qLower)
+    (m) => /london|borough/i.test(m.displayName) && norm(m.displayName).includes(qn)
   );
-  const chosen = londonHint || regions[0];
+  if (londonHint) return `${londonHint.type}^${londonHint.id}`;
+
+  const contains = regions.find((m) => norm(m.displayName).includes(qn));
+  const chosen = contains || regions[0];
   return `${chosen.type}^${chosen.id}`;
 }
