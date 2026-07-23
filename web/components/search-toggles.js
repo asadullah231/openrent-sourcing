@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 // Outreach page ka searches box (Asad, 23 Jul): SIRF list + ON/OFF.
 //
@@ -125,15 +126,29 @@ export function SearchToggles() {
                 background: on ? 'var(--green)' : 'var(--mist)',
               }}
             />
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600 }}>
-                {s.name || s.slug || 'New search'}
+            {/* Naam+filters pe click → is search ke saare result gallery me
+                (Asad, 23 Jul). Sirf link-wali searches khulti hain; legacy
+                (bina link) ka koi result page nahi. */}
+            {s.pastedUrl ? (
+              <Link
+                href={`/searches/view?u=${encodeURIComponent(s.pastedUrl)}&n=${encodeURIComponent(s.name || 'Search')}`}
+                style={{ minWidth: 0, flex: 1, textDecoration: 'none', color: 'inherit' }}
+                title="See this search's listings"
+              >
+                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{s.name || s.slug || 'New search'}</div>
+                <div className="text-muted" style={{ fontSize: 11.5, marginTop: 2 }}>
+                  {s.params ? describe(s.params) : 'link (no filters read yet)'}
+                  {!on && ' · off'} · view listings →
+                </div>
+              </Link>
+            ) : (
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{s.name || s.slug || 'New search'}</div>
+                <div className="text-muted" style={{ fontSize: 11.5, marginTop: 2 }}>
+                  legacy area (no link){!on && ' · off'}
+                </div>
               </div>
-              <div className="text-muted" style={{ fontSize: 11.5, marginTop: 2 }}>
-                {s.params ? describe(s.params) : s.pastedUrl ? 'link (no filters read yet)' : 'legacy area (no link)'}
-                {!on && ' · off'}
-              </div>
-            </div>
+            )}
             {s.pastedUrl && (
               <a
                 href={s.pastedUrl}
