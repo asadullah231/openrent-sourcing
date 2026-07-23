@@ -21,11 +21,19 @@ export const dynamic = 'force-dynamic';
 export default async function SearchFolderPage({ searchParams }) {
   const sp = await searchParams;
   const area = sp?.area || '';
+  const source = sp?.source || ''; // 'openrent' | 'rightmove' | '' (dono)
 
   const all = await getListings();
-  // Is location ki listings — area match (case-insensitive, trim)
+  // Is folder ki listings — area match + (agar source diya) portal match.
+  // Ye is liye zaroori hai (23 Jul): auto-cross ke baad ek hi location ki
+  // OpenRent + Rightmove dono listings store me hoti hain. Folder OpenRent ka
+  // hai to sirf OpenRent ki dikhni chahiye, warna dono mix ho jatin.
   const mine = area
-    ? all.filter((l) => (l.area || '').trim().toLowerCase() === area.trim().toLowerCase())
+    ? all.filter((l) => {
+        if ((l.area || '').trim().toLowerCase() !== area.trim().toLowerCase()) return false;
+        if (source && (l.source || 'openrent') !== source) return false;
+        return true;
+      })
     : [];
 
   const requested = mine.filter((l) => l.viewing_status === 'requested');
@@ -46,9 +54,28 @@ export default async function SearchFolderPage({ searchParams }) {
         ← Back to Outreach
       </Link>
 
-      <h1 style={{ fontSize: 28, margin: '0 0 4px', fontWeight: 600 }}>{area || 'Search'}</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <h1 style={{ fontSize: 28, margin: '0 0 4px', fontWeight: 600 }}>{area || 'Search'}</h1>
+        {source && (
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.03em',
+              textTransform: 'uppercase',
+              padding: '3px 9px',
+              borderRadius: 6,
+              marginBottom: 4,
+              color: source === 'rightmove' ? '#8ec7ff' : 'var(--brass)',
+              background: source === 'rightmove' ? 'rgba(90,160,255,.14)' : 'rgba(180,140,60,.14)',
+            }}
+          >
+            {source === 'rightmove' ? 'Rightmove' : 'OpenRent'}
+          </span>
+        )}
+      </div>
       <p className="text-muted" style={{ marginTop: 0, marginBottom: 8, fontSize: 12.5 }}>
-        Every property in this location the bot is running outreach on.
+        Every {source === 'rightmove' ? 'Rightmove' : source === 'openrent' ? 'OpenRent' : ''} property in this location the bot is running outreach on.
       </p>
 
       {/* count strip */}

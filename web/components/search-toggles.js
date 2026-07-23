@@ -53,16 +53,18 @@ export function SearchToggles() {
       .then(setSettings)
       .catch(() => setStatus('error'));
 
-    // Per-location count (folder pe "12 · 6 sent"). Store se; fail ho to
-    // sirf count na dikhe — folders phir bhi kaam karein.
+    // Per-folder count (folder pe "12 · 6 sent"). Ab key = SOURCE|area, taake
+    // OpenRent aur Rightmove ke Croydon ki ginti alag rahe (mix na ho). Store
+    // se; fail ho to sirf count na dikhe — folders phir bhi kaam karein.
     fetch('/api/listings')
       .then((r) => r.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : data.listings || data.list || [];
         const m = {};
         for (const l of list) {
-          const k = (l.area || '').trim().toLowerCase();
-          if (!k) continue;
+          const area = (l.area || '').trim().toLowerCase();
+          if (!area) continue;
+          const k = `${l.source || 'openrent'}|${area}`;
           if (!m[k]) m[k] = { total: 0, sent: 0 };
           m[k].total++;
           if (l.viewing_status === 'requested') m[k].sent++;
@@ -97,13 +99,16 @@ export function SearchToggles() {
     return <div className="text-muted" style={{ fontSize: 12.5 }}>Loading…</div>;
   }
 
-  // Naam pe dedup — ek location ka ek hi folder (pehla wala). Har folder ka
-  // asli index (`i`) yaad rakhte hain taake toggle sahi row pe lage.
+  // Dedup PORTAL + naam pe (Asad, 23 Jul). Ek location ka ek folder PER SITE —
+  // yani Croydon-OpenRent aur Croydon-Rightmove DONO alag folder, kyunki dono
+  // alag site ki alag outreach hain. Sirf naam pe dedup galat tha: wo Rightmove
+  // ka Croydon chhupa deta (auto-cross ke baad ye masla saamne aata).
+  // Har folder ka asli index (`i`) yaad rakhte hain taake toggle sahi row pe lage.
   const seen = new Set();
   const searches = (settings.areas || [])
     .map((s, i) => ({ s, i }))
     .filter(({ s }) => {
-      const key = (s.name || s.slug || '').trim().toLowerCase();
+      const key = `${s.source || 'openrent'}|${(s.name || s.slug || '').trim().toLowerCase()}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -144,12 +149,14 @@ export function SearchToggles() {
         {searches.map(({ s, i }) => {
           const on = s.enabled !== false;
           const name = s.name || s.slug || 'New search';
-          const c = counts ? counts[name.trim().toLowerCase()] : null;
+          const source = s.source || 'openrent';
+          const isRM = source === 'rightmove';
+          const c = counts ? counts[`${source}|${name.trim().toLowerCase()}`] : null;
           const sub = s.params ? describe(s.params) : s.pastedUrl ? 'link' : 'legacy';
 
           return (
             <div
-              key={s.pastedUrl || s.slug || i}
+              key={`${source}|${s.pastedUrl || s.slug || i}`}
               style={{
                 position: 'relative',
                 border: '1px solid var(--mist-line)',
@@ -177,14 +184,33 @@ export function SearchToggles() {
                 />
               </div>
 
-              {/* poora folder click → andar (folder view) */}
+              {/* poora folder click → andar (folder view). Ab source bhi bhejo,
+                  taake folder page sirf us site ki listings dikhaye (mix na ho). */}
               <Link
-                href={`/searches/view?area=${encodeURIComponent(name)}`}
+                href={`/searches/view?area=${encodeURIComponent(name)}&source=${source}`}
                 style={{ display: 'block', padding: '16px 14px 14px', textDecoration: 'none', color: 'inherit' }}
-                title="Open this location's outreach folder"
+                title={`Open this ${isRM ? 'Rightmove' : 'OpenRent'} folder`}
               >
                 <FolderIcon off={!on} />
-                <div style={{ fontSize: 14, fontWeight: 600, marginTop: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {/* Source badge — folder OpenRent ka hai ya Rightmove ka. Rang se
+                    bhi farq (Rightmove = blue-ish, OpenRent = brass). */}
+                <div style={{ marginTop: 9, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 9.5,
+                      fontWeight: 700,
+                      letterSpacing: '0.03em',
+                      textTransform: 'uppercase',
+                      padding: '2px 7px',
+                      borderRadius: 5,
+                      color: isRM ? '#8ec7ff' : 'var(--brass)',
+                      background: isRM ? 'rgba(90,160,255,.14)' : 'rgba(180,140,60,.14)',
+                    }}
+                  >
+                    {isRM ? 'Rightmove' : 'OpenRent'}
+                  </span>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {name}
                 </div>
                 <div className="text-muted" style={{ fontSize: 11, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
