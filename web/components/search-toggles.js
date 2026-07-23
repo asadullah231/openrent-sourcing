@@ -3,17 +3,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-// Outreach page ka searches box (Asad, 23 Jul): SIRF list + ON/OFF.
+// Outreach page ke location "folders" (Asad, 23 Jul): Google Drive jaise folder
+// tiles. Har saved search = ek folder. Tile pe folder icon + naam + count;
+// corner me chhota on/off dot + ✕. Click → us location ka folder page
+// (/searches/view?area=<name>) jahan uski saari listings.
 //
-// KYUN: Asad ne kaha "add-box aur Save changes yahan se hata do — jo Search
-// page se save hoti hai bas wo yahan dikhe". Add karna sirf Search page se
-// (paste → Save). Yahan Mo ka kaam ek hi hai: kisi search ko band ya chalu
-// karna. Isi liye toggle dabate hi AUTO-SAVE ho jata hai — koi button nahi.
-//
-// SearchesManager (add + Save changes wala) ab Outreach pe use nahi hota;
-// wo abhi bhi /searches route ke liye zinda hai.
+// Add/edit yahan nahi — Search page se (paste → Save & start outreach). Yahan
+// Mo sirf folder kholta, band/chalu karta, ya hata sakta hai. Toggle/delete
+// dabate hi AUTO-SAVE (koi button nahi).
 
-// Link ko insaani zaban me: "2-4 bed · 3 mile · £1000–£4000"
 function describe(params = {}) {
   const bits = [];
   const bMin = params.bedrooms_min ?? params.beds_min;
@@ -21,30 +19,58 @@ function describe(params = {}) {
   if (bMin && bMax) bits.push(`${bMin}-${bMax} bed`);
   else if (bMin) bits.push(`${bMin}+ bed`);
   else if (bMax) bits.push(`up to ${bMax} bed`);
-  if (params.area) bits.push(`${params.area} mile`);
+  if (params.area) bits.push(`${params.area} mi`);
   const pMax = params.prices_max ?? params.price_max;
-  const pMin = params.prices_min ?? params.price_min;
-  if (pMin && pMax) bits.push(`£${pMin}–£${pMax}`);
-  else if (pMax) bits.push(`up to £${pMax}`);
-  else if (pMin) bits.push(`from £${pMin}`);
-  return bits.length ? bits.join(' · ') : 'no filters';
+  if (pMax) bits.push(`£${pMax}`);
+  return bits.join(' · ');
+}
+
+// Google Drive style folder icon
+function FolderIcon({ off }) {
+  return (
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.2c.4 0 .78.16 1.06.44L11 7h8.5A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-11Z"
+        fill={off ? 'var(--mist-line)' : 'var(--brass)'}
+        opacity={off ? 0.5 : 1}
+      />
+    </svg>
+  );
 }
 
 export function SearchToggles() {
   const [settings, setSettings] = useState(null);
-  const [status, setStatus] = useState(''); // '' | 'saving' | 'saved' | 'error'
+  const [counts, setCounts] = useState(null); // areaLower -> { total, sent }
+  const [status, setStatus] = useState('');
 
   useEffect(() => {
     fetch('/api/settings')
       .then((r) => r.json())
       .then(setSettings)
       .catch(() => setStatus('error'));
+
+    // Per-location count (folder pe "12 · 6 sent"). Store se; fail ho to
+    // sirf count na dikhe — folders phir bhi kaam karein.
+    fetch('/api/listings')
+      .then((r) => r.json())
+      .then((data) => {
+        const list = Array.isArray(data) ? data : data.listings || data.list || [];
+        const m = {};
+        for (const l of list) {
+          const k = (l.area || '').trim().toLowerCase();
+          if (!k) continue;
+          if (!m[k]) m[k] = { total: 0, sent: 0 };
+          m[k].total++;
+          if (l.viewing_status === 'requested') m[k].sent++;
+        }
+        setCounts(m);
+      })
+      .catch(() => setCounts({}));
   }, []);
 
-  // Ek row badal kar foran server pe likho — Mo ko kuch dabana na pare.
   async function commit(nextAreas) {
     const next = { ...settings, areas: nextAreas };
-    setSettings(next); // optimistic — UI foran badle
+    setSettings(next);
     setStatus('saving');
     try {
       const res = await fetch('/api/settings', {
@@ -53,14 +79,11 @@ export function SearchToggles() {
         body: JSON.stringify(next),
       });
       if (res.ok) {
-        // Server params/naam bhar kar wapas deta hai — wahi rakho
         try {
           setSettings(await res.json());
         } catch {}
         setStatus('saved');
-      } else {
-        setStatus('error');
-      }
+      } else setStatus('error');
     } catch {
       setStatus('error');
     }
@@ -78,103 +101,105 @@ export function SearchToggles() {
         className="text-muted"
         style={{
           fontSize: 12.5,
-          padding: '18px 14px',
+          padding: '22px 14px',
           border: '1px dashed var(--mist-line)',
-          borderRadius: 'var(--r-ctrl)',
+          borderRadius: 'var(--r-tile)',
           textAlign: 'center',
         }}
       >
-        No searches yet. Paste a link on the Search page and hit Save — it shows up here.
+        No folders yet. Paste a link on the Search page and hit “Save &amp; start outreach” — it shows up here as a folder.
       </div>
     );
   }
 
-  const toggle = (i, on) =>
-    commit(searches.map((s, j) => (j === i ? { ...s, enabled: on } : s)));
+  const toggle = (i, on) => commit(searches.map((s, j) => (j === i ? { ...s, enabled: on } : s)));
   const remove = (i) => commit(searches.filter((_, j) => j !== i));
 
   return (
     <div>
-      {searches.map((s, i) => {
-        const on = s.enabled !== false;
-        return (
-          <div
-            key={s.pastedUrl || s.slug || i}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '11px 13px',
-              border: '1px solid var(--mist-line)',
-              borderRadius: 'var(--r-ctrl)',
-              marginBottom: 8,
-              opacity: on ? 1 : 0.55,
-            }}
-          >
-            <button
-              onClick={() => toggle(i, !on)}
-              title={on ? 'Turn off' : 'Turn on'}
-              aria-label={on ? 'Turn off' : 'Turn on'}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
+          gap: 12,
+        }}
+      >
+        {searches.map((s, i) => {
+          const on = s.enabled !== false;
+          const name = s.name || s.slug || 'New search';
+          const c = counts ? counts[name.trim().toLowerCase()] : null;
+          const sub = s.params ? describe(s.params) : s.pastedUrl ? 'link' : 'legacy';
+
+          return (
+            <div
+              key={s.pastedUrl || s.slug || i}
               style={{
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                border: 'none',
-                flexShrink: 0,
-                cursor: 'pointer',
-                padding: 0,
-                background: on ? 'var(--green)' : 'var(--mist)',
+                position: 'relative',
+                border: '1px solid var(--mist-line)',
+                borderRadius: 'var(--r-tile)',
+                background: 'var(--surface-2)',
+                opacity: on ? 1 : 0.6,
+                overflow: 'hidden',
               }}
-            />
-            {/* Poori row pe click → is location ka folder (Asad, 23 Jul):
-                us location ki saari store listings + status. Har search jiska
-                naam hai wo khulti hai (folder area = search ka naam). */}
-            <Link
-              href={`/searches/view?area=${encodeURIComponent(s.name || s.slug || '')}`}
-              style={{ minWidth: 0, flex: 1, textDecoration: 'none', color: 'inherit' }}
-              title="Open this location's outreach folder"
             >
-              <div style={{ fontSize: 13.5, fontWeight: 600 }}>{s.name || s.slug || 'New search'}</div>
-              <div className="text-muted" style={{ fontSize: 11.5, marginTop: 2 }}>
-                {s.params ? describe(s.params) : s.pastedUrl ? 'link (no filters read yet)' : 'legacy area'}
-                {!on && ' · off'} · open folder →
+              {/* corner controls — dot (on/off) + ✕ (delete) */}
+              <div style={{ position: 'absolute', top: 9, right: 9, display: 'flex', alignItems: 'center', gap: 8, zIndex: 2 }}>
+                <button
+                  onClick={() => toggle(i, !on)}
+                  title={on ? 'Turn off' : 'Turn on'}
+                  aria-label={on ? 'Turn off' : 'Turn on'}
+                  style={{
+                    width: 11,
+                    height: 11,
+                    borderRadius: '50%',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    background: on ? 'var(--green)' : 'var(--mist)',
+                  }}
+                />
+                <button
+                  onClick={() => remove(i)}
+                  title="Remove folder"
+                  aria-label="Remove folder"
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: 'var(--mist)',
+                    cursor: 'pointer',
+                    fontSize: 15,
+                    lineHeight: 1,
+                    padding: 0,
+                  }}
+                >
+                  ✕
+                </button>
               </div>
-            </Link>
-            {s.pastedUrl && (
-              <a
-                href={s.pastedUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-muted"
-                style={{ fontSize: 11.5, flexShrink: 0 }}
-                title="Open on OpenRent"
+
+              {/* poora folder click → andar (folder view) */}
+              <Link
+                href={`/searches/view?area=${encodeURIComponent(name)}`}
+                style={{ display: 'block', padding: '16px 14px 14px', textDecoration: 'none', color: 'inherit' }}
+                title="Open this location's outreach folder"
               >
-                open ↗
-              </a>
-            )}
-            <button
-              onClick={() => remove(i)}
-              title="Remove"
-              aria-label="Remove"
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: 'var(--mist)',
-                cursor: 'pointer',
-                fontSize: 15,
-                lineHeight: 1,
-                flexShrink: 0,
-                padding: 4,
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        );
-      })}
+                <FolderIcon off={!on} />
+                <div style={{ fontSize: 14, fontWeight: 600, marginTop: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {name}
+                </div>
+                <div className="text-muted" style={{ fontSize: 11, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {c
+                    ? `${c.total} listing${c.total === 1 ? '' : 's'}${c.sent ? ` · ${c.sent} sent` : ''}`
+                    : sub}
+                  {!on && ' · off'}
+                </div>
+              </Link>
+            </div>
+          );
+        })}
+      </div>
 
       {status === 'error' && (
-        <div style={{ fontSize: 12, color: 'var(--rust)', marginTop: 4 }}>
+        <div style={{ fontSize: 12, color: 'var(--rust)', marginTop: 10 }}>
           Couldn&apos;t save that change — try again.
         </div>
       )}
