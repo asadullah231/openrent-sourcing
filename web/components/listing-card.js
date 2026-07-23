@@ -142,6 +142,30 @@ export function ListingCard({ l, rank = 1, sent = false }) {
             </span>
           )}
         </div>
+
+        {/* Contact — jo bot ne grab kiya (Mo, 23 Jul: "phone ho to number bhi").
+            Sirf tab dikhta hai jab agent/phone mila ho. Phone tap-to-call. */}
+        {(l.agent_name || l.agent_phone) && (
+          <div className="text-muted" style={{ fontSize: 11.5, marginTop: 2, display: 'flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
+            {l.agent_name && (
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {l.agent_name}
+              </span>
+            )}
+            {l.agent_phone && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `tel:${l.agent_phone.replace(/\s+/g, '')}`; }}
+                className="font-mono"
+                style={{ marginLeft: 'auto', flexShrink: 0, color: 'var(--brass)', cursor: 'pointer' }}
+                title="Call"
+              >
+                {l.agent_phone}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </Link>
   );

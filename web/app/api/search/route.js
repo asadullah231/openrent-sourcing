@@ -125,6 +125,10 @@ export async function POST(req) {
     address: l.address ?? null,
     title: l.title ?? null,
     furnishing: l.furnishing ?? null,
+    // Contact — jo mile grab karo (Mo, 23 Jul: "phone ho to us ka number bhi").
+    // Rightmove pe agent name + phone milte hain; OpenRent pe enrich se landlord.
+    agent_name: l.agent_name ?? l.landlord_name ?? null,
+    agent_phone: l.agent_phone ?? null,
   });
 
   // Rightmove asli total (resultCount) deta hai; OpenRent pe jitni scrape hui.
