@@ -34,6 +34,7 @@ export function SearchBar() {
   const [res, setRes] = useState(null);
   const [err, setErr] = useState('');
   const [saved, setSaved] = useState('');
+  const [srcFilter, setSrcFilter] = useState('all'); // all | openrent | rightmove
 
   async function run() {
     const v = url.trim();
@@ -42,6 +43,7 @@ export function SearchBar() {
     setErr('');
     setRes(null);
     setSaved('');
+    setSrcFilter('all');
     try {
       const r = await fetch('/api/search', {
         method: 'POST',
@@ -145,29 +147,26 @@ export function SearchBar() {
                 {describe(res.search?.params) || 'no filters'}
               </div>
               {/* Auto-cross (Mo, 23 Jul): ek link paste, bot ne baqi sites bhi
-                  khud dhoondi. Kaunse portal, kitni har se — saaf dikhao. */}
+                  khud dhoondi. Ye CHIPS filter hain — daba kar sirf us site ke
+                  result dekho, aur har site se kitne aaye saaf pata chale. */}
               {res.sources?.length > 1 && (
-                <div style={{ fontSize: 11, marginTop: 5, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ fontSize: 11.5, marginTop: 7, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <SrcChip
+                    label="All"
+                    count={res.sources.reduce((n, s) => n + s.matched, 0)}
+                    active={srcFilter === 'all'}
+                    onClick={() => setSrcFilter('all')}
+                  />
                   {res.sources.map((s) => (
-                    <span
+                    <SrcChip
                       key={s.source}
-                      className="text-muted"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                      title={s.crossed ? 'The bot found this site for you' : 'The link you pasted'}
-                    >
-                      <span
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          background: s.ok ? 'var(--green)' : 'var(--rust)',
-                          display: 'inline-block',
-                        }}
-                      />
-                      {s.source === 'rightmove' ? 'Rightmove' : 'OpenRent'}
-                      <span className="font-mono">{s.matched}</span>
-                      {s.crossed && <span style={{ opacity: 0.6 }}>· auto</span>}
-                    </span>
+                      label={s.source === 'rightmove' ? 'Rightmove' : 'OpenRent'}
+                      count={s.matched}
+                      auto={s.crossed}
+                      ok={s.ok}
+                      active={srcFilter === s.source}
+                      onClick={() => setSrcFilter(srcFilter === s.source ? 'all' : s.source)}
+                    />
                   ))}
                 </div>
               )}
@@ -263,14 +262,19 @@ export function SearchBar() {
                     : 'All already in the store'}
                 {res.matched > res.listings.length &&
                   ` · top ${res.listings.length} with full detail`}
+                {srcFilter !== 'all' &&
+                  ` · showing ${srcFilter === 'rightmove' ? 'Rightmove' : 'OpenRent'} only`}
               </div>
 
               {/* Upar wali 12 — poore photo cards, bilkul neeche "Worth a look"
                   jaise (Asad: "yani aisa show ho jab me link paste karun wahan").
                   Ye is liye mumkin hua ke enrich naapa: 6 listings parallel me
-                  1.5 sec. Pehle andaza tha ke bohot mehnga hai — ghalat tha. */}
+                  1.5 sec. Pehle andaza tha ke bohot mehnga hai — ghalat tha.
+                  srcFilter: 'all' ke ilawa sirf us site ke cards. */}
               <div className="grid-cards">
-                {res.listings.map((l) => (
+                {res.listings
+                  .filter((l) => srcFilter === 'all' || (l.source || 'openrent') === srcFilter)
+                  .map((l) => (
                   <div key={l.listing_id} style={{ position: 'relative' }}>
                     {/* Source badge — ye listing kaun se portal se aayi.
                         23 Jul: ab OpenRent + Rightmove dono ho sakte hain, isliye
@@ -300,14 +304,15 @@ export function SearchBar() {
 
               {/* Baqi 48 — patli list. Inhe enrich nahi kiya (60 requests ek dam
                   us hi account se jata hai jis se bot messages bhejta hai; 429
-                  khana bohot mehnga sauda hai sirf preview ke liye). */}
-              {res.more?.length > 0 && (
+                  khana bohot mehnga sauda hai sirf preview ke liye).
+                  srcFilter yahan bhi lagta hai. */}
+              {res.more?.filter((l) => srcFilter === 'all' || (l.source || 'openrent') === srcFilter).length > 0 && (
                 <>
                   <div
                     className="text-muted"
                     style={{ fontSize: 11.5, margin: '18px 0 8px' }}
                   >
-                    {res.more.length} more, without photos (the bot enriches these on its run)
+                    {res.more.filter((l) => srcFilter === 'all' || (l.source || 'openrent') === srcFilter).length} more, without photos (the bot enriches these on its run)
                   </div>
                   <div
                     style={{
@@ -316,7 +321,9 @@ export function SearchBar() {
                       gap: 6,
                     }}
                   >
-                    {res.more.map((l) => (
+                    {res.more
+                      .filter((l) => srcFilter === 'all' || (l.source || 'openrent') === srcFilter)
+                      .map((l) => (
                       <a
                         key={l.listing_id}
                         href={l.url}
@@ -368,5 +375,38 @@ export function SearchBar() {
         </div>
       )}
     </div>
+  );
+}
+
+// Source filter chip — daba kar sirf us site ke result. Active pe brass ring.
+// Count har site se kitne aaye saaf batata hai (Mo, 23 Jul: "check kar sakoon
+// kitne Rightmove se, kitne OpenRent se").
+function SrcChip({ label, count, active, auto, ok = true, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 5,
+        padding: '3px 10px',
+        borderRadius: 999,
+        cursor: 'pointer',
+        fontSize: 11.5,
+        fontWeight: active ? 600 : 500,
+        border: active ? '1px solid var(--brass)' : '1px solid var(--mist-line)',
+        background: active ? 'var(--brass-soft, rgba(180,140,60,.12))' : 'var(--surface-2)',
+        color: active ? 'var(--paper)' : 'var(--text-muted, #999)',
+      }}
+      title={auto ? 'The bot found this site for you' : undefined}
+    >
+      {!ok && (
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--rust)', display: 'inline-block' }} />
+      )}
+      {label}
+      <span className="font-mono" style={{ opacity: 0.85 }}>{count}</span>
+      {auto && <span style={{ opacity: 0.55, fontSize: 10 }}>auto</span>}
+    </button>
   );
 }
