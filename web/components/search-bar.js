@@ -58,6 +58,11 @@ export function SearchBar() {
     setBusy(false);
   }
 
+  // Asad (23 Jul): "result ke saath hi outreach start ho jaye, autopilot pe."
+  // Ek button do kaam karta hai:
+  //   1. Search save (settings.areas me — har cron pe chalti rahegi = autopilot)
+  //   2. Foran ek batch trigger (n8n webhook → VPS run.sh) — abhi chal pade
+  // States: '' → 'saving' → 'starting' → 'ok' | koi error string.
   async function save() {
     if (!res) return;
     setSaved('saving');
@@ -68,9 +73,24 @@ export function SearchBar() {
         body: JSON.stringify({ url: url.trim() }),
       });
       const j = await r.json();
-      setSaved(r.ok ? 'ok' : j?.error || "Couldn't save.");
+      if (!r.ok) {
+        setSaved(j?.error || "Couldn't save.");
+        return;
+      }
     } catch {
       setSaved("Couldn't save — try again.");
+      return;
+    }
+
+    // Save ho gayi — ab foran ek batch bhi chala do (autopilot ka pehla dhakka).
+    // Agar ye trigger fail bhi ho to search SAVE ho chuki hai; cron use uthayega.
+    setSaved('starting');
+    try {
+      const r2 = await fetch('/api/outreach/run', { method: 'POST' });
+      if (r2.ok) setSaved('ok');
+      else setSaved('saved-only'); // save hui, batch abhi nahi chala
+    } catch {
+      setSaved('saved-only');
     }
   }
 
@@ -155,23 +175,36 @@ export function SearchBar() {
                 href="/outreach"
                 style={{ fontSize: 12.5, color: 'var(--green)', flexShrink: 0, textDecoration: 'none' }}
               >
-                ✓ Saved — see it on Outreach ↗
+                ✓ Outreach started — see it on Outreach ↗
+              </a>
+            ) : saved === 'saved-only' ? (
+              <a
+                href="/outreach"
+                style={{ fontSize: 12.5, color: 'var(--green)', flexShrink: 0, textDecoration: 'none' }}
+              >
+                ✓ Saved — bot runs it on its next batch ↗
               </a>
             ) : (
               <button
                 onClick={save}
-                disabled={saved === 'saving'}
+                disabled={saved === 'saving' || saved === 'starting'}
                 className="btn-brass"
                 style={{ flexShrink: 0, borderRadius: 999 }}
               >
-                {saved === 'saving' ? 'Saving…' : 'Save this search'}
+                {saved === 'saving'
+                  ? 'Saving…'
+                  : saved === 'starting'
+                    ? 'Starting outreach…'
+                    : 'Save & start outreach'}
               </button>
             )}
           </div>
 
-          {saved && saved !== 'ok' && saved !== 'saving' && (
-            <div style={{ fontSize: 12, color: 'var(--rust)', marginTop: 8 }}>{saved}</div>
-          )}
+          {/* sirf asli error strings — 'saving'/'starting'/'ok'/'saved-only' status hain */}
+          {saved &&
+            !['ok', 'saving', 'starting', 'saved-only'].includes(saved) && (
+              <div style={{ fontSize: 12, color: 'var(--rust)', marginTop: 8 }}>{saved}</div>
+            )}
 
           {/* OpenRent ne jitni deen vs jitni filter pe poori utrin.
               Farq hamesha bara hota hai (OpenRent ke bed params kaam nahi karte),
