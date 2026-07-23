@@ -20,7 +20,9 @@ export const metadata = {
 
 const nav = [
   { href: '/', label: 'New & pending' },
+  { href: '/searches', label: 'Searches' },
   { href: '/map', label: 'Map' },
+  { href: '/outreach', label: 'Outreach' },
   { href: '/sent', label: 'Requested' },
   { href: '/queue', label: 'Queue' },
   { href: '/settings', label: 'Settings' },
