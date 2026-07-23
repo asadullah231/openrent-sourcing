@@ -67,7 +67,7 @@ export default async function OutreachPage() {
           <span className="text-muted" style={{ fontSize: 11.5 }}>green dot = on · outreach runs only on these</span>
         </div>
         <p className="text-muted" style={{ fontSize: 12.5, margin: '0 0 16px', lineHeight: 1.6 }}>
-          One folder per location. Open a folder to see its listings. Green dot toggles it on/off, ✕ removes it — changes save on their own.
+          One folder per location. Open a folder to see its listings. The green dot toggles it on/off — changes save on their own.
         </p>
         <SearchToggles />
       </div>

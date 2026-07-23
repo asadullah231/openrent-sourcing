@@ -5,12 +5,16 @@ import Link from 'next/link';
 
 // Outreach page ke location "folders" (Asad, 23 Jul): Google Drive jaise folder
 // tiles. Har saved search = ek folder. Tile pe folder icon + naam + count;
-// corner me chhota on/off dot + ✕. Click → us location ka folder page
+// corner me chhota on/off dot. Click → us location ka folder page
 // (/searches/view?area=<name>) jahan uski saari listings.
 //
 // Add/edit yahan nahi — Search page se (paste → Save & start outreach). Yahan
-// Mo sirf folder kholta, band/chalu karta, ya hata sakta hai. Toggle/delete
-// dabate hi AUTO-SAVE (koi button nahi).
+// Mo sirf folder kholta ya band/chalu karta hai. Toggle dabate hi AUTO-SAVE.
+//
+// EK LOCATION = EK FOLDER (Asad, 23 Jul: "duplicate remove kro"). Purane
+// settings me ek hi location kai dafa saved ho sakti hai (pehle dedup key me
+// runtime params they). Yahan naam pe dedup karke ek hi folder dikhate hain —
+// pehla wala rakh lete hain, baqi chhupa dete hain.
 
 function describe(params = {}) {
   const bits = [];
@@ -93,7 +97,17 @@ export function SearchToggles() {
     return <div className="text-muted" style={{ fontSize: 12.5 }}>Loading…</div>;
   }
 
-  const searches = settings.areas || [];
+  // Naam pe dedup — ek location ka ek hi folder (pehla wala). Har folder ka
+  // asli index (`i`) yaad rakhte hain taake toggle sahi row pe lage.
+  const seen = new Set();
+  const searches = (settings.areas || [])
+    .map((s, i) => ({ s, i }))
+    .filter(({ s }) => {
+      const key = (s.name || s.slug || '').trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
   if (searches.length === 0) {
     return (
@@ -112,8 +126,11 @@ export function SearchToggles() {
     );
   }
 
-  const toggle = (i, on) => commit(searches.map((s, j) => (j === i ? { ...s, enabled: on } : s)));
-  const remove = (i) => commit(searches.filter((_, j) => j !== i));
+  // toggle asli index (settings.areas me) pe lagta hai — folder page bhi
+  // wahi row uthata hai. Dedup se dikhne wale index se nahi.
+  const all = settings.areas || [];
+  const toggle = (realIdx, on) =>
+    commit(all.map((s, j) => (j === realIdx ? { ...s, enabled: on } : s)));
 
   return (
     <div>
@@ -124,7 +141,7 @@ export function SearchToggles() {
           gap: 12,
         }}
       >
-        {searches.map((s, i) => {
+        {searches.map(({ s, i }) => {
           const on = s.enabled !== false;
           const name = s.name || s.slug || 'New search';
           const c = counts ? counts[name.trim().toLowerCase()] : null;
@@ -142,8 +159,8 @@ export function SearchToggles() {
                 overflow: 'hidden',
               }}
             >
-              {/* corner controls — dot (on/off) + ✕ (delete) */}
-              <div style={{ position: 'absolute', top: 9, right: 9, display: 'flex', alignItems: 'center', gap: 8, zIndex: 2 }}>
+              {/* corner control — sirf on/off dot */}
+              <div style={{ position: 'absolute', top: 9, right: 9, zIndex: 2 }}>
                 <button
                   onClick={() => toggle(i, !on)}
                   title={on ? 'Turn off' : 'Turn on'}
@@ -158,22 +175,6 @@ export function SearchToggles() {
                     background: on ? 'var(--green)' : 'var(--mist)',
                   }}
                 />
-                <button
-                  onClick={() => remove(i)}
-                  title="Remove folder"
-                  aria-label="Remove folder"
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    color: 'var(--mist)',
-                    cursor: 'pointer',
-                    fontSize: 15,
-                    lineHeight: 1,
-                    padding: 0,
-                  }}
-                >
-                  ✕
-                </button>
               </div>
 
               {/* poora folder click → andar (folder view) */}
