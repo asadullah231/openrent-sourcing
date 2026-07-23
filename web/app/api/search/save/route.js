@@ -24,13 +24,30 @@ export async function POST(req) {
   const settings = (await getSettings()) || {};
   const areas = Array.isArray(settings.areas) ? [...settings.areas] : [];
 
-  // Wahi search dobara na add ho jaye. Slug+params se milao, poore link se nahi —
-  // OpenRent ka link har baar thora alag ban sakta hai (params ki tarteeb badal
-  // jati hai) magar search wahi hoti hai.
-  const key = (s) => `${s.slug}|${new URLSearchParams(s.params || {}).toString()}`;
+  // Wahi search dobara na add ho jaye. Slug + ASLI filter params se milao.
+  // faltu/runtime params (isLive, viewingProperty, jo bot khud lagata hai) ko
+  // chhod do — warna wahi search "alag" lagti hai aur list me duplicate ban
+  // jate hain (23 Jul: settings me teen Tower Hamlets isi wajah se bane).
+  const IGNORE = new Set(['isLive', 'viewingProperty', 'viewingproperty']);
+  const key = (s) => {
+    const p = new URLSearchParams();
+    Object.entries(s.params || {})
+      .filter(([k]) => !IGNORE.has(k))
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([k, v]) => p.set(k, v));
+    return `${s.slug}|${p.toString()}`;
+  };
   const newKey = key(parsed.search);
+
+  // Pehle se hai? Ye ERROR nahi — Mo ne bas dobara "Save & start" dabaya.
+  // Success do (search zinda hai) taake button ✓ dikhaye aur outreach chale.
   if (areas.some((a) => a.params && key(a) === newKey)) {
-    return Response.json({ error: 'Ye search pehle se list me hai.' }, { status: 409 });
+    return Response.json({
+      ok: true,
+      already: true,
+      count: areas.length,
+      name: parsed.search.name,
+    });
   }
 
   areas.push({

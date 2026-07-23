@@ -1,5 +1,6 @@
 import { getHealth, getSendLog, getListings } from '@/lib/data';
 import { SendBatchButton } from '@/components/send-batch-button';
+import { SearchToggles } from '@/components/search-toggles';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,9 +57,20 @@ export default async function OutreachPage() {
         ))}
       </div>
 
-      {/* Searches ki list yahan se hata di (Asad, 23 Jul): "section bilkul hata
-          do". Searches ab sirf Search page pe hain (paste → Save). Outreach page
-          ab sirf do kaam ka: abhi ek batch bhejo + aaj kya hua. */}
+      {/* Active searches — Search page se "Save & start outreach" yahan aa kar
+          dikhti hai (Asad, 23 Jul: "save kiya, outreach pe check karne aaya to
+          kuch nahi dikha"). Sirf list + green on/off dot; add/edit Search page
+          se. Toggle dabate hi auto-save. */}
+      <div style={{ marginBottom: 30, padding: '18px 20px', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-tile)', background: 'var(--surface)' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 6 }}>
+          <h2 style={{ fontSize: 17, margin: 0, fontWeight: 600 }}>Active searches</h2>
+          <span className="text-muted" style={{ fontSize: 11.5 }}>green = on · outreach runs only on these</span>
+        </div>
+        <p className="text-muted" style={{ fontSize: 12.5, margin: '0 0 14px', lineHeight: 1.6 }}>
+          Saved from the Search page. Toggle one off to pause it, ✕ to remove it — changes save on their own.
+        </p>
+        <SearchToggles />
+      </div>
 
       {/* send now */}
       <div style={{ marginBottom: 30, paddingTop: 4 }}>
