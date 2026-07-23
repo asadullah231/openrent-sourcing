@@ -6,13 +6,15 @@
 // nahi parta ke andar kaun sa site hai. Naya portal (Zoopla) add karna =
 // sirf yahan ek entry.
 
-import { parseSearchUrl, filtersFromParams } from './search-url.js';
+import { parseSearchUrl, filtersFromParams, buildUrl } from './search-url.js';
 import { scrapeArea } from './scraper.js';
 import {
   parseRightmoveUrl,
   filtersFromRightmoveParams,
+  buildRightmoveUrl,
 } from './search-url-rm.js';
 import { scrapeRightmove, matchesRightmoveFilters } from './scraper-rm.js';
+import { rightmoveLocationId } from './rm-location.js';
 
 // Link se portal pehchano (host se).
 export function detectPortal(url) {
@@ -37,6 +39,78 @@ export function parseAnyUrl(url) {
     return r;
   }
   return { ok: false, error: 'Sirf OpenRent ya Rightmove ka link chalega.' };
+}
+
+// ── Auto-cross (Mo, 23 Jul): ek link paste → bot khud doosre portal pe wohi
+// search bana kar result laaye. Yahan ek parsed search se doosre portal ki
+// "equivalent" search banti hai — area ka naam + beds/price le kar.
+
+/** Kisi bhi parsed search se ek portable shape: { name, bedsMin, bedsMax, priceMax, priceMin }. */
+function normalize(search) {
+  const f = filtersForSearch(search);
+  // Area naam: OpenRent me params.term ya name; Rightmove me name (jo humne banaya).
+  // Rightmove ke auto-name me "Rightmove REGION 391 · ..." hota hai — usko lookup
+  // ke liye istemaal nahi kar sakte. Us surat me OpenRent-origin hi cross karega.
+  const name = (search.params?.term || search.name || '').split(',')[0].trim();
+  return { name, ...f };
+}
+
+/** OpenRent-shakl ki search banao (naam + filters se). */
+function buildOpenRentSearch(n) {
+  const slug = n.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const params = { term: n.name, isLive: 'true' };
+  if (n.bedsMin != null) params.bedrooms_min = String(n.bedsMin);
+  if (n.bedsMax != null) params.bedrooms_max = String(n.bedsMax);
+  if (n.priceMax != null) params.prices_max = String(n.priceMax);
+  if (n.priceMin != null) params.prices_min = String(n.priceMin);
+  return {
+    source: 'openrent',
+    slug,
+    params,
+    name: n.name,
+    url: buildUrl(slug, params),
+    _crossed: true, // bot ne khud banayi (paste nahi hui)
+  };
+}
+
+/** Rightmove-shakl ki search banao (naam → locationIdentifier lookup + filters). */
+async function buildRightmoveSearch(n) {
+  const locId = await rightmoveLocationId(n.name);
+  if (!locId) return null; // naam Rightmove pe nahi mila — is portal ko chhoro
+  const params = { searchType: 'RENT', locationIdentifier: locId };
+  if (n.bedsMin != null) params.minBedrooms = String(n.bedsMin);
+  if (n.bedsMax != null) params.maxBedrooms = String(n.bedsMax);
+  if (n.priceMax != null) params.maxPrice = String(n.priceMax);
+  if (n.priceMin != null) params.minPrice = String(n.priceMin);
+  return {
+    source: 'rightmove',
+    slug: locId,
+    params,
+    name: n.name, // saaf naam (Rightmove ka "REGION 391" wala nahi)
+    url: buildRightmoveUrl(params),
+    _crossed: true,
+  };
+}
+
+/**
+ * Ek parsed search (paste hui) → is ke ilawa BAQI portals ki equivalent searches.
+ * Wapas: [{source, ...}] (jo ban sakein). Jo portal pe area na mile, wo chhoot jata.
+ *
+ * Abhi OpenRent + Rightmove (Zoopla plain-fetch pe block hai — Phase C).
+ */
+export async function fanOut(pasteSearch) {
+  const n = normalize(pasteSearch);
+  if (!n.name) return []; // naam hi nahi (Rightmove-origin bina term) — cross nahi kar sakte
+  const out = [];
+
+  if (pasteSearch.source !== 'openrent') {
+    out.push(buildOpenRentSearch(n));
+  }
+  if (pasteSearch.source !== 'rightmove') {
+    const rm = await buildRightmoveSearch(n);
+    if (rm) out.push(rm);
+  }
+  return out;
 }
 
 /** search object (jisme source hai) → apne filter shape { bedsMin, bedsMax, priceMax, priceMin }. */

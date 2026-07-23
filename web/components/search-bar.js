@@ -144,6 +144,33 @@ export function SearchBar() {
               <div className="text-muted" style={{ fontSize: 12, marginTop: 2 }}>
                 {describe(res.search?.params) || 'no filters'}
               </div>
+              {/* Auto-cross (Mo, 23 Jul): ek link paste, bot ne baqi sites bhi
+                  khud dhoondi. Kaunse portal, kitni har se — saaf dikhao. */}
+              {res.sources?.length > 1 && (
+                <div style={{ fontSize: 11, marginTop: 5, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {res.sources.map((s) => (
+                    <span
+                      key={s.source}
+                      className="text-muted"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      title={s.crossed ? 'The bot found this site for you' : 'The link you pasted'}
+                    >
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: s.ok ? 'var(--green)' : 'var(--rust)',
+                          display: 'inline-block',
+                        }}
+                      />
+                      {s.source === 'rightmove' ? 'Rightmove' : 'OpenRent'}
+                      <span className="font-mono">{s.matched}</span>
+                      {s.crossed && <span style={{ opacity: 0.6 }}>· auto</span>}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: 20, marginLeft: 'auto', alignItems: 'baseline' }}>

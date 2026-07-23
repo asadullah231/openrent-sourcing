@@ -1,4 +1,4 @@
-import { parseAnyUrl, scrapeSearch, filtersForSearch, matchesFilters } from '@bot/portals.js';
+import { parseAnyUrl, scrapeSearch, filtersForSearch, matchesFilters, fanOut } from '@bot/portals.js';
 import { enrichListing } from '@bot/enrich.js';
 import { getListings } from '@/lib/data';
 
@@ -33,25 +33,54 @@ export async function POST(req) {
 
   const portal = parsed.search.source === 'rightmove' ? 'Rightmove' : 'OpenRent';
 
-  let listings;
+  // Auto-cross (Mo, 23 Jul): "ek link paste karun, bot khud baqi sites pe wohi
+  // search bana kar result laaye." Paste ki hui search + baqi portals ki
+  // equivalent searches — sab ek saath scrape, ek natija.
+  //   - fanOut area ka naam le kar doosre portal ki search banata hai
+  //     (Rightmove pe naam→locationIdentifier lookup se).
+  //   - Jo portal pe area na mile / scrape fail ho, wo chhoot jata — baqi chalti.
+  let crossed = [];
   try {
-    listings = await scrapeSearch(parsed.search);
-  } catch (err) {
-    // 429/405/timeout ya page shape badalna — asli wajah dikhao, warna Mo
-    // samjhega ke us ka link kharab hai jabke masla hamari taraf hai.
+    crossed = await fanOut(parsed.search);
+  } catch {
+    crossed = [];
+  }
+  const allSearches = [parsed.search, ...crossed];
+
+  // Sab searches parallel scrape. Ek fail ho to poora na gire.
+  const scraped = await Promise.all(
+    allSearches.map((s) =>
+      scrapeSearch(s)
+        .then((list) => ({ ok: true, source: s.source, list, total: list._resultCount ?? list.length }))
+        .catch((err) => ({ ok: false, source: s.source, list: [], total: 0, error: err.message }))
+    )
+  );
+
+  // Kuch bhi na mila (paste wali bhi fail) = asli masla, wajah dikhao.
+  const anyOk = scraped.some((r) => r.ok);
+  if (!anyOk) {
+    const pasteRes = scraped[0];
     return Response.json(
-      { error: `${portal} se result nahi mila: ${err.message}` },
+      { error: `${portal} se result nahi mila: ${pasteRes?.error || 'unknown'}` },
       { status: 502 }
     );
   }
 
-  // Link ke apne bed/price filter lagao.
-  // ⚠️ Ye zaroori hai: OpenRent ke URL params results filter NAHI karte (unka
-  // filter browser me JS se chalta hai). 22 Jul ko live test kiya — Mo ke link
-  // se 713 aayin jin me 267 range se bahar thin. Rightmove behtar filter karta
-  // hai lekin hum phir bhi apni taraf se lagate hain (ek hi jagah sach).
+  // Sab portals ki listings ek me. Filter har listing pe uske apne portal ke
+  // hisaab se — matcher dono ka same shape (beds/price) hai.
   const f = filtersForSearch(parsed.search);
-  const matched = listings.filter((l) => matchesFilters(l, f));
+  let listings = [];
+  const bySource = {}; // source -> { total, matched }
+  for (const r of scraped) {
+    const m = r.list.filter((l) => matchesFilters(l, f));
+    listings.push(...m);
+    bySource[r.source] = {
+      total: r.total,
+      matched: (bySource[r.source]?.matched || 0) + m.length,
+      ok: r.ok,
+    };
+  }
+  const matched = listings;
 
   // "Nayi" = jo store me pehle se nahi. Mo ke liye sab se kaam ki ginti —
   // batati hai ke is search se asal me kitna FAIDA hoga.
@@ -97,19 +126,19 @@ export async function POST(req) {
   const rest = withFlag.slice(TOP, 60);
 
   // Rightmove ke card pe photo + address pehle se hote hain — enrich ki zaroorat
-  // nahi. Sirf OpenRent ke liye enrich (uske search page pe photo hote hi nahi).
-  const enriched =
-    parsed.search.source === 'rightmove'
-      ? top
-      : await Promise.all(
-          top.map((l) =>
-            enrichListing(l)
-              .then((e) => ({ ...l, ...e }))
-              // Ek listing ka page na khule to poora search na gire — us ke liye
-              // photo ke baghair hi dikha do.
-              .catch(() => l)
-          )
-        );
+  // nahi. Sirf OpenRent listings enrich karo (unke search page pe photo hote hi
+  // nahi). Ab list mili-juli hoti hai (dono portal), is liye PER-LISTING dekho.
+  const enriched = await Promise.all(
+    top.map((l) =>
+      (l.source === 'rightmove' || l.image)
+        ? Promise.resolve(l)
+        : enrichListing(l)
+            .then((e) => ({ ...l, ...e }))
+            // Ek listing ka page na khule to poora search na gire — photo ke
+            // baghair hi dikha do.
+            .catch(() => l)
+    )
+  );
 
   const slim = (l) => ({
     listing_id: l.listing_id,
@@ -131,13 +160,27 @@ export async function POST(req) {
     agent_phone: l.agent_phone ?? null,
   });
 
-  // Rightmove asli total (resultCount) deta hai; OpenRent pe jitni scrape hui.
-  const total = listings._resultCount != null ? listings._resultCount : listings.length;
+  // Har portal ne jitni deen unka jama (Rightmove resultCount, OpenRent scraped).
+  const total = Object.values(bySource).reduce((s, v) => s + (v.total || 0), 0);
+
+  // Kaunse portal chale, kitni kis se — Mo ko dikhane ke liye (e.g. "OpenRent 40 · Rightmove 47").
+  const sources = allSearches.map((s) => ({
+    source: s.source,
+    crossed: !!s._crossed, // bot ne khud banayi (paste nahi hui)
+    matched: 0,
+    ok: bySource[s.source]?.ok ?? false,
+  }));
+  // matched per source bharo
+  for (const l of matched) {
+    const e = sources.find((x) => x.source === (l.source || 'openrent'));
+    if (e) e.matched++;
+  }
 
   return Response.json({
     search: parsed.search,
-    total, // portal ne jitni deen
-    matched: matched.length, // filter ke baad
+    total, // sab portals ne jitni deen
+    matched: matched.length, // filter ke baad (sab portal jama)
+    sources, // per-portal breakdown (auto-cross)
     fresh: known ? withFlag.filter((l) => l._isNew).length : null,
     enrichedCount: enriched.filter((l) => l.image).length,
     // Poori list na bhejo — 400 listings ka JSON bara hai aur Mo waise bhi utni
