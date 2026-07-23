@@ -1,75 +1,41 @@
-import { getPending, getHealth } from '@/lib/data';
-import { ListingGallery } from '@/components/listing-gallery';
+import { getHealth } from '@/lib/data';
 import { SearchBar } from '@/components/search-bar';
 
 export const dynamic = 'force-dynamic';
 
-function Ribbon({ health }) {
+// SEARCH page (home) — Asad ka faisla (23 Jul): pehle kuch na dikhe, sirf
+// search bar. Mo apna OpenRent link paste kare → result gallery me aaye.
+//
+// Pehle yahan "New & pending" ki poori listings gallery + ticker thi. Wo hata
+// di — ab ye saaf search page hai. (Purani listings /outreach aur detail pages
+// pe abhi bhi milti hain; sirf ye page saaf kiya.)
+function StatusLine({ health }) {
   const live = health.mode === 'live';
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 16px', borderRadius: 10, border: '1px solid var(--mist-line)', background: 'var(--ink-raise)', marginBottom: 20, flexWrap: 'wrap' }}>
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: live ? 'var(--rust)' : 'var(--brass)', boxShadow: live ? '0 0 8px var(--rust)' : 'none' }} />
-      <span className="font-mono" style={{ fontSize: 12.5 }}>
-        {live ? 'LIVE' : 'SHADOW'} · autopilot {health.autopilot} · {health.sentToday}/{health.dailyCap} sent today
-      </span>
-      <span className="text-muted" style={{ marginLeft: 'auto', fontSize: 12 }}>
-        {live ? 'Requests go out from your account' : 'Building requests — nothing is sent yet'}
-      </span>
-    </div>
+    <span className="font-mono text-muted" style={{ fontSize: 12 }}>
+      {live ? 'LIVE' : 'SHADOW'} · autopilot {health.autopilot} · {health.sentToday}/{health.dailyCap} today
+    </span>
   );
 }
 
-function Ticker({ health }) {
-  const cells = [
-    { v: health.totalListings, l: 'listings' },
-    { v: health.aboveViewingBar, l: 'above bar' },
-    { v: health.sentToday, l: 'sent today' },
-    { v: health.dailyCap, l: 'daily cap' },
-  ];
-  return (
-    <div style={{ display: 'flex', borderTop: '1px solid var(--mist-line)', borderBottom: '1px solid var(--mist-line)', marginBottom: 26, flexWrap: 'wrap' }}>
-      {cells.map((c, i) => (
-        <div key={i} style={{ flex: '1 1 120px', padding: '13px 18px', borderLeft: i === 0 ? 'none' : '1px solid var(--mist-line)', display: 'flex', alignItems: 'baseline', gap: 9 }}>
-          <span className="font-mono" style={{ fontSize: 22, fontWeight: 500 }}>{c.v}</span>
-          <span className="text-muted" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.l}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export default async function NewListings() {
-  const [pending, health] = await Promise.all([getPending(), getHealth()]);
-
-  // Pehle yahan "Tower Hamlets · live" HARD-CODED tha. Ab Mo jitni chahe
-  // searches rakh sakta hai, to wo jhoot ban jata. Asli list dikhao.
-  const names = (health.areas || []).filter(Boolean);
-  const areaLabel =
-    names.length === 0 ? 'koi search nahi' : names.length <= 2 ? names.join(' · ') : `${names.length} searches`;
+export default async function SearchPage() {
+  let health = {};
+  try {
+    health = await getHealth();
+  } catch {}
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
-        <h1 style={{ fontSize: 30, margin: 0, fontWeight: 600 }}>New &amp; pending</h1>
-        <span className="text-muted font-mono" style={{ fontSize: 12 }} title={names.join(', ')}>
-          {areaLabel} · {health.mode}
-        </span>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+        <h1 style={{ fontSize: 30, margin: 0, fontWeight: 600 }}>Search</h1>
+        <StatusLine health={health} />
       </div>
+      <p className="text-muted" style={{ marginTop: 0, marginBottom: 22, fontSize: 13, maxWidth: 560, lineHeight: 1.6 }}>
+        OpenRent pe search banao, us ka poora link yahan paste karo. Result foran
+        neeche dikhega — pasand aaye to Save karo, bot usi ko chalata rahega.
+      </p>
 
-      <Ribbon health={health} />
-
-      {/* Search bar sab se upar — Mo apna OpenRent link paste kar ke foran
-          result dekh sakta hai, bina Settings me jaye (Asad, 22 Jul). */}
       <SearchBar />
-
-      <Ticker health={health} />
-
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 14 }}>
-        <h2 style={{ fontSize: 17, margin: 0, fontWeight: 600 }}>Worth a look</h2>
-        <span className="text-muted" style={{ fontSize: 12.5 }}>filter and sort — top ones move first</span>
-      </div>
-
-      <ListingGallery listings={pending} />
     </div>
   );
 }

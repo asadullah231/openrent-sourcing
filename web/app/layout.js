@@ -18,13 +18,14 @@ export const metadata = {
   description: 'Property sourcing bot control panel',
 };
 
+// Asad ka faisla (23 Jul): sirf 4 pages nav me. New&pending / Requested / Queue
+// hata diye — Search hi ab home hai (pehle khali, link paste karo → gallery).
+// /sent aur /queue routes zinda hain (detail links unhe use karte hain), bas
+// nav se nikaal diye.
 const nav = [
-  { href: '/', label: 'New & pending' },
-  { href: '/searches', label: 'Searches' },
-  { href: '/map', label: 'Map' },
+  { href: '/', label: 'Search' },
   { href: '/outreach', label: 'Outreach' },
-  { href: '/sent', label: 'Requested' },
-  { href: '/queue', label: 'Queue' },
+  { href: '/map', label: 'Map' },
   { href: '/settings', label: 'Settings' },
 ];
 
