@@ -1,7 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ListingCard } from './listing-card';
+
+// 🐛 FIX (23 Jul, Asad: "Outreach pe jaake wapas aaun to result gayab"):
+// Search result React state me tha — page navigate karte hi component unmount,
+// wapas aane pe fresh mount = khali. Ab result + link sessionStorage me rakhte
+// hain, taake wapas aane pe wahi result restore ho jaye (tab band hone tak zinda).
+const STORE_KEY = 'openrent:lastSearch';
 
 // Home page ka search bar — Mo apna OpenRent link paste kare aur FORAN result dekhe.
 //
@@ -36,6 +42,27 @@ export function SearchBar() {
   const [saved, setSaved] = useState('');
   const [srcFilter, setSrcFilter] = useState('all'); // all | openrent | rightmove
 
+  // Mount pe: pichhla result restore karo (agar tha). Isi se Outreach se wapas
+  // aane pe result barqaraar rehta hai.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(STORE_KEY);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s.url) setUrl(s.url);
+        if (s.res) setRes(s.res);
+        if (s.srcFilter) setSrcFilter(s.srcFilter);
+      }
+    } catch {}
+  }, []);
+
+  // Result/filter badle to sessionStorage me save karo (restore ke liye).
+  useEffect(() => {
+    try {
+      if (res) sessionStorage.setItem(STORE_KEY, JSON.stringify({ url, res, srcFilter }));
+    } catch {}
+  }, [res, url, srcFilter]);
+
   async function run() {
     const v = url.trim();
     if (!v || busy) return;
@@ -44,6 +71,7 @@ export function SearchBar() {
     setRes(null);
     setSaved('');
     setSrcFilter('all');
+    try { sessionStorage.removeItem(STORE_KEY); } catch {} // purana result hatao
     try {
       const r = await fetch('/api/search', {
         method: 'POST',
