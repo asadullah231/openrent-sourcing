@@ -1,5 +1,6 @@
 import { getHealth, getSendLog, getListings } from '@/lib/data';
 import { SendBatchButton } from '@/components/send-batch-button';
+import { SearchesManager } from '@/components/searches-manager';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,8 +57,29 @@ export default async function OutreachPage() {
         ))}
       </div>
 
+      {/* Saved searches — Search page se "Save this search" yahan aa kar jamti
+          hai (Asad, 23 Jul). Har search pe green dot = ON/OFF: outreach sirf
+          ON searches pe chalti hai. Mo yahin se ek search band/chalu kar sakta
+          hai bina Settings me gaye. */}
+      <div style={{ marginBottom: 26, padding: '18px 20px', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-tile)', background: 'var(--surface)' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 6 }}>
+          <h2 style={{ fontSize: 17, margin: 0, fontWeight: 600 }}>Searches</h2>
+          <span className="text-muted" style={{ fontSize: 11.5 }}>
+            green = on · outreach runs only on these
+          </span>
+        </div>
+        <p className="text-muted" style={{ fontSize: 12.5, margin: '0 0 14px', lineHeight: 1.6 }}>
+          Saved from the Search page. Toggle one off to pause it, ✕ to remove it.
+        </p>
+        <SearchesManager />
+      </div>
+
       {/* send now */}
-      <div style={{ marginBottom: 30 }}>
+      <div style={{ marginBottom: 30, paddingTop: 4 }}>
+        <h2 style={{ fontSize: 17, margin: '0 0 4px', fontWeight: 600 }}>Start outreach</h2>
+        <p className="text-muted" style={{ fontSize: 12.5, margin: '0 0 14px', lineHeight: 1.6 }}>
+          Runs every search that&apos;s on, scrapes them, and sends one batch of requests now.
+        </p>
         <SendBatchButton />
       </div>
 

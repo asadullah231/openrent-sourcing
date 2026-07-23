@@ -68,9 +68,9 @@ export function SearchBar() {
         body: JSON.stringify({ url: url.trim() }),
       });
       const j = await r.json();
-      setSaved(r.ok ? 'ok' : j?.error || 'Save nahi hui.');
+      setSaved(r.ok ? 'ok' : j?.error || "Couldn't save.");
     } catch {
-      setSaved('Save nahi hui.');
+      setSaved("Couldn't save — try again.");
     }
   }
 
@@ -151,9 +151,12 @@ export function SearchBar() {
             </div>
 
             {saved === 'ok' ? (
-              <span style={{ fontSize: 12.5, color: 'var(--green)', flexShrink: 0 }}>
-                ✓ Saved — runs on every batch now
-              </span>
+              <a
+                href="/outreach"
+                style={{ fontSize: 12.5, color: 'var(--green)', flexShrink: 0, textDecoration: 'none' }}
+              >
+                ✓ Saved — see it on Outreach ↗
+              </a>
             ) : (
               <button
                 onClick={save}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SearchList } from '@/components/search-list';
 
 export default function SettingsPage() {
   const [s, setS] = useState(null);
@@ -119,15 +118,17 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Searches — Mo ke paste kiye OpenRent link */}
+      {/* Searches ab Outreach page pe hain (Asad, 23 Jul) — ek hi jagah, taake
+          do jagah edit karne ki confusion na ho. Yahan sirf ishaara. */}
       <div style={section}>
         <span className="font-display" style={{ fontSize: 19, display: 'block', marginBottom: 4 }}>
           Searches
         </span>
-        <p className="text-muted" style={{ fontSize: 12.5, margin: '0 0 16px', lineHeight: 1.6 }}>
-          The bot runs these searches on every batch. Add as many as you like.
+        <p className="text-muted" style={{ fontSize: 12.5, margin: 0, lineHeight: 1.6 }}>
+          Your saved searches and their on/off toggles now live on the{' '}
+          <a href="/outreach" style={{ color: 'var(--brass)' }}>Outreach page</a>. Paste a link on
+          the Search page, hit Save, and it appears there.
         </p>
-        <SearchList searches={s.areas || []} onChange={(areas) => setS({ ...s, areas })} />
       </div>
 
       {/* Message */}
