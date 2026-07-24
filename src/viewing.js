@@ -73,46 +73,10 @@ async function writeDraft(entry) {
   await addRow({ ...entry, kind: 'draft' });
 }
 
-// "3 Bed Maisonette, Swaton Road, E3" → "Swaton Road, E3" (bed-type prefix hata do)
-function shortPlace(listing) {
-  const a = listing.address || listing.title || '';
-  const parts = a.split(',').map((s) => s.trim()).filter(Boolean);
-  // Pehla part aksar "X Bed <type>" hota hai — usko chhoro agar 'bed'/'room' ho
-  if (parts.length > 1 && /bed|room|studio|flat|house|maisonette/i.test(parts[0])) {
-    return parts.slice(1).join(', ');
-  }
-  return a || `listing ${listing.listing_id}`;
-}
-
-// Ek listing ka viewing-request payload banao (POST se pehle wala sab).
-// Template ke placeholders bharo.
-//
-// ⚠️ Ye function ka poora maqsad: message me KABHI khali `{beds}` ya `[Name]` na jaye,
-// aur kabhi jhoota data na jaye. Har cheez ka safe fallback hai:
-//   - naam na mile              -> "Hi," (koi farzi naam nahi)
-//   - beds na milen             -> "property" ("undefined-bed" nahi)
-//   - area na mile              -> street ya khali
-// Aur `replace` ke bajaye global regex — warna template me dobara aane wala
-// placeholder bina bhare reh jata (JS ka `.replace(string)` sirf pehla badalta hai).
-export function fillTemplate(tpl, listing, v) {
-  const name = listing.landlord_name || null;
-  const beds = listing.beds != null ? `${listing.beds}-bed` : 'property';
-  const area = listing.area || null;
-  const place = shortPlace(listing);
-
-  const vals = {
-    // Greeting poora, taake template me "Hi {name}," likhne par khali comma na bache
-    greeting: name ? `Hi ${name},` : 'Hi,',
-    name: name || 'there',
-    beds,
-    area: area || place,
-    place,
-    price: listing.price != null ? `£${Number(listing.price).toLocaleString('en-GB')}` : '',
-    availability: v.availabilityText || '',
-  };
-
-  return tpl.replace(/\{(\w+)\}/g, (m, k) => (k in vals ? vals[k] : m));
-}
+// fillTemplate + shortPlace ab shared module me (message-template.js) — dashboard
+// bhi wahi use karta hai, koi drift nahi. Re-export taake purane imports na tootein.
+export { fillTemplate, shortPlace } from './message-template.js';
+import { fillTemplate, shortPlace } from './message-template.js';
 
 function buildRequest(listing, token) {
   const v = config.viewing;
