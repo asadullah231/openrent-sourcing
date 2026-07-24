@@ -1,6 +1,5 @@
 import { getListing, getSettings } from '@/lib/data';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +28,28 @@ function Row({ label, value }) {
 export default async function ListingDetail({ params }) {
   const { id } = await params;
   const [l, settings] = await Promise.all([getListing(id), getSettings()]);
-  if (!l) notFound();
+
+  // 🐛 FIX (23 Jul): pehle `notFound()` (bare 404) chalta tha jab id store me na
+  // ho. Live search ke result store me hote hi nahi, is liye un pe click 404
+  // deta tha. Ab search-preview cards seedha portal khulte hain (ListingCard
+  // preview), aur agar phir bhi koi un-stored id yahan aaye to bare 404 ki
+  // jagah ek saaf message + wapsi link.
+  if (!l) {
+    return (
+      <div style={{ maxWidth: 560, padding: '20px 0' }}>
+        <Link href="/" style={{ color: 'var(--mist)', fontSize: 13, textDecoration: 'none' }}>← Back</Link>
+        <h1 style={{ fontSize: 22, margin: '16px 0 8px', fontWeight: 600 }}>This listing isn&apos;t saved yet</h1>
+        <p className="text-muted" style={{ fontSize: 13.5, lineHeight: 1.6 }}>
+          Detail pages only exist for listings the bot has saved. Search results open on the
+          portal directly. Once this search is saved and the bot runs it, the property shows up here.
+        </p>
+        <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <Link href="/" className="btn-brass" style={{ textDecoration: 'none', fontSize: 13 }}>Back to Search</Link>
+          <Link href="/outreach" className="text-muted" style={{ fontSize: 13, alignSelf: 'center', textDecoration: 'none' }}>Go to Outreach →</Link>
+        </div>
+      </div>
+    );
+  }
 
   const sent = l.viewing_status === 'requested';
   const photos = (l.images && l.images.length ? l.images : l.image ? [l.image] : []).slice(0, 12);

@@ -12,7 +12,10 @@
 //   • Score seal 44px ka gola tha photo pe. Ab chhota text-pill hai neeche.
 //     Wajah: minScore 0 ke baad score kisi ko rokta nahi (har landlord ek lead
 //     hai), to use photo ki sab se qeemti jagah dena ghalat tha.
-// Click → apna detail page (/listing/{id}), seedha OpenRent nahi.
+// Click → normally apna detail page (/listing/{id}). LEKIN search-preview cards
+// (live scrape, abhi store me nahi) ke liye detail page 404 deta hai — un ke liye
+// `preview` prop true ho to seedha portal (OpenRent/Rightmove) khulta hai.
+// (Asad, 23 Jul: /listing/2978397 pe 404 aaya — wo live result tha, store me nahi.)
 import Link from 'next/link';
 
 function timeAgo(hours) {
@@ -23,7 +26,11 @@ function timeAgo(hours) {
   return `${d} day${d > 1 ? 's' : ''} ago`;
 }
 
-export function ListingCard({ l, rank = 1, sent = false }) {
+export function ListingCard({ l, rank = 1, sent = false, preview = false }) {
+  // preview (live search result, store me nahi) → portal URL, warna detail page.
+  // url na ho to ek defensive fallback (detail page).
+  const isExternal = preview && !!l.url;
+  const href = isExternal ? l.url : `/listing/${l.listing_id}`;
   // Airbnb ki pehli line = jagah. Hamare paas address enrich hone ke baad hi
   // aata hai, is liye jo mil jaye: address → area → title → id.
   //
@@ -41,7 +48,8 @@ export function ListingCard({ l, rank = 1, sent = false }) {
 
   return (
     <Link
-      href={`/listing/${l.listing_id}`}
+      href={href}
+      {...(isExternal ? { target: '_blank', rel: 'noreferrer' } : {})}
       className="gcard"
       style={{
         display: 'flex',

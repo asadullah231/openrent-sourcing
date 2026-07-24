@@ -325,7 +325,7 @@ export function SearchBar() {
                     >
                       {l.source === 'rightmove' ? 'Rightmove' : 'OpenRent'}
                     </span>
-                    <ListingCard l={l} />
+                    <ListingCard l={l} preview />
                   </div>
                 ))}
               </div>
