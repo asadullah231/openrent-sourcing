@@ -246,6 +246,13 @@ select {
 .btn-brass:hover {
   filter: brightness(1.1);
 }
+/* Outreach sent-list rows — subtle hover lift */
+.row-hover {
+  transition: background 0.12s ease;
+}
+.row-hover:hover {
+  background: var(--surface-2);
+}
 .btn-brass:active {
   transform: translateY(1px);
 }
