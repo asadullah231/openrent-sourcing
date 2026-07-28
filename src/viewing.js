@@ -13,6 +13,7 @@
 
 import { config } from './config.js';
 import { authFetch } from './auth.js';
+import { usedToday, reserveSlot, releaseSlot } from './cap.js';
 
 // Drafts aur send-log dono NocoDB ki EK table me hain, `kind` se alag:
 // kind='draft' (banaya gaya) · kind='sent' (bhejne ki koshish hui).
@@ -51,19 +52,7 @@ async function addRow(row) {
   }).catch(() => {});
 }
 
-// Aaj asli (LIVE) bheji gayi requests count — daily cap sirf live sends pe lagta hai.
-// Shadow drafts cap me nahi ginte (warna shadow week cap kha jata hai).
-async function sentToday() {
-  try {
-    const res = await fetch(`${NC.base()}/api/v2/tables/${NC.table()}/records?limit=1000`, { headers: H() });
-    if (!res.ok) return 0;
-    const rows = (await res.json()).list || [];
-    const today = todayKey();
-    return rows.filter((e) => e.kind === 'sent' && e.day === today && e.mode === 'live').length;
-  } catch {
-    return 0;
-  }
-}
+// (sentToday cap.js me chala gaya — ab reserve-aware usedToday() istemal hota hai.)
 
 async function logAttempt(entry) {
   await addRow({ ...entry, day: todayKey(), kind: 'sent' });
@@ -159,7 +148,10 @@ export async function processViewings(listings, jar, updateStatus) {
     // wali listings us run me sab se pehle jayein, cap khatam hone se pehle.
     .sort((a, b) => (isQueued(b) - isQueued(a)) || (b.score - a.score));
 
-  let budget = v.dailyCap - (await sentToday());
+  // Cap ab reserve-aware hai (cap.js) — live sends + abhi ke reserves dono ginta.
+  // Isse do overlapping run / manual+cron ek doosre ke reserves dekh lete hain,
+  // aur cap kabhi paar nahi hota (AUDIT #1).
+  let budget = v.dailyCap - (await usedToday());
   if (budget <= 0) {
     console.log(`  ⏸️  daily cap (${v.dailyCap}) reached — aaj aur nahi.`);
     result.capped = eligible.length;
@@ -236,7 +228,19 @@ export async function processViewings(listings, jar, updateStatus) {
       continue;
     }
 
-    // 🔴 LIVE: idempotent send. Status pehle 'requested' + exact message store, phir POST.
+    // 🔴 LIVE: pehle SLOT RESERVE karo (cap.js) — POST se theek pehle, taake
+    // koi doosri run/manual send is slot ko na le. Reserve fail (cap full is
+    // exact lamhe) → is listing ko skip, aur baaki bhi cap-full hain.
+    const reserveId = await reserveSlot(v.dailyCap, {
+      listing_id: l.listing_id, score: l.score, address: req.preview.address,
+    });
+    if (!reserveId) {
+      console.log(`    ⏸️  ${l.listing_id}: cap full (reserve nahi mila) — ruk gaya.`);
+      result.capped += eligible.length - result.built + 1; // baqi bhi cap-blocked
+      break;
+    }
+
+    // Idempotent send. Status pehle 'requested' + exact message store, phir POST.
     if (updateStatus)
       await updateStatus(l.listing_id, {
         viewing_status: 'requested',
@@ -289,14 +293,20 @@ export async function processViewings(listings, jar, updateStatus) {
       if (ok) {
         console.log(`    ✅ SENT [${l.score}] ${req.preview.address} (${reason})`);
         result.sent++;
+        // Reserve rehne do — cap ke against ye request ginni chahiye (asli send ho gaya).
       } else {
         console.log(`    ❌ ${l.listing_id}: NOT sent — ${reason}`);
+        // Request gaya hi nahi → slot zaya na karo, reserve wapas.
+        await releaseSlot(reserveId);
         // status wapas 'new' taake gate/verify hone pe dobara try ho (send_failed dead-end nahi)
         if (updateStatus) await updateStatus(l.listing_id, { viewing_status: 'new', last_fail: reason });
       }
     } catch (err) {
       console.log(`    ❌ ${l.listing_id}: send error ${err.message}`);
-      if (updateStatus) await updateStatus(l.listing_id, { viewing_status: 'send_failed' });
+      // Send exception — request pahuncha ya nahi pata nahi. SAFE side: reserve
+      // wapas MAT do (agar pahunch gaya to double-count se bachao). status
+      // send_failed rehta; agli run isko dobara nahi bhejti (requested nahi hai
+      // par send_failed bhi 'new'/'queued' nahi, eligible filter se bahar).
     }
     budget--;
     // Koshish ho gayi (kaamyab ho ya na ho) — agli se pehle wafqa lena hai.

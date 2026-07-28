@@ -292,14 +292,24 @@ export async function getSendLog() {
 export async function getHealth() {
   const listings = await getListings();
   const settings = await getSettings();
-  const log = await viewingRows('sent');
+  // Poori log table (sent + draft + reserve) — cap ke liye reserves bhi chahiye.
+  const allLog = await fetchAll(T.log);
   const today = new Date().toISOString().slice(0, 10);
+  const todayLog = allLog.filter((x) => x.day === today);
+  const liveSent = todayLog.filter((x) => x.kind === 'sent' && x.mode === 'live').length;
+  // Reserve-aware used count — bot (src/cap.js) ke saath EXACT match. Warna
+  // dashboard aur bot alag budget dekhte aur cap paar ho jata (AUDIT #1).
+  const reserved = todayLog.filter((x) => x.kind === 'reserve').length;
+  const usedToday = liveSent + reserved;
   return {
     totalListings: listings.length,
     withScore: listings.filter((l) => l.score != null).length,
     aboveViewingBar: listings.filter((l) => (l.score ?? 0) >= (settings.viewing?.minScore ?? 65)).length,
-    sentToday: log.filter((x) => x.day === today && x.mode === 'live').length,
-    draftsToday: log.filter((x) => x.day === today && x.mode === 'shadow').length,
+    // sentToday ab reserve-aware "used" hai — cap ke against yehi ginti hai.
+    sentToday: usedToday,
+    liveSentToday: liveSent, // sirf asli sends (UI display ke liye, cap ke liye nahi)
+    reservedToday: reserved,
+    draftsToday: todayLog.filter((x) => x.kind === 'sent' && x.mode === 'shadow').length,
     mode: settings.viewing?.mode ?? 'shadow',
     autopilot: settings.viewing?.autopilot ?? 'on',
     dailyCap: settings.viewing?.dailyCap ?? 15,
