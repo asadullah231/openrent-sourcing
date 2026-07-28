@@ -144,6 +144,62 @@ export async function saveSettings(next) {
   return merged;
 }
 
+// ── Listing bulk actions (dashboard folder view — Smartlead-style campaign) ──
+//
+// Har action listing_id ke zariye NocoDB row patch karta hai. Mo folder khol kar
+// rooms select karta hai, phir bulk: hide / unhide / queue-for-send.
+//
+// KYUN patch (delete nahi): "remove" = soft hide (viewing_status:'hidden'), taake
+// data bacha rahe aur wapas laya ja sake. "send" = 'queued' mark, taake bot ke
+// run me sirf yehi listings priority pe jayein (dashboard Vercel se seedha OpenRent
+// message nahi bhej sakta — bot ke session se jata hai).
+
+/** listing_id -> NocoDB row Id map (patch ke liye Id chahiye, listing_id nahi). */
+async function listingIdMap() {
+  const rows = await fetchAll(T.listings);
+  const m = new Map();
+  for (const r of rows) m.set(String(r.listing_id), r.Id);
+  return m;
+}
+
+/** Diye gaye listing_ids ko ek patch field se update karo (25-25 batch). */
+async function patchListings(listingIds, patch) {
+  if (!Array.isArray(listingIds) || !listingIds.length) return 0;
+  const idMap = await listingIdMap();
+  const rows = listingIds
+    .map((lid) => idMap.get(String(lid)))
+    .filter(Boolean)
+    .map((Id) => ({ Id, ...patch }));
+  let written = 0;
+  for (let i = 0; i < rows.length; i += 25) {
+    const batch = rows.slice(i, i + 25);
+    const res = await fetch(`${BASE}/api/v2/tables/${T.listings}/records`, {
+      method: 'PATCH', headers: H, body: JSON.stringify(batch),
+    });
+    if (res.ok) written += batch.length;
+  }
+  return written;
+}
+
+/** Rooms folder se hatao (soft) — viewing_status:'hidden'. Wapas laya ja sakta. */
+export async function hideListings(listingIds) {
+  return patchListings(listingIds, { viewing_status: 'hidden' });
+}
+
+/** Hidden rooms wapas laao — status 'new' (dobara action-eligible). */
+export async function unhideListings(listingIds) {
+  return patchListings(listingIds, { viewing_status: 'new' });
+}
+
+/**
+ * Selected rooms ko SEND ke liye queue karo — viewing_status:'queued'.
+ * Bot ka agla run (ya turant trigger) sirf 'queued' listings ko priority pe
+ * bhejta hai. 'requested' (ja chuki) ko chhedo mat.
+ */
+export async function queueListings(listingIds) {
+  return patchListings(listingIds, { viewing_status: 'queued' });
+}
+
 /** viewing rows — kind='draft' (banaye gaye) ya 'sent' (bheje gaye). */
 async function viewingRows(kind) {
   const rows = await fetchAll(T.log);

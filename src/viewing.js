@@ -133,10 +133,16 @@ export async function processViewings(listings, jar, updateStatus) {
     return result;
   }
 
-  // Gate: score + status + property ki qism
+  // QUEUED (Mo ne dashboard se select kiya "Send outreach") — ye priority pe jati
+  // hain aur score-gate BYPASS karti hain (Mo ne khud chuni, bharosa uska). Sirf
+  // 'requested' (ja chuki) skip. In ko normal se pehle bhejo.
+  const isQueued = (l) => (l.viewing_status || 'new') === 'queued';
+
+  // Gate: score + status + property ki qism.
+  // queued ke liye score-gate nahi (Mo ka manual pick). Baqi ke liye minScore.
   const eligible = listings
-    .filter((l) => l.score >= v.minScore)
-    .filter((l) => (l.viewing_status || 'new') !== 'requested')
+    .filter((l) => isQueued(l) || l.score >= v.minScore)
+    .filter((l) => (l.viewing_status || 'new') !== 'requested' && (l.viewing_status || 'new') !== 'hidden')
     .filter((l) => {
       // ⚠️ Shared room ≠ poora flat. OpenRent shared flat ka `beds` POORE flat ka
       // deta hai (3 bed), jabke kiraye pe sirf ek kamra hai — is liye beds filter
@@ -149,7 +155,9 @@ export async function processViewings(listings, jar, updateStatus) {
       result.skipped++;
       return false;
     })
-    .sort((a, b) => b.score - a.score);
+    // queued (Mo ke manual picks) pehle, phir score-desc. Taake "Send outreach"
+    // wali listings us run me sab se pehle jayein, cap khatam hone se pehle.
+    .sort((a, b) => (isQueued(b) - isQueued(a)) || (b.score - a.score));
 
   let budget = v.dailyCap - (await sentToday());
   if (budget <= 0) {

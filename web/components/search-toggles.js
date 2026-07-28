@@ -29,6 +29,21 @@ function describe(params = {}) {
   return bits.join(' · ');
 }
 
+// ⋯ dropdown menu item ka style (rename/delete/toggle sab isi shakl me).
+const menuItemStyle = {
+  display: 'block',
+  width: '100%',
+  textAlign: 'left',
+  padding: '10px 14px',
+  fontSize: 13,
+  fontWeight: 500,
+  border: 'none',
+  borderBottom: '1px solid var(--mist-line)',
+  background: 'transparent',
+  color: 'var(--paper)',
+  cursor: 'pointer',
+};
+
 // Google Drive style folder icon
 function FolderIcon({ off }) {
   return (
@@ -42,10 +57,24 @@ function FolderIcon({ off }) {
   );
 }
 
+// Ek folder ki dedup/delete key — data.js ke areaKey se match honi chahiye
+// (source|slug-or-name|sorted-params). Delete ke waqt yehi key server ko bhejte.
+function areaKeyOf(a) {
+  const IGNORE = new Set(['isLive', 'viewingProperty', 'viewingproperty', 'index']);
+  const p = new URLSearchParams();
+  Object.entries(a?.params || {})
+    .filter(([k]) => !IGNORE.has(k))
+    .sort(([x], [y]) => x.localeCompare(y))
+    .forEach(([k, v]) => p.set(k, v));
+  return `${a?.source || 'openrent'}|${a?.slug || a?.name || ''}|${p.toString()}`;
+}
+
 export function SearchToggles() {
   const [settings, setSettings] = useState(null);
   const [counts, setCounts] = useState(null); // areaLower -> { total, sent }
   const [status, setStatus] = useState('');
+  const [menuFor, setMenuFor] = useState(null);   // kis folder ka ⋯ menu khula
+  const [renaming, setRenaming] = useState(null);  // { idx, value }
 
   useEffect(() => {
     fetch('/api/settings')
@@ -93,6 +122,40 @@ export function SearchToggles() {
     } catch {
       setStatus('error');
     }
+  }
+
+  // RENAME — folder ke saare duplicate entries (allIdx) ka naam ek saath badlo,
+  // taake hidden twin bhi update ho (warna bot purane naam pe scrape karta rahe).
+  async function renameFolder(allIdx, newName) {
+    const nm = (newName || '').trim();
+    if (!nm) return;
+    const set = new Set(allIdx);
+    const all = settings.areas || [];
+    await commit(all.map((s, j) => (set.has(j) ? { ...s, name: nm } : s)));
+    setRenaming(null);
+    setMenuFor(null);
+  }
+
+  // DELETE — folder ke saare entries hatao. _deleteKeys server ko bhejte hain
+  // (data.js saveSettings sirf inhi keys wale areas girata, baqi safe).
+  async function deleteFolder(allIdx) {
+    const all = settings.areas || [];
+    const keys = [...new Set(allIdx.map((j) => areaKeyOf(all[j])))];
+    // baqi areas (jo delete nahi) — inhe bhejo taake merge-by-key inhe rakhe.
+    const keep = all.filter((_, j) => !allIdx.includes(j));
+    setStatus('saving');
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...settings, areas: keep, _deleteKeys: keys }),
+      });
+      if (res.ok) {
+        try { setSettings(await res.json()); } catch {}
+        setStatus('saved');
+      } else setStatus('error');
+    } catch { setStatus('error'); }
+    setMenuFor(null);
   }
 
   if (!settings) {
@@ -175,23 +238,70 @@ export function SearchToggles() {
                 overflow: 'hidden',
               }}
             >
-              {/* corner control — sirf on/off dot */}
-              <div style={{ position: 'absolute', top: 9, right: 9, zIndex: 2 }}>
+              {/* corner control — on/off dot + ⋯ menu (rename / delete / toggle) */}
+              <div style={{ position: 'absolute', top: 9, right: 9, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <button
                   onClick={() => toggle(allIdx, !on)}
                   title={on ? 'Turn off' : 'Turn on'}
                   aria-label={on ? 'Turn off' : 'Turn on'}
                   style={{
-                    width: 11,
-                    height: 11,
-                    borderRadius: '50%',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 0,
-                    background: on ? 'var(--green)' : 'var(--mist)',
+                    width: 11, height: 11, borderRadius: '50%', border: 'none',
+                    cursor: 'pointer', padding: 0, background: on ? 'var(--green)' : 'var(--mist)',
                   }}
                 />
+                <button
+                  onClick={(e) => { e.preventDefault(); setMenuFor(menuFor === i ? null : i); }}
+                  title="More"
+                  aria-label="More options"
+                  style={{
+                    width: 20, height: 20, borderRadius: 6, border: 'none', cursor: 'pointer',
+                    padding: 0, background: 'transparent', color: 'var(--mist)',
+                    fontSize: 16, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  ⋯
+                </button>
               </div>
+
+              {/* ⋯ dropdown menu */}
+              {menuFor === i && (
+                <>
+                  {/* backdrop — bahar click se band */}
+                  <div
+                    onClick={(e) => { e.preventDefault(); setMenuFor(null); }}
+                    style={{ position: 'fixed', inset: 0, zIndex: 8 }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute', top: 28, right: 9, zIndex: 9, minWidth: 150,
+                      background: 'var(--surface)', border: '1px solid var(--mist-line)',
+                      borderRadius: 10, boxShadow: 'var(--shadow-card)', overflow: 'hidden',
+                    }}
+                  >
+                    <button
+                      onClick={(e) => { e.preventDefault(); setRenaming({ idx: i, allIdx, value: name }); setMenuFor(null); }}
+                      style={menuItemStyle}
+                    >
+                      Rename
+                    </button>
+                    <button
+                      onClick={(e) => { e.preventDefault(); toggle(allIdx, !on); setMenuFor(null); }}
+                      style={menuItemStyle}
+                    >
+                      {on ? 'Turn off' : 'Turn on'}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (confirm(`Delete “${name}”? Its outreach will stop. This can’t be undone.`)) deleteFolder(allIdx);
+                      }}
+                      style={{ ...menuItemStyle, color: 'var(--rust)' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </>
+              )}
 
               {/* poora folder click → andar (folder view). Ab source bhi bhejo,
                   taake folder page sirf us site ki listings dikhaye (mix na ho). */}
@@ -219,9 +329,27 @@ export function SearchToggles() {
                     {isRM ? 'Rightmove' : 'OpenRent'}
                   </span>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 600, marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {name}
-                </div>
+                {renaming?.idx === i ? (
+                  <input
+                    autoFocus
+                    defaultValue={renaming.value}
+                    onClick={(e) => e.preventDefault()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); renameFolder(renaming.allIdx, e.currentTarget.value); }
+                      if (e.key === 'Escape') { e.preventDefault(); setRenaming(null); }
+                    }}
+                    onBlur={(e) => renameFolder(renaming.allIdx, e.currentTarget.value)}
+                    style={{
+                      marginTop: 6, width: '100%', fontSize: 14, fontWeight: 600,
+                      padding: '4px 6px', borderRadius: 6, border: '1px solid var(--brass)',
+                      background: 'var(--surface)', color: 'var(--paper)', outline: 'none',
+                    }}
+                  />
+                ) : (
+                  <div style={{ fontSize: 14, fontWeight: 600, marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {name}
+                  </div>
+                )}
                 <div className="text-muted" style={{ fontSize: 11, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {c
                     ? `${c.total} listing${c.total === 1 ? '' : 's'}${c.sent ? ` · ${c.sent} sent` : ''}`

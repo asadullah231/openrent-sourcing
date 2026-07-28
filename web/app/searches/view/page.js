@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getListings } from '@/lib/data';
-import { ListingCard } from '@/components/listing-card';
+import { FolderRooms } from '@/components/folder-rooms';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +32,8 @@ export default async function SearchFolderPage({ searchParams }) {
     ? all.filter((l) => {
         if ((l.area || '').trim().toLowerCase() !== area.trim().toLowerCase()) return false;
         if (source && (l.source || 'openrent') !== source) return false;
+        // 'hidden' rooms folder se hataye gaye (Mo ne remove kiye) — na dikhao.
+        if (l.viewing_status === 'hidden') return false;
         return true;
       })
     : [];
@@ -111,11 +113,7 @@ export default async function SearchFolderPage({ searchParams }) {
           </Link>
         </div>
       ) : (
-        <div className="grid-cards">
-          {ordered.map((l) => (
-            <ListingCard key={l.listing_id} l={l} sent={l.viewing_status === 'requested'} />
-          ))}
-        </div>
+        <FolderRooms rooms={ordered} />
       )}
     </div>
   );
