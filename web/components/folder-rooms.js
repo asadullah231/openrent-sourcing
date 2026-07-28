@@ -70,14 +70,52 @@ function BulkBar({ count, busy, onSend, onRemove, onClear }) {
   );
 }
 
+// min/max price input ka style
+const priceInputStyle = {
+  width: 80,
+  fontSize: 13,
+  padding: '6px 8px',
+  borderRadius: 8,
+  border: '1px solid var(--mist-line)',
+  background: 'var(--surface)',
+  color: 'var(--paper)',
+  outline: 'none',
+};
+
+// Price presets (£/month) — ek click me common budget ranges. Mo in se ya
+// khud min/max type kar ke apni pricing pe filter karta hai.
+const PRICE_PRESETS = [
+  { label: 'All prices', min: '', max: '' },
+  { label: 'Under £1,000', min: '', max: '1000' },
+  { label: '£1,000–1,500', min: '1000', max: '1500' },
+  { label: '£1,500–2,000', min: '1500', max: '2000' },
+  { label: '£2,000+', min: '2000', max: '' },
+];
+
 export function FolderRooms({ rooms }) {
   const [selected, setSelected] = useState(() => new Set());
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
   // rooms jinhe abhi is session me remove kiya (turant gayab dikhane ko)
   const [removed, setRemoved] = useState(() => new Set());
+  // PRICE FILTER — min/max £ (khali = koi limit nahi)
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
 
-  const visible = rooms.filter((r) => !removed.has(String(r.listing_id)));
+  const notRemoved = rooms.filter((r) => !removed.has(String(r.listing_id)));
+
+  // pricing filter lagao — jis room ka price range me ho wahi dikhe. price na ho
+  // (null) to us ko chhupao nahi (filter tabhi lage jab dono/ek limit ho).
+  const min = minPrice === '' ? null : Number(minPrice);
+  const max = maxPrice === '' ? null : Number(maxPrice);
+  const visible = notRemoved.filter((r) => {
+    if (min == null && max == null) return true;
+    const p = Number(r.price);
+    if (!p) return true; // price unknown — na hatao
+    if (min != null && p < min) return false;
+    if (max != null && p > max) return false;
+    return true;
+  });
   const allSelected = visible.length > 0 && visible.every((r) => selected.has(String(r.listing_id)));
 
   function toggle(id) {
@@ -130,16 +168,81 @@ export function FolderRooms({ rooms }) {
     }
   }
 
+  const activePreset = PRICE_PRESETS.find((p) => p.min === minPrice && p.max === maxPrice);
+
+  // Price filter bar — presets + custom min/max. Rooms count bhi (filtered).
+  const PriceFilter = (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+        <span className="text-muted" style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          Filter by price
+        </span>
+        {PRICE_PRESETS.map((p) => {
+          const on = activePreset ? activePreset.label === p.label : false;
+          return (
+            <button
+              key={p.label}
+              onClick={() => { setMinPrice(p.min); setMaxPrice(p.max); }}
+              style={{
+                fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 999,
+                cursor: 'pointer',
+                border: '1px solid ' + (on ? 'var(--brass)' : 'var(--mist-line)'),
+                background: on ? 'var(--brass)' : 'transparent',
+                color: on ? '#1a1400' : 'var(--mist)',
+              }}
+            >
+              {p.label}
+            </button>
+          );
+        })}
+      </div>
+      {/* custom min / max */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span className="text-muted" style={{ fontSize: 12 }}>£</span>
+          <input
+            type="number" inputMode="numeric" placeholder="Min"
+            value={minPrice} onChange={(e) => setMinPrice(e.target.value)}
+            style={priceInputStyle}
+          />
+          <span className="text-muted" style={{ fontSize: 12 }}>to £</span>
+          <input
+            type="number" inputMode="numeric" placeholder="Max"
+            value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)}
+            style={priceInputStyle}
+          />
+        </div>
+        {(minPrice !== '' || maxPrice !== '') && (
+          <>
+            <button
+              onClick={() => { setMinPrice(''); setMaxPrice(''); }}
+              style={{ fontSize: 12, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--mist-line)', background: 'transparent', color: 'var(--mist)', cursor: 'pointer' }}
+            >
+              Clear
+            </button>
+            <span className="text-muted" style={{ fontSize: 12 }}>
+              {visible.length} of {notRemoved.length} shown
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
   if (!visible.length) {
     return (
-      <div className="text-muted" style={{ padding: '30px 20px', textAlign: 'center', fontSize: 13 }}>
-        No rooms here right now.
+      <div>
+        {PriceFilter}
+        <div className="text-muted" style={{ padding: '30px 20px', textAlign: 'center', fontSize: 13 }}>
+          {notRemoved.length > 0 ? 'No rooms in this price range. Try a wider range.' : 'No rooms here right now.'}
+        </div>
       </div>
     );
   }
 
   return (
     <div>
+      {PriceFilter}
       {/* select-all + note */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, cursor: 'pointer' }}>
