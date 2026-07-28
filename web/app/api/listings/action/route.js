@@ -1,4 +1,4 @@
-import { hideListings, unhideListings, queueListings, getSettings, getHealth } from '@/lib/data';
+import { hideListings, unhideListings, queueListings, getSettings, getHealth, setRoomNote } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -29,11 +29,39 @@ export async function POST(req) {
   const action = body?.action;
   const listingIds = Array.isArray(body?.listingIds) ? body.listingIds : [];
 
+  // NOTE action — single room ka note save/clear. listingIds gate se pehle,
+  // kyunki ye ek hi listingId + text leta hai (bulk nahi).
+  if (action === 'note') {
+    const id = body?.listingId;
+    if (!id) return Response.json({ error: 'No room given.' }, { status: 400 });
+    const saved = await setRoomNote(id, body?.text ?? '');
+    return Response.json({ ok: true, action, note: saved });
+  }
+
   if (!listingIds.length) {
     return Response.json({ error: 'No rooms selected.' }, { status: 400 });
   }
 
-  if (action === 'hide') {
+  // MOVE action — kanban drag/drop. Target column ke hisaab se status set.
+  //   'pending' → unhide/new (score gate wapas)  ·  'queued' → queue+trigger
+  //   'sent' column pe drag = queue+send (same as send).
+  // 'sent' se wapas kheechna allow nahi (ja chuki request wapas nahi hoti) —
+  // client wahan drop rok deta, par yahan bhi guard.
+  if (action === 'move') {
+    const to = body?.to;
+    if (to === 'pending') {
+      const n = await unhideListings(listingIds);
+      return Response.json({ ok: true, action, to, count: n });
+    }
+    if (to === 'queued' || to === 'sent') {
+      // queued/sent dono = queue kar ke bot trigger (neeche send block reuse).
+      body.action = 'send';
+    } else {
+      return Response.json({ error: `Bad move target: ${to}` }, { status: 400 });
+    }
+  }
+
+  if (body.action === 'hide' || action === 'hide') {
     const n = await hideListings(listingIds);
     return Response.json({ ok: true, action, count: n });
   }
@@ -43,7 +71,7 @@ export async function POST(req) {
     return Response.json({ ok: true, action, count: n });
   }
 
-  if (action === 'send') {
+  if (body.action === 'send' || action === 'send') {
     // Cap-aware: sirf itni queue karo jitni cap me bacha hai.
     const health = await getHealth().catch(() => ({}));
     const cap = health.dailyCap ?? 15;

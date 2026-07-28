@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getListings } from '@/lib/data';
+import { getListings, getRoomNotes, getActivityByListing, getHealth } from '@/lib/data';
 import { FolderRooms } from '@/components/folder-rooms';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +23,12 @@ export default async function SearchFolderPage({ searchParams }) {
   const area = sp?.area || '';
   const source = sp?.source || ''; // 'openrent' | 'rightmove' | '' (dono)
 
-  const all = await getListings();
+  const [all, roomNotes, activity, health] = await Promise.all([
+    getListings(),
+    getRoomNotes().catch(() => ({})),
+    getActivityByListing().catch(() => ({})),
+    getHealth().catch(() => ({})),
+  ]);
   // Is folder ki listings — area match + (agar source diya) portal match.
   // Ye is liye zaroori hai (23 Jul): auto-cross ke baad ek hi location ki
   // OpenRent + Rightmove dono listings store me hoti hain. Folder OpenRent ka
@@ -113,7 +118,7 @@ export default async function SearchFolderPage({ searchParams }) {
           </Link>
         </div>
       ) : (
-        <FolderRooms rooms={ordered} />
+        <FolderRooms rooms={ordered} notes={roomNotes} activity={activity} health={health} />
       )}
     </div>
   );

@@ -206,6 +206,61 @@ async function viewingRows(kind) {
   return rows.filter((r) => r.kind === kind);
 }
 
+// ── Per-room notes (campaign panel — Atomic/Twenty CRM jaisa) ──────────────
+//
+// KYUN settings JSON me (naya DB field nahi): NocoDB v2 patch naya column nahi
+// banata — us ke liye schema change chahiye. Notes chhoti cheez hai, per-listing
+// ek chhota text. Settings row me `roomNotes` map (listing_id -> {text, at})
+// rakhna sab se saaf: koi migration nahi, dashboard + bot dono isi row ko dekhte.
+
+/** Saare room notes ek map me: { [listing_id]: { text, at } }. */
+export async function getRoomNotes() {
+  const s = await getSettings();
+  return s.roomNotes && typeof s.roomNotes === 'object' ? s.roomNotes : {};
+}
+
+/** Ek room ka note set/clear karo. Khaali text = note hata do. */
+export async function setRoomNote(listingId, text) {
+  const row = await settingsRow();
+  const cur = safeParse(row?.value) ?? {};
+  const notes = cur.roomNotes && typeof cur.roomNotes === 'object' ? { ...cur.roomNotes } : {};
+  const key = String(listingId);
+  const clean = (text || '').trim();
+  if (clean) notes[key] = { text: clean, at: new Date().toISOString() };
+  else delete notes[key];
+
+  const merged = { ...cur, roomNotes: notes };
+  const body = JSON.stringify(merged);
+  if (row) {
+    await fetch(`${BASE}/api/v2/tables/${T.settings}/records`, {
+      method: 'PATCH', headers: H, body: JSON.stringify([{ Id: row.Id, value: body }]),
+    });
+  } else {
+    await fetch(`${BASE}/api/v2/tables/${T.settings}/records`, {
+      method: 'POST', headers: H, body: JSON.stringify([{ key: 'main', value: body }]),
+    });
+  }
+  return notes[key] ?? null;
+}
+
+// ── Activity log per listing (kab draft/queue/send hua) ────────────────────
+//
+// Kanban/notes panel timeline dikhata hai. Send log (T.log, kind='sent') me
+// listing_id + timestamp hai. queued/hidden events ka apna audit nahi — wo
+// viewing_status me hi hai, is liye timeline = send events + note-updated.
+
+/** listing_id -> [{ kind, at }] — abhi sirf 'sent' events (jo track hote hain). */
+export async function getActivityByListing() {
+  const rows = await fetchAll(T.log);
+  const map = {};
+  for (const r of rows) {
+    if (r.kind !== 'sent') continue;
+    const k = String(r.listing_id);
+    (map[k] ||= []).push({ kind: 'sent', at: r.sent_at || r.created_at || r.CreatedAt || null, mode: r.mode });
+  }
+  return map;
+}
+
 // Ek listing + uska bheja gaya message (drafts/log se) — detail page ke liye
 export async function getListing(id) {
   const rows = await fetchAll(T.listings);
