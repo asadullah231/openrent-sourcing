@@ -126,6 +126,9 @@ export async function fanOut(pasteSearch) {
 
 /** search object (jisme source hai) → apne filter shape { bedsMin, bedsMax, priceMax, priceMin }. */
 export function filtersForSearch(search) {
+  // NAYA (Mo, 28 Jul): dashboard "New Search" form apne filters `search.filters` me
+  // deta hai (beds range + max rent). Wo jeette — Mo ki chuni requirement hai.
+  if (search.filters && typeof search.filters === 'object') return search.filters;
   if (search.source === 'rightmove') return filtersFromRightmoveParams(search.params);
   return filtersFromParams(search.params);
 }

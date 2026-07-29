@@ -35,8 +35,9 @@ export const config = {
   // Mo ke monitored areas (dashboard se editable).
   areas: s.areas ?? [{ name: 'Tower Hamlets', slug: 'tower-hamlets', term: 'Tower Hamlets', radiusKm: 3 }],
 
-  // Buy-box filters (dashboard se editable)
-  filters: s.filters ?? { bedsMin: 2, bedsMax: 4, priceMax: null },
+  // Buy-box filters (dashboard se editable). priceMin/priceMax = rent range
+  // (social-housing: LHA+incentive se max, kabhi min bhi). bedsMin/Max = 2-4 default.
+  filters: s.filters ?? { bedsMin: 2, bedsMax: 4, priceMin: null, priceMax: null },
 
   // "Naya listing" = itne ghante se kam purana (dashboard editable)
   freshWithinHours: s.freshWithinHours ?? 24,

@@ -1,5 +1,6 @@
 import { getHealth } from '@/lib/data';
 import { SearchBar } from '@/components/search-bar';
+import { SearchForm } from '@/components/search-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,11 +32,23 @@ export default async function SearchPage() {
         <StatusLine health={health} />
       </div>
       <p className="text-muted" style={{ marginTop: 0, marginBottom: 22, fontSize: 13, maxWidth: 560, lineHeight: 1.6 }}>
-        Build a search on OpenRent, paste its full link here. Results show below
-        instantly. Save the ones you like and the bot keeps running them.
+        Set a location, bedrooms and rent. The bot searches OpenRent on a schedule
+        and keeps only the listings that fit. Prefer a link? Paste one below instead.
       </p>
 
-      <SearchBar />
+      {/* Naya default (Mo, 28 Jul): form se search — location + beds + max rent. */}
+      <SearchForm />
+
+      {/* Purana paste-link flow — secondary, collapsed. Kuch toota nahi; jab Mo
+          ke paas already-built OpenRent link ho to ye rahe. */}
+      <details style={{ marginTop: 4 }}>
+        <summary style={{ cursor: 'pointer', fontSize: 12.5, color: 'var(--mist)', userSelect: 'none' }}>
+          Or paste an OpenRent link instead
+        </summary>
+        <div style={{ marginTop: 14 }}>
+          <SearchBar />
+        </div>
+      </details>
     </div>
   );
 }

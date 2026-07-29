@@ -39,6 +39,7 @@ function buildSearchUrl(search, filters) {
   if (filters.bedsMin != null) params.set('beds_min', String(filters.bedsMin));
   if (filters.bedsMax != null) params.set('beds_max', String(filters.bedsMax));
   if (filters.priceMax != null) params.set('prices_max', String(filters.priceMax));
+  if (filters.priceMin != null) params.set('prices_min', String(filters.priceMin));
   params.set('isLive', 'true'); // afiodorov se: sirf live listings, dead hata do
   return `${config.base}/properties-to-rent/${search.slug}?${params.toString()}`;
 }
@@ -53,6 +54,15 @@ function buildSearchUrl(search, filters) {
  * Jo link me nahi diya (jaise max rent), wo settings se le lo.
  */
 function filtersFor(search) {
+  // NAYA (Mo, 28 Jul): agar search ke apne `filters` hain (dashboard "New Search"
+  // form ne set kiye — beds + max rent), to WAHI jeette. Ye Mo ki soch-samajh ke
+  // saath chuni gayi requirement hai (borough ka LHA+incentive max), config default
+  // nahi. Sirf jo form ne diya wo override kare, baaki config se.
+  if (search.filters && typeof search.filters === 'object') {
+    const out = { ...config.filters };
+    for (const [k, v] of Object.entries(search.filters)) if (v != null) out[k] = v;
+    return out;
+  }
   if (!search.params) return config.filters;
   const fromLink = filtersFromParams(search.params);
   const out = { ...config.filters };
@@ -140,6 +150,9 @@ function matchesFilters(l, f) {
   if (f.bedsMin != null && (l.beds == null || l.beds < f.bedsMin)) return false;
   if (f.bedsMax != null && (l.beds == null || l.beds > f.bedsMax)) return false;
   if (f.priceMax != null && (l.price == null || l.price > f.priceMax)) return false;
+  // priceMin (Mo, 28 Jul): social-housing flow me har borough+bed ka apna max rent
+  // (LHA+incentive) hota hai; kabhi min bhi. Us se neeche/upar wale skip.
+  if (f.priceMin != null && (l.price == null || l.price < f.priceMin)) return false;
   return true;
 }
 
