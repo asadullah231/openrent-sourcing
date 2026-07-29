@@ -173,6 +173,13 @@ export async function scrapeAll() {
   const errors = [];
   const searches = (config.areas || []).filter((a) => a.enabled !== false);
 
+  // Koi search hi nahi (settings khaali / fetch fail) — saaf skip, throw nahi.
+  // Ye bataana zaroori hai warna "0 listings" chup-chaap ho jaye aur pata na chale.
+  if (!searches.length) {
+    console.log('  ℹ️  No enabled searches — dashboard se location add karo. Kuch scrape nahi kiya.');
+    return [];
+  }
+
   for (const search of searches) {
     try {
       // Portal ke hisaab se sahi scraper (OpenRent ya Rightmove).

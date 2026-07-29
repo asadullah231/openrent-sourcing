@@ -32,8 +32,12 @@ async function fetchSettings() {
 let s = {};
 
 export const config = {
-  // Mo ke monitored areas (dashboard se editable).
-  areas: s.areas ?? [{ name: 'Tower Hamlets', slug: 'tower-hamlets', term: 'Tower Hamlets', radiusKm: 3 }],
+  // Mo ke monitored areas — 100% dashboard se aati hain (dynamic). Koi hardcoded
+  // location default NAHI (Mo, 29 Jul): pehle yahan "Tower Hamlets" tha, jo settings
+  // fetch fail hone pe galti se scrape ho jata. Ab default KHAALI — settings na
+  // milein to bot kuch scrape na kare (galat location scrape se behtar). Jo bhi
+  // location Mo daale (Bexley, Bromley, kuch bhi), wahi chalti hai.
+  areas: s.areas ?? [],
 
   // Buy-box filters (dashboard se editable). priceMin/priceMax = rent range
   // (social-housing: LHA+incentive se max, kabhi min bhi). bedsMin/Max = 2-4 default.
