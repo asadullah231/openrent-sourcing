@@ -14,8 +14,8 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){
 document.documentElement.setAttribute('data-theme','dark');}})();`;
 
 export const metadata = {
-  title: 'OpenRent Sourcing — Control',
-  description: 'Property sourcing bot control panel',
+  title: 'Social Housing — Sourcing',
+  description: 'Social housing property sourcing control panel',
 };
 
 // Asad ka faisla (23 Jul): sirf 4 pages nav me. New&pending / Requested / Queue
@@ -62,8 +62,8 @@ export default async function RootLayout({ children }) {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 10px 24px' }}>
-              <span style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(145deg,#edc06a,var(--brass))', display: 'grid', placeItems: 'center', color: '#1a1204', fontWeight: 700, fontSize: 14, boxShadow: '0 2px 6px rgba(0,0,0,.35)' }}>S</span>
-              <span style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: '-0.02em' }}>Sourcing</span>
+              <span style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(145deg,#edc06a,var(--brass))', display: 'grid', placeItems: 'center', color: '#1a1204', fontWeight: 700, fontSize: 12, boxShadow: '0 2px 6px rgba(0,0,0,.35)' }}>SH</span>
+              <span style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: '-0.02em' }}>Social Housing</span>
             </div>
 
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mist)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 12px 8px' }}>Menu</div>
