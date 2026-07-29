@@ -41,7 +41,17 @@ if [ -n "${PROXY_IPS:-}" ] && [ -n "${PROXY_PORT:-}" ]; then
   export NODE_USE_ENV_PROXY=1
   export HTTPS_PROXY="$URI"
   export HTTP_PROXY="$URI"
-  echo "  🔀 Proxy: ${IP}:${PROXY_PORT} ($((IDX + 1))/${#IPS[@]})"
+
+  # 🐛 FIX (29 Jul — folder khaali + "Tower Hamlets" default ka jaR):
+  #   Proxy (Proxy-Seller GB, OpenRent ke liye zaroori) NocoDB tak nahi pahunchta.
+  #   Proxy ON hone pe har fetch — NocoDB bhi — usi se jata, to hydrateConfig ki
+  #   settings fetch FAIL ho jati → s={} → default areas ("Tower Hamlets") chalte
+  #   aur listings NocoDB pe save bhi nahi hoti. Sirf OpenRent ko proxy chahiye.
+  #   NO_PROXY me NocoDB (+ localhost) daal do → wo DIRECT jaye, OpenRent proxy se.
+  NC_HOST="$(node -e 'try{console.log(new URL(process.env.NOCODB_BASE_URL).hostname)}catch(e){}' 2>/dev/null)"
+  export NO_PROXY="${NC_HOST},localhost,127.0.0.1"
+  export no_proxy="$NO_PROXY"
+  echo "  🔀 Proxy: ${IP}:${PROXY_PORT} ($((IDX + 1))/${#IPS[@]}) — NocoDB direct (${NC_HOST})"
 else
   echo "  ℹ️  Proxy nahi (PROXY_IPS khali) — seedha connection."
 fi
