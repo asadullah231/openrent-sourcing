@@ -41,6 +41,7 @@ export async function POST(req) {
   const bedsMax = num(body?.bedsMax);
   const priceMin = num(body?.priceMin);
   const priceMax = num(body?.priceMax);
+  const radius = num(body?.radius); // km — OpenRent 'area' param (0 = this area only)
 
   if (bedsMin != null && bedsMax != null && bedsMin > bedsMax) {
     return Response.json({ error: 'Min beds cannot be more than max beds.' }, { status: 400 });
@@ -69,6 +70,9 @@ export async function POST(req) {
   if (bedsMax != null) params.bedrooms_max = String(bedsMax);
   if (priceMin != null) params.prices_min = String(priceMin);
   if (priceMax != null) params.prices_max = String(priceMax);
+  // Radius: OpenRent ka 'area' param = kitne km/miles door tak dhoonde (km unit
+  // OpenRent ka default). 0 ya null = sirf yehi area (param na daalo).
+  if (radius != null && radius > 0) params.area = String(radius);
 
   const search = {
     source: 'openrent',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // "New Search" form (Mo, 28 Jul) — link paste ki jagah seedha requirement bharo.
 //
@@ -26,10 +26,17 @@ const BEDS = [1, 2, 3, 4, 5, 6];
 
 export function SearchForm() {
   const [location, setLocation] = useState('');
+  const [radius, setRadius] = useState('3'); // km — OpenRent 'area' param, km default
   const [bedsMin, setBedsMin] = useState('2');
   const [bedsMax, setBedsMax] = useState('4');
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
+  // Autocomplete (OpenRent ki apni suggestions)
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSug, setShowSug] = useState(false);
+  const [activeSug, setActiveSug] = useState(-1);
+  const pickedRef = useRef(false); // suggestion select hua to dobara fetch na karo
+  const boxRef = useRef(null);
   // LHA helper (optional) — Mo ise bharkar max rent auto-fill kar sakta hai.
   const [showHelper, setShowHelper] = useState(false);
   const [lhaRate, setLhaRate] = useState('');
@@ -51,6 +58,51 @@ export function SearchForm() {
     if (suggested != null) setPriceMax(String(suggested));
   }
 
+  // Location autocomplete — jaise Mo type kare, OpenRent se asli suggestions.
+  // Debounced (250ms) taake har keystroke pe call na jaye. Suggestion select
+  // karne ke baad wapas fetch na ho (pickedRef).
+  useEffect(() => {
+    const q = location.trim();
+    if (pickedRef.current) { pickedRef.current = false; return; }
+    if (q.length < 2) { setSuggestions([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/location-suggest?q=${encodeURIComponent(q)}`);
+        const j = await r.json();
+        setSuggestions(Array.isArray(j.suggestions) ? j.suggestions : []);
+        setShowSug(true);
+        setActiveSug(-1);
+      } catch { setSuggestions([]); }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [location]);
+
+  // Bahar click = dropdown band.
+  useEffect(() => {
+    function onDoc(e) {
+      if (boxRef.current && !boxRef.current.contains(e.target)) setShowSug(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  function pickSuggestion(s) {
+    pickedRef.current = true;
+    setLocation(s);
+    setShowSug(false);
+    setSuggestions([]);
+  }
+
+  function onLocationKey(e) {
+    if (showSug && suggestions.length) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setActiveSug((i) => Math.min(i + 1, suggestions.length - 1)); return; }
+      if (e.key === 'ArrowUp') { e.preventDefault(); setActiveSug((i) => Math.max(i - 1, 0)); return; }
+      if (e.key === 'Enter' && activeSug >= 0) { e.preventDefault(); pickSuggestion(suggestions[activeSug]); return; }
+      if (e.key === 'Escape') { setShowSug(false); return; }
+    }
+    if (e.key === 'Enter') save();
+  }
+
   async function save() {
     const loc = location.trim();
     if (!loc) { setOk(false); setMsg('Enter a location first.'); return; }
@@ -60,6 +112,7 @@ export function SearchForm() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           location: loc,
+          radius: radius === '' ? null : Number(radius), // km
           bedsMin: bedsMin === '' ? null : Number(bedsMin),
           bedsMax: bedsMax === '' ? null : Number(bedsMax),
           priceMin: priceMin === '' ? null : Number(priceMin),
@@ -87,16 +140,60 @@ export function SearchForm() {
         and only keeps listings that fit. No links to paste.
       </div>
 
-      {/* Location */}
-      <div style={{ marginBottom: 14 }}>
-        <label style={labelStyle}>Location</label>
-        <input
-          style={inputStyle}
-          placeholder="Borough or postcode — e.g. Bexley, Bromley, SE9"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && save()}
-        />
+      {/* Location + radius row */}
+      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 14, alignItems: 'flex-start' }}>
+        {/* Location with OpenRent autocomplete */}
+        <div ref={boxRef} style={{ flex: '1 1 280px', position: 'relative' }}>
+          <label style={labelStyle}>Location</label>
+          <input
+            style={inputStyle}
+            placeholder="Start typing — e.g. Bexley, Bromley, SE9"
+            value={location}
+            autoComplete="off"
+            onChange={(e) => setLocation(e.target.value)}
+            onFocus={() => suggestions.length && setShowSug(true)}
+            onKeyDown={onLocationKey}
+          />
+          {showSug && suggestions.length > 0 && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30, marginTop: 4,
+              background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 10,
+              boxShadow: 'var(--shadow-card)', overflow: 'hidden', maxHeight: 320, overflowY: 'auto',
+            }}>
+              {suggestions.map((s, i) => (
+                <button
+                  key={s}
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); pickSuggestion(s); }}
+                  onMouseEnter={() => setActiveSug(i)}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left', padding: '9px 12px',
+                    fontSize: 13, border: 'none', cursor: 'pointer', color: 'var(--paper)',
+                    background: i === activeSug ? 'rgba(180,140,60,0.14)' : 'transparent',
+                    borderTop: i === 0 ? 'none' : '1px solid var(--mist-line)',
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Radius (km) — OpenRent 'area' param, km */}
+        <div style={{ flex: '0 1 150px' }}>
+          <label style={labelStyle}>Within (km)</label>
+          <select style={{ ...inputStyle, cursor: 'pointer' }} value={radius} onChange={(e) => setRadius(e.target.value)}>
+            <option value="0">This area only</option>
+            <option value="1">1 km</option>
+            <option value="3">3 km</option>
+            <option value="5">5 km</option>
+            <option value="10">10 km</option>
+            <option value="15">15 km</option>
+            <option value="20">20 km</option>
+            <option value="25">25 km</option>
+          </select>
+        </div>
       </div>
 
       {/* Beds + Price row */}
