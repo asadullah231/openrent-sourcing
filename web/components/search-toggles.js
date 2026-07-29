@@ -16,16 +16,27 @@ import Link from 'next/link';
 // runtime params they). Yahan naam pe dedup karke ek hi folder dikhate hain —
 // pehla wala rakh lete hain, baqi chhupa dete hain.
 
-function describe(params = {}) {
+// Folder card ki chhoti summary line. Beds ab folder ke NAAM me hota hai (form se
+// "2-4 Bed, Bexley"), is liye yahan sirf radius + price range dikhate hain — dobara
+// beds na aaye. (Purani paste-link searches ke liye beds bhi rakh lete, warna unki
+// summary khali lagti.)
+function describe(params = {}, opts = {}) {
   const bits = [];
-  const bMin = params.bedrooms_min ?? params.beds_min;
-  const bMax = params.bedrooms_max ?? params.beds_max;
-  if (bMin && bMax) bits.push(`${bMin}-${bMax} bed`);
-  else if (bMin) bits.push(`${bMin}+ bed`);
-  else if (bMax) bits.push(`up to ${bMax} bed`);
-  if (params.area) bits.push(`${params.area} mi`);
+  if (!opts.bedsInName) {
+    const bMin = params.bedrooms_min ?? params.beds_min;
+    const bMax = params.bedrooms_max ?? params.beds_max;
+    if (bMin && bMax) bits.push(`${bMin}-${bMax} bed`);
+    else if (bMin) bits.push(`${bMin}+ bed`);
+    else if (bMax) bits.push(`up to ${bMax} bed`);
+  }
+  // Radius: OpenRent 'area' param KM me hota hai (mi nahi — 29 Jul confirm).
+  if (params.area) bits.push(`within ${params.area} km`);
+  // Price range (min-max), warna sirf max.
+  const pMin = params.prices_min ?? params.price_min;
   const pMax = params.prices_max ?? params.price_max;
-  if (pMax) bits.push(`£${pMax}`);
+  if (pMin && pMax) bits.push(`£${Number(pMin).toLocaleString('en-GB')}-${Number(pMax).toLocaleString('en-GB')}`);
+  else if (pMax) bits.push(`up to £${Number(pMax).toLocaleString('en-GB')}`);
+  else if (pMin) bits.push(`£${Number(pMin).toLocaleString('en-GB')}+`);
   return bits.join(' · ');
 }
 
@@ -224,7 +235,11 @@ export function SearchToggles() {
           const isRM = source === 'rightmove';
           const c = counts ? counts[`${source}|${name.trim().toLowerCase()}`] : null;
           // sub: filter summary; crossed (bot ne khud banayi) pe "auto".
-          const sub = s.params ? describe(s.params) : s.crossed ? 'auto' : s.pastedUrl ? 'link' : 'saved';
+          // fromForm searches ka naam me pehle se beds hai ("2-4 Bed, Bexley"),
+          // to sub me beds dobara na dikhao (bedsInName).
+          const sub = s.params
+            ? describe(s.params, { bedsInName: !!s.fromForm })
+            : s.crossed ? 'auto' : s.pastedUrl ? 'link' : 'saved';
 
           return (
             <div

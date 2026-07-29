@@ -74,10 +74,22 @@ export async function POST(req) {
   // OpenRent ka default). 0 ya null = sirf yehi area (param na daalo).
   if (radius != null && radius > 0) params.area = String(radius);
 
+  // Folder ka SAAF naam (Mo, 29 Jul): beds + location, jaise "2-4 Bed, Bexley"
+  // ya "1 Bed, Bexley". Pehle sirf location aata tha; ab beds bhi taake folder
+  // se hi saaf pata chale kya search hai.
+  let bedLabel = '';
+  if (bedsMin != null && bedsMax != null) bedLabel = bedsMin === bedsMax ? `${bedsMin} Bed` : `${bedsMin}-${bedsMax} Bed`;
+  else if (bedsMin != null) bedLabel = `${bedsMin}+ Bed`;
+  else if (bedsMax != null) bedLabel = `Up to ${bedsMax} Bed`;
+  // Location ka pehla saaf hissa ("Bexley, Greater London" → "Bexley").
+  const shortLoc = location.split(',')[0].trim();
+  const name = bedLabel ? `${bedLabel}, ${shortLoc}` : shortLoc;
+
   const search = {
     source: 'openrent',
     slug,
-    name: location,
+    name,
+    displayLocation: shortLoc, // area-match ke liye asli location (bot listings ka area is se match)
     params,
     filters,
     enabled: true,
