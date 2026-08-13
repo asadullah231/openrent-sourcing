@@ -1,7 +1,7 @@
 'use client';
 
-// CRM leads table — search / status / order / needs-action filters + column
-// sorting. Row click → /leads/[id]. Data server se aata hai (page.js), yahan
+// Sourcing table — search / status / order / needs-action filters + column
+// sorting. Row click → /sourcing/[id]. Data server se aata hai (page.js), yahan
 // sirf dikhane ki chhanai hoti hai — koi fetch nahi, koi apni copy nahi.
 
 import { useMemo, useState } from 'react';
@@ -84,7 +84,7 @@ export function LeadsTable({ leads }) {
         <input
           className="field"
           style={{ maxWidth: 260 }}
-          placeholder="Search leads, areas, landlords…"
+          placeholder="Search properties, areas, landlords…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -123,14 +123,14 @@ export function LeadsTable({ leads }) {
       {/* ── Table ── */}
       {shown.length === 0 ? (
         <div className="text-muted" style={{ border: '1px dashed var(--mist-line-2)', borderRadius: 'var(--r-card)', padding: '36px 24px', textAlign: 'center', fontSize: 13 }}>
-          No leads match these filters.
+          No properties match these filters.
         </div>
       ) : (
         <div className="crm-wrap">
           <table className="crm-table">
             <thead>
               <tr>
-                <th>Lead</th>
+                <th>Ref</th>
                 <th>Property</th>
                 <th>Order</th>
                 <th>Landlord</th>
@@ -145,7 +145,7 @@ export function LeadsTable({ leads }) {
             </thead>
             <tbody>
               {shown.map((l) => (
-                <tr key={l.Id} onClick={() => router.push(`/leads/${l.Id}`)}>
+                <tr key={l.Id} onClick={() => router.push(`/sourcing/${l.Id}`)}>
                   <td className="font-mono" style={{ fontWeight: 700, fontSize: 12.5 }}>{l.ref}</td>
                   <td style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {leadPropertyLine(l)}

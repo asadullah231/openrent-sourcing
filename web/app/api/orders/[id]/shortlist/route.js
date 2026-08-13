@@ -38,7 +38,7 @@ export async function POST(req, { params }) {
         listing_id: listingId,
         lead_row_id: row.Id,
         type: body.shortlisted ? 'shortlisted' : 'unshortlisted',
-        title: body.shortlisted ? 'Lead shortlisted' : 'Removed from shortlist',
+        title: body.shortlisted ? 'Shortlisted' : 'Removed from shortlist',
         detail: row.match_score != null ? `Match score: ${row.match_score}%` : null,
       });
     } catch {}

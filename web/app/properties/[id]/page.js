@@ -34,7 +34,7 @@ export default async function PropertyDetailPage({ params }) {
     return (
       <div style={{ textAlign: 'center', padding: '64px 24px' }}>
         <p style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Property not found</p>
-        <p className="text-muted" style={{ margin: '6px 0 16px', fontSize: 13 }}>No sourcing lead references this property any more.</p>
+        <p className="text-muted" style={{ margin: '6px 0 16px', fontSize: 13 }}>No order is sourcing this property any more.</p>
         <Link href="/properties" className="btn-brass" style={{ textDecoration: 'none' }}>Back to properties</Link>
       </div>
     );
@@ -84,13 +84,13 @@ export default async function PropertyDetailPage({ params }) {
       {/* ── Sourcing leads (orders matched) ── */}
       <div>
         <h2 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 600 }}>
-          Sourcing leads <span className="text-muted" style={{ fontWeight: 400, fontSize: 12.5 }}>{leads.length}</span>
+          Orders sourcing this property <span className="text-muted" style={{ fontWeight: 400, fontSize: 12.5 }}>{leads.length}</span>
         </h2>
         <div className="crm-wrap">
           <table className="crm-table" style={{ minWidth: 720 }}>
             <thead>
               <tr>
-                <th>Lead</th>
+                <th>Ref</th>
                 <th>Order</th>
                 <th style={{ textAlign: 'right' }}>Match</th>
                 <th style={{ textAlign: 'right' }}>Net margin</th>
@@ -103,7 +103,7 @@ export default async function PropertyDetailPage({ params }) {
               {leads.map((lead) => (
                 <tr key={lead.Id}>
                   <td className="font-mono" style={{ fontWeight: 700, fontSize: 12.5 }}>
-                    <Link href={`/leads/${lead.Id}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>{lead.ref}</Link>
+                    <Link href={`/sourcing/${lead.Id}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>{lead.ref}</Link>
                   </td>
                   <td className="font-mono" style={{ fontSize: 12 }}>
                     {lead.order ? (

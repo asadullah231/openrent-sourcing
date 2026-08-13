@@ -26,7 +26,7 @@ export async function POST(req, { params }) {
 
   const type = TYPES[body.type] ? body.type : 'message';
   const lead = await getLead(id);
-  if (!lead) return Response.json({ error: 'Lead not found.' }, { status: 404 });
+  if (!lead) return Response.json({ error: 'Record not found.' }, { status: 404 });
 
   // Outreach hua → pipeline aage. 'response' pe awaiting nahi lagta (jawab to
   // aa gaya); baqi sab pe: contacted + awaiting_response.

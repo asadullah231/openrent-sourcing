@@ -85,7 +85,7 @@ export default async function PropertiesPage() {
                   {[l.beds != null && `${l.beds} bed`, l.baths != null && `${l.baths} bath`, l.epc && `EPC ${l.epc}`].filter(Boolean).join(' · ') || '—'}
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 12 }}>
-                  <span><b className="font-mono">{p.leads.length}</b> <span className="text-muted">lead{p.leads.length === 1 ? '' : 's'}</span></span>
+                  <span><b className="font-mono">{p.leads.length}</b> <span className="text-muted">order{p.leads.length === 1 ? '' : 's'}</span></span>
                   <LeadStatusBadge status={best?.status} size={10} />
                 </div>
               </Link>

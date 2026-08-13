@@ -22,7 +22,7 @@ export async function POST(req, { params }) {
   }
 
   const lead = await getLead(id);
-  if (!lead) return Response.json({ error: 'Lead not found.' }, { status: 404 });
+  if (!lead) return Response.json({ error: 'Record not found.' }, { status: 404 });
 
   const order = LEAD_STATUSES.map((s) => s.key);
   const before = (key) => order.indexOf(lead.status) < order.indexOf(key);

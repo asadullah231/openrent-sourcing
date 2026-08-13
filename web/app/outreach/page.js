@@ -109,7 +109,7 @@ function LeadRow({ lead, actions, engine }) {
     >
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
-          <Link href={`/leads/${lead.Id}`} className="font-mono" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--accent)', textDecoration: 'none' }}>
+          <Link href={`/sourcing/${lead.Id}`} className="font-mono" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--accent)', textDecoration: 'none' }}>
             {lead.ref}
           </Link>
           <span style={{ fontSize: 13.5, fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -253,7 +253,7 @@ export default async function OutreachPage({ searchParams }) {
 
       {leadsError && (
         <div style={{ border: '1px solid var(--rust)', color: 'var(--rust)', borderRadius: 'var(--r-ctrl)', padding: '12px 16px', fontSize: 13, marginBottom: 18 }}>
-          Could not load leads: {leadsError}
+          Could not load the funnel: {leadsError}
         </div>
       )}
 
@@ -306,7 +306,7 @@ export default async function OutreachPage({ searchParams }) {
           >
             {tab === 'ready' && 'Nothing waiting for outreach. Shortlist properties on an order to fill this list.'}
             {tab === 'followups' && 'No follow-ups due. Set a follow-up date when you log outreach.'}
-            {tab === 'all' && 'No leads yet — run Find Properties on an order first.'}
+            {tab === 'all' && 'Nothing here yet — run Find Properties on an order first.'}
             {!['ready', 'followups', 'all'].includes(tab) && 'Nothing here yet.'}
           </div>
         ) : (

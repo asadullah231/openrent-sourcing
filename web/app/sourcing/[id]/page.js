@@ -1,5 +1,6 @@
-// Lead detail — CRM ka sab se aham page. Sawal ek hi hai: IS LEAD PE AGLA
-// QADAM KYA HAI? Upar pehchaan + actions (client), neeche property / order /
+// Sourcing detail — CRM ka sab se aham page. Ek property × ek order ka
+// workbench. Sawal ek hi hai: IS PE AGLA QADAM KYA HAI? (UI me "Lead" lafz
+// nahi aata — 13 Aug directive; andar ka model wahi lead/order_properties hai.) Upar pehchaan + actions (client), neeche property / order /
 // landlord / match / margin ke cards, aakhir me activity timeline.
 //
 // Server component: lead + activities NocoDB se. Sab actions LeadActions
@@ -39,7 +40,7 @@ function Fact({ label, children, strong = false }) {
   );
 }
 
-export default async function LeadDetailPage({ params }) {
+export default async function SourcingDetailPage({ params }) {
   const { id } = await params;
 
   let lead = null;
@@ -63,16 +64,16 @@ export default async function LeadDetailPage({ params }) {
   if (loadError) {
     return (
       <div style={{ border: '1px solid var(--rust)', color: 'var(--rust)', borderRadius: 'var(--r-ctrl)', padding: '12px 16px', fontSize: 13 }}>
-        Could not load the lead: {loadError}
+        Could not load this record: {loadError}
       </div>
     );
   }
   if (!lead) {
     return (
       <div style={{ textAlign: 'center', padding: '64px 24px' }}>
-        <p style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Lead not found</p>
-        <p className="text-muted" style={{ margin: '6px 0 16px', fontSize: 13 }}>It may have been removed by a newer search.</p>
-        <Link href="/leads" className="btn-brass" style={{ textDecoration: 'none' }}>Back to leads</Link>
+        <p style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Not found</p>
+        <p className="text-muted" style={{ margin: '6px 0 16px', fontSize: 13 }}>This property may have been removed by a newer search.</p>
+        <Link href="/sourcing" className="btn-brass" style={{ textDecoration: 'none' }}>Back to sourcing</Link>
       </div>
     );
   }
@@ -87,8 +88,8 @@ export default async function LeadDetailPage({ params }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       {/* ── Header ── */}
       <div>
-        <Link href="/leads" className="text-muted" style={{ fontSize: 12.5, textDecoration: 'none' }}>
-          ← Leads
+        <Link href="/sourcing" className="text-muted" style={{ fontSize: 12.5, textDecoration: 'none' }}>
+          ← Sourcing
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
           <h1 className="font-mono" style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>{lead.ref}</h1>

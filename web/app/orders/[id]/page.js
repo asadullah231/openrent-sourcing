@@ -143,8 +143,8 @@ export default async function OrderDetailPage({ params }) {
                 <div className="text-muted" style={{ fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
               </div>
             ))}
-            <Link href="/leads" className="seg" style={{ marginLeft: 'auto', textDecoration: 'none', fontSize: 12 }}>
-              View as leads
+            <Link href="/sourcing" className="seg" style={{ marginLeft: 'auto', textDecoration: 'none', fontSize: 12 }}>
+              Open in Sourcing
             </Link>
           </div>
         );

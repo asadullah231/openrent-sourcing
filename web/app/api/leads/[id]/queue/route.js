@@ -20,7 +20,7 @@ export const maxDuration = 60;
 export async function POST(req, { params }) {
   const { id } = await params;
   const lead = await getLead(id);
-  if (!lead) return Response.json({ error: 'Lead not found.' }, { status: 404 });
+  if (!lead) return Response.json({ error: 'Record not found.' }, { status: 404 });
 
   const l = lead.listing || {};
   if ((l.source || 'openrent') !== 'openrent') {
@@ -30,7 +30,7 @@ export async function POST(req, { params }) {
     );
   }
   if (!lead.listing_id) {
-    return Response.json({ error: 'This lead has no listing id to contact.' }, { status: 400 });
+    return Response.json({ error: 'This property has no listing id to contact.' }, { status: 400 });
   }
 
   // Cap-aware — folder view ke "Send" jaisa hi guard. Cap poori = queue nahi.

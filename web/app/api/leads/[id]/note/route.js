@@ -12,7 +12,7 @@ export async function POST(req, { params }) {
   if (!text) return Response.json({ error: 'Note text is required.' }, { status: 400 });
 
   const lead = await getLead(id);
-  if (!lead) return Response.json({ error: 'Lead not found.' }, { status: 404 });
+  if (!lead) return Response.json({ error: 'Record not found.' }, { status: 404 });
 
   try {
     const activity = await logActivity({

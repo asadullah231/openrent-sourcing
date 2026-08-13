@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req, { params }) {
   const { id } = await params;
   const lead = await getLead(id);
-  if (!lead) return Response.json({ error: 'Lead not found.' }, { status: 404 });
+  if (!lead) return Response.json({ error: 'Record not found.' }, { status: 404 });
   return Response.json({ lead });
 }
 
@@ -25,10 +25,10 @@ export async function PATCH(req, { params }) {
   }
 
   const before = await getLead(id);
-  if (!before) return Response.json({ error: 'Lead not found.' }, { status: 404 });
+  if (!before) return Response.json({ error: 'Record not found.' }, { status: 404 });
 
   if (body.lead_status === 'lost' && !body.loss_reason && !before.loss_reason) {
-    return Response.json({ error: 'Pick a loss reason when marking a lead as lost.' }, { status: 400 });
+    return Response.json({ error: 'Pick a loss reason when marking it as lost.' }, { status: 400 });
   }
 
   let lead;

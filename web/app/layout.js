@@ -29,12 +29,16 @@ export const metadata = {
 // Search nav se HATA (13 Aug directive): properties ab Order → Find Properties
 // se dhundi jati hain. Standalone search /search pe zinda hai (paste-link flow
 // wahi ka wahi), sirf primary entry point nahi raha. Root / ab dashboard pe jata hai.
+// "Leads" nav se HATA (13 Aug directive): Lead = order↔property relationship,
+// user ko ye lafz kabhi nahi dikhna chahiye. Wahi workspace ab "Sourcing" hai
+// (/sourcing) — data model wahi ka wahi, sirf naam badla. Nav ki tarteeb
+// workflow ki tarteeb hai: Order → Sourcing → Outreach.
 const nav = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/orders', label: 'Orders' },
-  { href: '/leads', label: 'Leads' },
-  { href: '/properties', label: 'Properties' },
+  { href: '/sourcing', label: 'Sourcing' },
   { href: '/outreach', label: 'Outreach' },
+  { href: '/properties', label: 'Properties' },
   { href: '/map', label: 'Map' },
   { href: '/settings', label: 'Settings' },
 ];

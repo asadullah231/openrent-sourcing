@@ -64,16 +64,16 @@ export default async function DashboardPage() {
 
   const priorities = [
     f.needsContact > 0 && {
-      text: `${f.needsContact} lead${f.needsContact === 1 ? '' : 's'} need contact on OpenRent`,
-      href: '/leads', color: 'var(--brass)',
+      text: `${f.needsContact} propert${f.needsContact === 1 ? 'y needs' : 'ies need'} contact on OpenRent`,
+      href: '/outreach?tab=ready', color: 'var(--brass)',
     },
     f.followupsDue > 0 && {
       text: `${f.followupsDue} follow-up${f.followupsDue === 1 ? '' : 's'} due today`,
-      href: '/leads', color: 'var(--rust)',
+      href: '/outreach?tab=followups', color: 'var(--rust)',
     },
     f.awaiting > 0 && {
-      text: `${f.awaiting} lead${f.awaiting === 1 ? '' : 's'} awaiting a landlord response`,
-      href: '/leads', color: 'var(--accent)',
+      text: `${f.awaiting} propert${f.awaiting === 1 ? 'y' : 'ies'} awaiting a landlord response`,
+      href: '/outreach?tab=awaiting', color: 'var(--accent)',
     },
     ordersNoStrong.length > 0 && {
       text: `${ordersNoStrong.length} active order${ordersNoStrong.length === 1 ? '' : 's'} with no strong match yet — run the search again`,
@@ -86,20 +86,20 @@ export default async function DashboardPage() {
       <div>
         <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Dashboard</h1>
         <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
-          The sourcing pipeline at a glance — orders, leads and what needs doing next.
+          The sourcing pipeline at a glance — orders, properties and what needs doing next.
         </p>
       </div>
 
       {/* ── Funnel stats ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
         <Stat label="Active orders" value={activeOrders.length} href="/orders" />
-        <Stat label="New leads (7d)" value={newLeads} href="/leads" />
-        <Stat label="Strong matches" value={f.strong} href="/leads" />
-        <Stat label="Shortlisted" value={f.shortlisted} color="var(--brass)" href="/leads" />
-        <Stat label="Needs contact" value={f.needsContact} color={f.needsContact ? 'var(--brass)' : undefined} href="/leads" />
-        <Stat label="Awaiting response" value={f.awaiting} color={f.awaiting ? 'var(--accent)' : undefined} href="/leads" />
-        <Stat label="Viewings" value={f.viewings} color={f.viewings ? 'var(--green)' : undefined} href="/leads" />
-        <Stat label="Active deals" value={f.deals} color={f.deals ? 'var(--green)' : undefined} href="/leads" />
+        <Stat label="New properties (7d)" value={newLeads} href="/sourcing" />
+        <Stat label="Strong matches" value={f.strong} href="/sourcing" />
+        <Stat label="Shortlisted" value={f.shortlisted} color="var(--brass)" href="/sourcing" />
+        <Stat label="Needs contact" value={f.needsContact} color={f.needsContact ? 'var(--brass)' : undefined} href="/outreach?tab=ready" />
+        <Stat label="Awaiting response" value={f.awaiting} color={f.awaiting ? 'var(--accent)' : undefined} href="/outreach?tab=awaiting" />
+        <Stat label="Viewings" value={f.viewings} color={f.viewings ? 'var(--green)' : undefined} href="/sourcing" />
+        <Stat label="Active deals" value={f.deals} color={f.deals ? 'var(--green)' : undefined} href="/sourcing" />
         <Stat
           label="Expected margin"
           value={`£${Math.round(f.expectedMargin).toLocaleString('en-GB')}/mo`}
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
         <h2 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 600 }}>Priority actions</h2>
         {priorities.length === 0 ? (
           <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
-            Nothing urgent — all leads are moving and no follow-ups are overdue.
+            Nothing urgent — everything is moving and no follow-ups are overdue.
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -140,7 +140,7 @@ export default async function DashboardPage() {
       {/* ── Recent activity ── */}
       <div>
         <h2 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 600 }}>Recent activity</h2>
-        <ActivityTimeline activities={activities} emptyText="No activity yet — it starts once orders find properties and leads move." />
+        <ActivityTimeline activities={activities} emptyText="No activity yet — it starts once orders find properties and they move through the funnel." />
       </div>
     </div>
   );

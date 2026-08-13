@@ -192,7 +192,7 @@ export function LeadActions({ lead }) {
       {/* ── Lost needs a reason first ── */}
       {pendingLost && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', border: '1px solid var(--rust)', borderRadius: 'var(--r-ctrl)', padding: '10px 12px' }}>
-          <span style={{ fontSize: 12.5, color: 'var(--rust)', fontWeight: 600 }}>Why was this lead lost?</span>
+          <span style={{ fontSize: 12.5, color: 'var(--rust)', fontWeight: 600 }}>Why was this property lost?</span>
           <select className="field" style={{ width: 190 }} value={lossReason} onChange={(e) => setLossReason(e.target.value)}>
             {LOSS_REASONS.map((r) => (
               <option key={r.key} value={r.key}>{r.label}</option>
@@ -251,7 +251,7 @@ export function LeadActions({ lead }) {
       {panel === 'response' && (
         <div style={{ background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div className="text-muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
-            What did the landlord say? This moves the lead in the funnel.
+            What did the landlord say? This moves the property in the funnel.
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <select className="field" style={{ width: 220 }} value={rOutcome} onChange={(e) => setROutcome(e.target.value)}>

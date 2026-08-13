@@ -328,12 +328,12 @@ function MatchCard({ m, order, busy, onShortlist }) {
               send abhi bhi Phase 3 hai.) */}
           {m.Id != null && (
             <a
-              href={`/leads/${m.Id}`}
+              href={`/sourcing/${m.Id}`}
               className="seg"
               style={{ fontSize: 12, padding: '7px 12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-              title="Open the lead — outreach, status and timeline live there."
+              title="Open the sourcing record — outreach, status and timeline live there."
             >
-              Open lead
+              Open in Sourcing
             </a>
           )}
         </div>
