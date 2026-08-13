@@ -2,6 +2,7 @@ import './globals.css';
 import { getHealth } from '@/lib/data';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NavLinks } from '@/components/nav-links';
+import { BrandLogo } from '@/components/brand';
 
 // Ye script HTML me sab se pehle chalti hai, React se bhi pehle.
 // Kyun zaroori hai: theme localStorage me hai, jo server pe nahi hota. Agar
@@ -15,9 +16,10 @@ const NO_FLASH = `(function(){try{var t=localStorage.getItem('theme')||'light';
 document.documentElement.setAttribute('data-theme',t);}catch(e){
 document.documentElement.setAttribute('data-theme','light');}})();`;
 
+// Brand directive (13 Aug): customer-facing naam sirf "Social Housing".
 export const metadata = {
-  title: 'Social Housing — Sourcing',
-  description: 'Social housing property sourcing control panel',
+  title: 'Social Housing',
+  description: 'Social Housing — property sourcing platform',
 };
 
 // Asad ka faisla (23 Jul): sirf 4 pages nav me. New&pending / Requested / Queue
@@ -81,10 +83,9 @@ export default async function RootLayout({ children }) {
               background: 'var(--surface)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 10px 24px' }}>
-              {/* flat mark — primary blue (MRE redesign), no gradients */}
-              <span style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--accent)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 700, fontSize: 11 }}>SH</span>
-              <span style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: '-0.02em' }}>Social Housing</span>
+            {/* Official horizontal logo (brand directive) — mark + wordmark */}
+            <div style={{ padding: '4px 10px 24px' }}>
+              <BrandLogo markSize={30} />
             </div>
 
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mist)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 12px 8px' }}>Menu</div>
