@@ -36,13 +36,28 @@ export const LEAD_STATUSES = [
 ];
 
 // Outreach = OpenRent ke andar baat-cheet ki halat (email-CRM statuses NAHI).
+// replied/needs_info: landlord ne jawab diya magar abhi interested/not faisla
+// nahi — REPLIED branch (13 Aug funnel directive).
 export const OUTREACH_STATUSES = [
   { key: 'not_contacted', label: 'Not contacted' },
   { key: 'contacted', label: 'Contacted' },
   { key: 'awaiting_response', label: 'Awaiting response' },
+  { key: 'replied', label: 'Replied' },
+  { key: 'needs_info', label: 'Needs info' },
   { key: 'interested', label: 'Interested' },
   { key: 'no_response', label: 'No response' },
   { key: 'not_interested', label: 'Not interested' },
+];
+
+// Landlord ke jawab ki qismein (response logger) — har ek ka asar neeche
+// applyResponse (api/leads/[id]/response) me map hota hai.
+export const RESPONSE_OUTCOMES = [
+  { key: 'interested', label: 'Interested' },
+  { key: 'not_interested', label: 'Not interested' },
+  { key: 'needs_info', label: 'Needs more information' },
+  { key: 'property_unavailable', label: 'Property unavailable' },
+  { key: 'already_let', label: 'Already let' },
+  { key: 'other', label: 'Other' },
 ];
 
 export const LOSS_REASONS = [
@@ -102,9 +117,13 @@ export function toLead(r, order) {
     ref: leadRef(r.Id),
     status,
     outreach_status: r.outreach_status || 'not_contacted',
+    contact_attempts: Number(r.contact_attempts) || 0,
     order: order || null,
   };
 }
+
+// "Reply mila" = in me se koi bhi outreach halat (interested/not bhi jawab hi hai).
+const REPLIED_SET = new Set(['replied', 'needs_info', 'interested', 'not_interested']);
 
 const ACTIVE_CUTOFF = ['won', 'lost']; // in ke baad lead "band" hai
 
@@ -151,6 +170,27 @@ const PATCHABLE = new Set([
   'lead_status', 'outreach_status', 'next_action', 'next_action_date', 'loss_reason',
 ]);
 
+// Contact-record fields — sirf system paths (engine sync, outreach/response
+// routes) likhte hain; public PATCH inhe nahi chhoo sakta, is liye alag whitelist.
+const CONTACT_FIELDS = new Set([
+  'last_contacted_at', 'contact_attempts', 'last_outreach_message', 'last_outreach_result',
+]);
+
+/**
+ * Outreach ka record lead row pe likho (kab, kitni baar, exact message, result).
+ * Audit + follow-up context ke liye — "sent" akela kaafi nahi (13 Aug directive).
+ */
+export async function recordContact(rowId, fields) {
+  const clean = {};
+  for (const [k, v] of Object.entries(fields || {})) {
+    if (CONTACT_FIELDS.has(k)) clean[k] = v;
+  }
+  if (!Object.keys(clean).length) return;
+  await fetch(`${BASE}/api/v2/tables/${T.orderProps}/records`, {
+    method: 'PATCH', headers: H, body: JSON.stringify([{ Id: Number(rowId), ...clean }]),
+  });
+}
+
 /**
  * Lead update. shortlist_status ko lead_status ke sath SYNC rakhte hain —
  * /orders wala purana shortlist lens aur /leads wala pipeline lens ek hi
@@ -196,6 +236,7 @@ export function leadFunnel(leads, { rejectedCount = 0 } = {}) {
     shortlisted: 0,
     contacted: 0,
     awaiting: 0,
+    replied: 0,
     interested: 0,
     viewings: 0,
     deals: 0,
@@ -217,6 +258,7 @@ export function leadFunnel(leads, { rejectedCount = 0 } = {}) {
       // Awaiting = pipeline stage YA outreach ki halat (jab tak interested
       // na ho jaye) — dono ka matlab ek hi hai: landlord ke jawab ka intezaar.
       if (l.status === 'awaiting_response' || (l.outreach_status === 'awaiting_response' && !at(l, 'interested'))) f.awaiting++;
+      if (REPLIED_SET.has(l.outreach_status)) f.replied++;
       if (at(l, 'interested')) f.interested++;
       if (at(l, 'viewing')) f.viewings++;
       if (at(l, 'deal')) f.deals++;
@@ -232,4 +274,29 @@ export function leadFunnel(leads, { rejectedCount = 0 } = {}) {
     }
   }
   return f;
+}
+
+/**
+ * /outreach ke funnel tabs — har tab ek bucket, yahin ek jagah define taake
+ * counts aur lists kabhi alag na hon. Ek lead kai buckets me ho sakta hai
+ * (contacted + awaiting) — tabs partition nahi, lens hain.
+ */
+export function outreachBuckets(leads) {
+  const today = new Date().toISOString().slice(0, 10);
+  const active = leads.filter(isActiveLead);
+  return {
+    all: leads,
+    ready: active.filter(
+      (l) => (l.status === 'shortlisted' || l.status === 'ready_to_contact') && l.outreach_status === 'not_contacted'
+    ),
+    // Contacted = kabhi bhi contact hua (last_contacted_at ya outreach halat aage ki)
+    contacted: leads.filter(
+      (l) => l.last_contacted_at || (l.outreach_status !== 'not_contacted' && l.outreach_status !== 'no_response')
+    ),
+    awaiting: active.filter((l) => l.outreach_status === 'awaiting_response'),
+    replies: leads.filter((l) => REPLIED_SET.has(l.outreach_status)),
+    interested: active.filter((l) => l.outreach_status === 'interested' || l.status === 'interested'),
+    followups: active.filter((l) => l.next_action_date && l.next_action_date <= today),
+    noResponse: leads.filter((l) => l.outreach_status === 'no_response'),
+  };
 }

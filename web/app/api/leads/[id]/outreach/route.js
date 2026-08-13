@@ -1,4 +1,4 @@
-import { getLead, updateLead, LEAD_STATUSES } from '@/lib/leads';
+import { getLead, updateLead, recordContact, LEAD_STATUSES } from '@/lib/leads';
 import { logActivity } from '@/lib/activities';
 
 export const dynamic = 'force-dynamic';
@@ -51,6 +51,23 @@ export async function POST(req, { params }) {
     return Response.json({ error: e.message }, { status: 400 });
   }
 
+  // Contact record lead row pe — attempt number, kab, kya (audit + follow-up
+  // context). 'response' inbound hai, wo attempt nahi ginta.
+  const outbound = type !== 'response';
+  const attempt = outbound ? (lead.contact_attempts || 0) + 1 : lead.contact_attempts || 0;
+  try {
+    if (outbound) {
+      await recordContact(lead.Id, {
+        last_contacted_at: new Date().toISOString(),
+        contact_attempts: attempt,
+        last_outreach_message: body.message || body.notes || null,
+        last_outreach_result: 'sent',
+      });
+    } else {
+      await recordContact(lead.Id, { last_outreach_result: 'reply' });
+    }
+  } catch {}
+
   try {
     await logActivity({
       order_id: lead.order_id,
@@ -58,9 +75,10 @@ export async function POST(req, { params }) {
       lead_row_id: lead.Id,
       type: `outreach_${type}`,
       title: TYPES[type],
-      detail: body.notes || null,
+      detail: body.message || body.notes || null,
       meta: {
         channel: 'openrent',
+        attempt: outbound ? attempt : null,
         next_followup: body.next_followup || null,
         landlord: lead.listing?.landlord_name || null,
       },

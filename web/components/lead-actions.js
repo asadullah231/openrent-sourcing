@@ -7,20 +7,24 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LEAD_STATUSES, OUTREACH_STATUSES, LOSS_REASONS } from '@/lib/leads';
+import { LEAD_STATUSES, OUTREACH_STATUSES, LOSS_REASONS, RESPONSE_OUTCOMES } from '@/lib/leads';
 import { sourceLabel } from '@/components/crm-bits';
 
 export function LeadActions({ lead }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [panel, setPanel] = useState(null); // 'outreach' | 'note' | null
+  const [panel, setPanel] = useState(null); // 'outreach' | 'response' | 'note' | null
   const [pendingLost, setPendingLost] = useState(false);
 
   // Outreach form
   const [oType, setOType] = useState('message');
   const [oNotes, setONotes] = useState('');
   const [oFollowup, setOFollowup] = useState('');
+  // Response form (landlord ka jawab)
+  const [rOutcome, setROutcome] = useState('interested');
+  const [rNotes, setRNotes] = useState('');
+  const [rFollowup, setRFollowup] = useState('');
   // Note form
   const [noteText, setNoteText] = useState('');
   // Next action editor
@@ -29,9 +33,12 @@ export function LeadActions({ lead }) {
   // Lost reason
   const [lossReason, setLossReason] = useState(lead.loss_reason || 'other');
 
+  const [info, setInfo] = useState('');
+
   async function call(url, method, body) {
     setBusy(true);
     setError('');
+    setInfo('');
     try {
       const res = await fetch(url, {
         method,
@@ -39,8 +46,10 @@ export function LeadActions({ lead }) {
         body: JSON.stringify(body),
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j.error || `Failed (${res.status})`);
+      // Kuch routes 200 + {ok:false, error} dete hain (cap full waghera) — wo bhi error hai.
+      if (!res.ok || (j.ok === false && j.error)) throw new Error(j.error || `Failed (${res.status})`);
       if (j.warning) setError(j.warning);
+      if (j.message) setInfo(j.message);
       router.refresh();
       return true;
     } catch (e) {
@@ -75,6 +84,23 @@ export function LeadActions({ lead }) {
     }
   }
 
+  async function logResponse() {
+    const ok = await call(`/api/leads/${lead.Id}/response`, 'POST', {
+      outcome: rOutcome,
+      notes: rNotes.trim() || undefined,
+      next_followup: rFollowup || undefined,
+    });
+    if (ok) {
+      setPanel(null);
+      setRNotes('');
+      setRFollowup('');
+    }
+  }
+
+  async function queueOutreach() {
+    await call(`/api/leads/${lead.Id}/queue`, 'POST', {});
+  }
+
   async function addNote() {
     const ok = await call(`/api/leads/${lead.Id}/note`, 'POST', { text: noteText });
     if (ok) {
@@ -98,6 +124,13 @@ export function LeadActions({ lead }) {
         ) : (
           <span className="text-muted" style={{ fontSize: 12.5, alignSelf: 'center' }}>Listing URL unavailable</span>
         )}
+        {/* Queue = EXISTING engine se bhejo (shadow/live, cap, idempotency sab
+            engine ke paas). Sirf OpenRent + abhi tak contact na hua ho. */}
+        {(lead.listing?.source || 'openrent') === 'openrent' && lead.outreach_status === 'not_contacted' && (
+          <button className="btn-brass" disabled={busy} onClick={queueOutreach}>
+            {busy ? 'Working…' : 'Queue outreach'}
+          </button>
+        )}
         <button
           className="seg"
           disabled={busy}
@@ -111,6 +144,13 @@ export function LeadActions({ lead }) {
           onClick={() => setPanel(panel === 'outreach' ? null : 'outreach')}
         >
           Log outreach
+        </button>
+        <button
+          className="seg"
+          style={panel === 'response' ? { color: 'var(--paper)', borderColor: 'var(--accent)' } : undefined}
+          onClick={() => setPanel(panel === 'response' ? null : 'response')}
+        >
+          Log response
         </button>
         <button
           className="seg"
@@ -184,7 +224,6 @@ export function LeadActions({ lead }) {
               <option value="message">Message sent</option>
               <option value="viewing_request">Viewing request sent</option>
               <option value="follow_up">Follow-up sent</option>
-              <option value="response">Landlord responded</option>
             </select>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <label className="text-muted" style={{ fontSize: 11.5 }}>Next follow-up</label>
@@ -194,13 +233,47 @@ export function LeadActions({ lead }) {
           <textarea
             className="field"
             rows={3}
-            placeholder="Notes (optional) — what was said, price discussed, availability…"
+            placeholder="The message you sent (paste it for the record) or notes…"
             value={oNotes}
             onChange={(e) => setONotes(e.target.value)}
           />
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn-brass" disabled={busy} onClick={logOutreach}>
               {busy ? 'Saving…' : 'Log it'}
+            </button>
+            <button className="seg" onClick={() => setPanel(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Log response panel — landlord ka jawab. Yehi cheez lead ko
+             REPLIED/INTERESTED banati hai (send kabhi nahi). ── */}
+      {panel === 'response' && (
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="text-muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
+            What did the landlord say? This moves the lead in the funnel.
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <select className="field" style={{ width: 220 }} value={rOutcome} onChange={(e) => setROutcome(e.target.value)}>
+              {RESPONSE_OUTCOMES.map((o) => (
+                <option key={o.key} value={o.key}>{o.label}</option>
+              ))}
+            </select>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <label className="text-muted" style={{ fontSize: 11.5 }}>Next follow-up</label>
+              <input type="date" className="field" style={{ width: 150 }} value={rFollowup} onChange={(e) => setRFollowup(e.target.value)} />
+            </div>
+          </div>
+          <textarea
+            className="field"
+            rows={3}
+            placeholder="Notes (optional) — what they said, viewing times offered…"
+            value={rNotes}
+            onChange={(e) => setRNotes(e.target.value)}
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn-brass" disabled={busy} onClick={logResponse}>
+              {busy ? 'Saving…' : 'Save response'}
             </button>
             <button className="seg" onClick={() => setPanel(null)}>Cancel</button>
           </div>
@@ -248,6 +321,11 @@ export function LeadActions({ lead }) {
         )}
       </div>
 
+      {info && (
+        <div style={{ border: '1px solid var(--mist-line)', color: 'var(--brass)', borderRadius: 'var(--r-ctrl)', padding: '10px 14px', fontSize: 13 }}>
+          {info}
+        </div>
+      )}
       {error && (
         <div style={{ border: '1px solid var(--rust)', color: 'var(--rust)', borderRadius: 'var(--r-ctrl)', padding: '10px 14px', fontSize: 13 }}>
           {error}

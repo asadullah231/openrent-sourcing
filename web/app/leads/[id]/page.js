@@ -8,6 +8,7 @@
 import Link from 'next/link';
 import { getLead } from '@/lib/leads';
 import { getActivities } from '@/lib/activities';
+import { syncEngineOutreach } from '@/lib/outreach-sync';
 import { LeadActions } from '@/components/lead-actions';
 import { ActivityTimeline, derivedLeadEvents } from '@/components/activity-timeline';
 import { LeadStatusBadge, OutreachBadge, money, leadPropertyLine, deentity, sourceLabel, SourceListingLine } from '@/components/crm-bits';
@@ -43,10 +44,18 @@ export default async function LeadDetailPage({ params }) {
 
   let lead = null;
   let activities = [];
+  let engine = null;
   let loadError = null;
   try {
     lead = await getLead(id);
-    if (lead) activities = await getActivities({ leadRowId: lead.Id });
+    if (lead) {
+      // Engine ne is listing pe bhej diya ho to lead ko yahin CONTACTED
+      // sync kar do (bot leads nahi likh sakta) — activities us ke BAAD
+      // parhte hain taake naya "message sent" event bhi timeline me aa jaye.
+      const sync = await syncEngineOutreach([lead]);
+      engine = sync.engineState.get(String(lead.listing_id)) || null;
+      activities = await getActivities({ leadRowId: lead.Id });
+    }
   } catch (e) {
     loadError = e.message;
   }
@@ -252,6 +261,35 @@ export default async function LeadDetailPage({ params }) {
           )}
         </Card>
 
+        <Card title="Outreach">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Fact label="Attempts" strong>{lead.contact_attempts || 0}</Fact>
+            <Fact label="Last contacted">
+              {lead.last_contacted_at
+                ? new Date(lead.last_contacted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                : 'Not yet'}
+            </Fact>
+            <Fact label="Next follow-up">
+              {lead.next_action_date || '—'}
+              {lead.next_action_date && lead.next_action_date <= new Date().toISOString().slice(0, 10) && (
+                <b style={{ color: 'var(--rust)', marginLeft: 6 }}>due</b>
+              )}
+            </Fact>
+            <Fact label="Last result">{lead.last_outreach_result ? lead.last_outreach_result.replace(/_/g, ' ') : '—'}</Fact>
+          </div>
+          {/* Engine ki halat — queued/draft dikhao taake pata ho bot kya karne wala hai */}
+          {engine && engine.viewing_status === 'queued' && (
+            <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--brass)' }}>
+              Queued — the bot sends this on its next run (within the daily cap).
+            </p>
+          )}
+          {engine && engine.viewing_status === 'draft' && (
+            <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--brass)' }}>
+              Draft prepared — preview mode is on, so nothing was actually sent.
+            </p>
+          )}
+        </Card>
+
         <Card title="Next action">
           {lead.next_action ? (
             <div>
@@ -272,6 +310,46 @@ export default async function LeadDetailPage({ params }) {
           )}
         </Card>
       </div>
+
+      {/* ── Message history — exact message + kab + attempt + result. Audit ke
+             liye "sent" akela kaafi nahi (13 Aug directive). ── */}
+      {(() => {
+        const msgs = activities.filter(
+          (a) => a.type?.startsWith('outreach_') || a.type === 'landlord_replied'
+        );
+        if (!msgs.length) return null;
+        return (
+          <div>
+            <h2 style={{ margin: '4px 0 12px', fontSize: 15, fontWeight: 600 }}>
+              Message history
+              <span className="text-muted" style={{ fontSize: 12.5, fontWeight: 400, marginLeft: 8 }}>{msgs.length}</span>
+            </h2>
+            <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', background: 'var(--surface)', overflow: 'hidden' }}>
+              {msgs.map((a, i) => (
+                <div key={a.Id ?? i} style={{ padding: '13px 16px', borderTop: i === 0 ? 'none' : '1px solid var(--mist-line)' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{a.title}</span>
+                    <span className="text-muted font-mono" style={{ fontSize: 11.5 }}>
+                      {a.CreatedAt ? new Date(a.CreatedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                    </span>
+                    <span className="text-muted" style={{ fontSize: 11.5, marginLeft: 'auto' }}>
+                      OpenRent
+                      {a.meta?.attempt != null && ` · attempt ${a.meta.attempt}`}
+                      {a.meta?.result && ` · ${a.meta.result}`}
+                      {a.meta?.outcome && ` · ${String(a.meta.outcome).replace(/_/g, ' ')}`}
+                    </span>
+                  </div>
+                  {a.detail && (
+                    <div style={{ marginTop: 8, fontSize: 12.5, lineHeight: 1.6, whiteSpace: 'pre-wrap', border: '1px solid var(--mist-line)', borderRadius: 8, padding: '10px 12px', background: 'var(--ink-raise)' }}>
+                      {a.detail}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Timeline ── */}
       <div>

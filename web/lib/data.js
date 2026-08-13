@@ -200,6 +200,34 @@ export async function queueListings(listingIds) {
   return patchListings(listingIds, { viewing_status: 'queued' });
 }
 
+/**
+ * Lead ki listing bot ke store me daalo (order-found properties store me
+ * NAHI hotin — snapshots order_properties me hain). Engine sirf apne store
+ * se bhejta hai, is liye "Queue outreach" ke liye row yahan honi zaroori hai.
+ * Sirf store ke maloom columns bhejte hain (NocoDB unknown field pe girta hai).
+ */
+export async function addListingToStore(listing, extra = {}) {
+  const allow = [
+    'listing_id', 'url', 'price', 'beds', 'baths', 'hours_live', 'area', 'title',
+    'response_rate', 'address', 'furnishing', 'epc', 'image', 'landlord_name', 'source',
+  ];
+  const row = { viewing_status: 'queued', scraped_at: new Date().toISOString(), ...extra };
+  for (const k of allow) {
+    if (listing?.[k] != null) row[k] = listing[k];
+  }
+  if (!row.listing_id) return false;
+  const res = await fetch(`${BASE}/api/v2/tables/${T.listings}/records`, {
+    method: 'POST', headers: H, body: JSON.stringify([row]),
+  });
+  return res.ok;
+}
+
+/** Ek listing ki store row (raw) — queue/sync guards ke liye. */
+export async function getListingRow(listingId) {
+  const rows = await fetchAll(T.listings);
+  return rows.find((r) => String(r.listing_id) === String(listingId)) || null;
+}
+
 /** viewing rows — kind='draft' (banaye gaye) ya 'sent' (bheje gaye). */
 async function viewingRows(kind) {
   const rows = await fetchAll(T.log);

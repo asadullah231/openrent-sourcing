@@ -23,6 +23,8 @@ export const OUTREACH_STATUS_COLOR = {
   not_contacted: 'var(--mist)',
   contacted: 'var(--accent)',
   awaiting_response: 'var(--accent)',
+  replied: 'var(--green)',
+  needs_info: 'var(--brass)',
   interested: 'var(--green)',
   no_response: 'var(--brass)',
   not_interested: 'var(--rust)',
