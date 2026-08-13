@@ -30,29 +30,25 @@ export const OUTREACH_STATUS_COLOR = {
   not_interested: 'var(--rust)',
 };
 
-export function LeadStatusBadge({ status, size = 11 }) {
+// Badge = rang wala dot + neutral text (.badge class, globals.css). Rang sirf
+// dot me rehta hai — colored uppercase text har row me chillata tha (DESIGN.md:
+// restrained colors, small status badges). `size` param purane call-sites ke
+// liye qubool hai magar ab ek hi scale use hoti hai.
+export function LeadStatusBadge({ status }) {
   const color = LEAD_STATUS_COLOR[status] || 'var(--mist)';
   return (
-    <span
-      style={{
-        fontSize: size, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
-        color, whiteSpace: 'nowrap',
-      }}
-    >
+    <span className="badge">
+      <span className="badge-dot" style={{ background: color }} />
       {leadStatusLabel(status)}
     </span>
   );
 }
 
-export function OutreachBadge({ status, size = 11 }) {
+export function OutreachBadge({ status }) {
   const color = OUTREACH_STATUS_COLOR[status] || 'var(--mist)';
   return (
-    <span
-      style={{
-        fontSize: size, fontWeight: 600, letterSpacing: '0.02em', color, whiteSpace: 'nowrap',
-        border: `1px solid ${color}`, borderRadius: 999, padding: '2px 9px', opacity: 0.9,
-      }}
-    >
+    <span className="badge">
+      <span className="badge-dot" style={{ background: color }} />
       {outreachStatusLabel(status)}
     </span>
   );

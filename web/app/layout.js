@@ -1,7 +1,7 @@
 import './globals.css';
-import Link from 'next/link';
 import { getHealth } from '@/lib/data';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { NavLinks } from '@/components/nav-links';
 
 // Ye script HTML me sab se pehle chalti hai, React se bhi pehle.
 // Kyun zaroori hai: theme localStorage me hai, jo server pe nahi hota. Agar
@@ -76,29 +76,13 @@ export default async function RootLayout({ children }) {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 10px 24px' }}>
-              <span style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(145deg,#edc06a,var(--brass))', display: 'grid', placeItems: 'center', color: '#1a1204', fontWeight: 700, fontSize: 12, boxShadow: '0 2px 6px rgba(0,0,0,.35)' }}>SH</span>
+              {/* flat mark — gradient/shadow hataya (DESIGN.md: no gradients) */}
+              <span style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--brass)', display: 'grid', placeItems: 'center', color: '#1a1204', fontWeight: 700, fontSize: 11 }}>SH</span>
               <span style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: '-0.02em' }}>Social Housing</span>
             </div>
 
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mist)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 12px 8px' }}>Menu</div>
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {nav.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className="nav-link"
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: 'var(--r-ctrl)',
-                    textDecoration: 'none',
-                    fontSize: 13.5,
-                    fontWeight: 500,
-                  }}
-                >
-                  {label}
-                </Link>
-              ))}
-            </nav>
+            <NavLinks items={nav} />
 
             <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--mist-line)', fontSize: 11.5, lineHeight: 1.6, color: 'var(--mist)' }}>
               <div style={{ padding: '14px 2px 12px' }}>

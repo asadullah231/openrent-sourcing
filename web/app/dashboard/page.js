@@ -10,22 +10,19 @@ import { ActivityTimeline } from '@/components/activity-timeline';
 
 export const dynamic = 'force-dynamic';
 
-function Stat({ label, value, color, href }) {
+// Ek bordered strip me sab numbers (dividers ke sath) — alag stat cards
+// DESIGN.md ke khilaf hain ("colorful statistic cards" avoid). Rang sirf
+// tab jab number pe dhyan chahiye (kaam ruka hua hai).
+function Metric({ label, value, color, href }) {
   const inner = (
-    <div
-      className={href ? 'row-hover' : undefined}
-      style={{
-        background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)',
-        padding: '14px 16px', height: '100%',
-      }}
-    >
-      <div className="font-mono" style={{ fontSize: 22, fontWeight: 700, color: color || 'var(--paper)' }}>{value}</div>
-      <div className="text-muted" style={{ fontSize: 11.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>
-        {label}
-      </div>
-    </div>
+    <>
+      <div className="metric-value" style={color ? { color } : undefined}>{value}</div>
+      <div className="metric-label">{label}</div>
+    </>
   );
-  return href ? <Link href={href} style={{ textDecoration: 'none' }}>{inner}</Link> : inner;
+  return href
+    ? <Link href={href} className="metric">{inner}</Link>
+    : <div className="metric">{inner}</div>;
 }
 
 export default async function DashboardPage() {
@@ -90,17 +87,17 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* ── Funnel stats ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
-        <Stat label="Active orders" value={activeOrders.length} href="/orders" />
-        <Stat label="New properties (7d)" value={newLeads} href="/sourcing" />
-        <Stat label="Strong matches" value={f.strong} href="/sourcing" />
-        <Stat label="Shortlisted" value={f.shortlisted} color="var(--brass)" href="/sourcing" />
-        <Stat label="Needs contact" value={f.needsContact} color={f.needsContact ? 'var(--brass)' : undefined} href="/outreach?tab=ready" />
-        <Stat label="Awaiting response" value={f.awaiting} color={f.awaiting ? 'var(--accent)' : undefined} href="/outreach?tab=awaiting" />
-        <Stat label="Viewings" value={f.viewings} color={f.viewings ? 'var(--green)' : undefined} href="/sourcing" />
-        <Stat label="Active deals" value={f.deals} color={f.deals ? 'var(--green)' : undefined} href="/sourcing" />
-        <Stat
+      {/* ── Funnel metrics — ek strip, workflow ki tarteeb me ── */}
+      <div className="metric-strip">
+        <Metric label="Active orders" value={activeOrders.length} href="/orders" />
+        <Metric label="New (7d)" value={newLeads} href="/sourcing" />
+        <Metric label="Strong matches" value={f.strong} href="/sourcing" />
+        <Metric label="Shortlisted" value={f.shortlisted} href="/sourcing" />
+        <Metric label="Needs contact" value={f.needsContact} color={f.needsContact ? 'var(--brass)' : undefined} href="/outreach?tab=ready" />
+        <Metric label="Awaiting" value={f.awaiting} href="/outreach?tab=awaiting" />
+        <Metric label="Viewings" value={f.viewings} href="/sourcing" />
+        <Metric label="Deals" value={f.deals} href="/sourcing" />
+        <Metric
           label="Expected margin"
           value={`£${Math.round(f.expectedMargin).toLocaleString('en-GB')}/mo`}
           color={f.expectedMargin > 0 ? 'var(--green)' : undefined}
@@ -115,20 +112,10 @@ export default async function DashboardPage() {
             Nothing urgent — everything is moving and no follow-ups are overdue.
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="action-list">
             {priorities.map((p, i) => (
-              <Link
-                key={i}
-                href={p.href}
-                className="row-hover"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  background: 'var(--surface)', border: '1px solid var(--mist-line)',
-                  borderRadius: 'var(--r-ctrl)', padding: '11px 14px',
-                  textDecoration: 'none', color: 'var(--paper)', fontSize: 13.5, fontWeight: 500,
-                }}
-              >
-                <span style={{ width: 8, height: 8, borderRadius: 999, background: p.color, flexShrink: 0 }} />
+              <Link key={i} href={p.href} className="action-row">
+                <span style={{ width: 7, height: 7, borderRadius: 999, background: p.color, flexShrink: 0 }} />
                 {p.text}
                 <span className="text-muted" style={{ marginLeft: 'auto', fontSize: 12 }}>→</span>
               </Link>
