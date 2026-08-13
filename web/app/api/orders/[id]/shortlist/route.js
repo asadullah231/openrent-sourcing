@@ -1,0 +1,36 @@
+import { setShortlist } from '@/lib/orders';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * Shortlist toggle — MVP criteria #7: "Shortlist a property and associate it
+ * with the order." Row order_properties me pehle se hoti hai (Find Properties
+ * ne banayi); ye sirf shortlist_status + next_action set/clear karta hai.
+ *
+ * Body: { listing_id, shortlisted: true|false, next_action? }
+ */
+export async function POST(req, { params }) {
+  const { id } = await params;
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: 'Request not valid.' }, { status: 400 });
+  }
+
+  const listingId = String(body?.listing_id || '').trim();
+  if (!listingId) return Response.json({ error: 'listing_id is required.' }, { status: 400 });
+
+  try {
+    const row = await setShortlist(id, listingId, !!body.shortlisted, body.next_action);
+    if (!row) {
+      return Response.json(
+        { error: 'This property is not linked to the order — run Find Properties first.' },
+        { status: 404 }
+      );
+    }
+    return Response.json({ ok: true, row });
+  } catch (e) {
+    return Response.json({ error: `Could not update the shortlist: ${e.message}` }, { status: 502 });
+  }
+}

@@ -36,7 +36,7 @@ export function ThemeToggle() {
     <button
       className="theme-toggle"
       onClick={flip}
-      aria-label={theme === 'dark' ? 'Light mode on karo' : 'Dark mode on karo'}
+      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
       title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
     >
       <span aria-hidden="true" style={{ fontSize: 14, width: 16, textAlign: 'center' }}>

@@ -23,6 +23,7 @@ export const metadata = {
 // /sent aur /queue routes zinda hain (detail links unhe use karte hain), bas
 // nav se nikaal diye.
 const nav = [
+  { href: '/orders', label: 'Orders' }, // Phase 1: Order = system ka markaz (PRD)
   { href: '/', label: 'Search' },
   { href: '/outreach', label: 'Outreach' },
   { href: '/map', label: 'Map' },
