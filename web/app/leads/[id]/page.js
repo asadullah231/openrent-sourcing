@@ -10,7 +10,7 @@ import { getLead } from '@/lib/leads';
 import { getActivities } from '@/lib/activities';
 import { LeadActions } from '@/components/lead-actions';
 import { ActivityTimeline, derivedLeadEvents } from '@/components/activity-timeline';
-import { LeadStatusBadge, OutreachBadge, money, leadPropertyLine, deentity } from '@/components/crm-bits';
+import { LeadStatusBadge, OutreachBadge, money, leadPropertyLine, deentity, sourceLabel, SourceListingLine } from '@/components/crm-bits';
 
 export const dynamic = 'force-dynamic';
 
@@ -138,6 +138,10 @@ export default async function LeadDetailPage({ params }) {
               {l.address && <div>{deentity(l.address)}</div>}
             </div>
           )}
+          {/* Original listing — persisted snapshot ki url (kabhi generate nahi hoti) */}
+          <div style={{ marginTop: 10 }}>
+            <SourceListingLine listing={l} size={12.5} />
+          </div>
         </Card>
 
         <Card title="Order">
@@ -165,8 +169,8 @@ export default async function LeadDetailPage({ params }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <Fact label="Name">{l.landlord_name || 'Not known yet'}</Fact>
             <Fact label="Response rate">{l.response_rate != null ? `${l.response_rate}%` : '—'}</Fact>
-            <Fact label="Source">OpenRent</Fact>
-            <Fact label="Contact">Via OpenRent listing</Fact>
+            <Fact label="Source">{sourceLabel(l.source)}</Fact>
+            <Fact label="Contact">Via {sourceLabel(l.source)} listing</Fact>
           </div>
           <p className="text-muted" style={{ margin: '10px 0 0', fontSize: 12, lineHeight: 1.5 }}>
             All contact happens inside OpenRent — open the listing and message the landlord there, then log it here.

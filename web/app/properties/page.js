@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { getLeads } from '@/lib/leads';
-import { LeadStatusBadge, money } from '@/components/crm-bits';
+import { LeadStatusBadge, money, SourceListingLine } from '@/components/crm-bits';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,8 +55,13 @@ export default async function PropertiesPage() {
             const raw = l.address || l.area || l.title || `#${listingId}`;
             const place = raw.replace(/^(?:\d+\s+)?(?:bed\s+)?(?:room in a |studio |flat |house |maisonette )?[^,]*?(?:flat|house|maisonette|studio|room|apartment)\s*,\s*/i, '');
             const best = p.leads.reduce((a, b) => ((b.match_score ?? -1) > (a.match_score ?? -1) ? b : a), p.leads[0]);
+            // Card ka structure: upar wala hissa Link (detail pe le jata hai),
+            // neeche source/listing line ALAG — View listing ek asli <a> hai jo
+            // original listing URL nai tab me kholta hai. Link ke andar <a> nest
+            // karna invalid HTML hota, is liye footer Link se bahar hai.
             return (
-              <Link key={listingId} href={`/properties/${listingId}`} className="gcard" style={{ display: 'flex', flexDirection: 'column', gap: 8, textDecoration: 'none', color: 'var(--paper)' }}>
+              <div key={listingId} className="gcard" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <Link href={`/properties/${listingId}`} style={{ display: 'flex', flexDirection: 'column', gap: 8, textDecoration: 'none', color: 'var(--paper)' }}>
                 <div className="gcard-photo">
                   {l.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -84,6 +89,8 @@ export default async function PropertiesPage() {
                   <LeadStatusBadge status={best?.status} size={10} />
                 </div>
               </Link>
+              <SourceListingLine listing={l} size={11.5} />
+              </div>
             );
           })}
         </div>

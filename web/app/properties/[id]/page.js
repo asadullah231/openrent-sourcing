@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { getLeads } from '@/lib/leads';
 import { getActivities } from '@/lib/activities';
 import { ActivityTimeline, derivedLeadEvents } from '@/components/activity-timeline';
-import { LeadStatusBadge, OutreachBadge, money } from '@/components/crm-bits';
+import { LeadStatusBadge, OutreachBadge, money, sourceLabel } from '@/components/crm-bits';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,10 +60,17 @@ export default async function PropertyDetailPage({ params }) {
             .filter(Boolean)
             .join(' · ')}
         </div>
-        {l.url && (
-          <a href={l.url} target="_blank" rel="noreferrer" className="btn-brass" style={{ display: 'inline-block', marginTop: 12, textDecoration: 'none' }}>
-            Open OpenRent
+        {/* Source ka naam alag, listing URL alag — url persisted snapshot se
+            aata hai (scraper ki original listing URL); yahan kabhi banai nahi jati. */}
+        <div className="text-muted" style={{ fontSize: 12.5, marginTop: 10 }}>
+          Source: <span style={{ color: 'var(--paper)', fontWeight: 600 }}>{sourceLabel(l.source)}</span>
+        </div>
+        {l.url ? (
+          <a href={l.url} target="_blank" rel="noreferrer" className="btn-brass" style={{ display: 'inline-block', marginTop: 10, textDecoration: 'none' }}>
+            View original listing ↗
           </a>
+        ) : (
+          <div className="text-muted" style={{ fontSize: 12.5, marginTop: 8 }}>Listing URL unavailable</div>
         )}
       </div>
 

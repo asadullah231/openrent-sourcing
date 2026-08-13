@@ -71,6 +71,37 @@ export function money(v) {
   return v == null ? '—' : `£${Number(v).toLocaleString('en-GB')}`;
 }
 
+/** Source ka display naam — data me 'openrent'/'rightmove' hai, UI me proper naam. */
+export function sourceLabel(source) {
+  if (source === 'rightmove') return 'Rightmove';
+  return 'OpenRent'; // default: sab purani rows OpenRent hi hain
+}
+
+/**
+ * "Source: OpenRent · View listing ↗" — har property surface pe wahi ek shakal.
+ * URL sirf persisted listing.url se aata hai (scraper ki di hui original listing
+ * URL) — yahan kabhi koi URL banai nahi jati. url na ho to broken link ke
+ * bajaye "Listing URL unavailable".
+ */
+export function SourceListingLine({ listing, size = 12 }) {
+  const url = listing?.url || null;
+  return (
+    <span style={{ fontSize: size, display: 'inline-flex', alignItems: 'baseline', gap: 6, minWidth: 0 }}>
+      <span className="text-muted" style={{ whiteSpace: 'nowrap' }}>
+        Source: <span style={{ color: 'var(--paper)', fontWeight: 600 }}>{sourceLabel(listing?.source)}</span>
+      </span>
+      <span className="text-muted">·</span>
+      {url ? (
+        <a href={url} target="_blank" rel="noreferrer" style={{ color: 'var(--brass)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+          View listing ↗
+        </a>
+      ) : (
+        <span className="text-muted" style={{ whiteSpace: 'nowrap' }}>Listing URL unavailable</span>
+      )}
+    </span>
+  );
+}
+
 /** Property ki ek-line pehchaan: "2 bed house · Bromley BR1" jaisi. */
 export function leadPropertyLine(lead) {
   const l = lead.listing || {};

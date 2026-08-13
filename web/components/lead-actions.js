@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LEAD_STATUSES, OUTREACH_STATUSES, LOSS_REASONS } from '@/lib/leads';
+import { sourceLabel } from '@/components/crm-bits';
 
 export function LeadActions({ lead }) {
   const router = useRouter();
@@ -88,10 +89,14 @@ export function LeadActions({ lead }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* ── Primary actions ── */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        {lead.listing?.url && (
+        {/* Original listing URL persisted snapshot se — na ho to broken link
+            nahi, saaf "unavailable" (URL kabhi generate nahi karte). */}
+        {lead.listing?.url ? (
           <a href={lead.listing.url} target="_blank" rel="noreferrer" className="btn-brass" style={{ textDecoration: 'none' }}>
-            Open OpenRent
+            Open {sourceLabel(lead.listing?.source)} ↗
           </a>
+        ) : (
+          <span className="text-muted" style={{ fontSize: 12.5, alignSelf: 'center' }}>Listing URL unavailable</span>
         )}
         <button
           className="seg"

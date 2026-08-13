@@ -26,12 +26,14 @@ export const metadata = {
 // hai, sirf scraper dashboard nahi. Landlords/Agents/Viewings/Deals ke alag
 // pages Phase 2 me banenge (abhi wo pipeline statuses ke andar hi jeete hain —
 // khali placeholder pages nav me rakhna user ko dead-ends dena hota).
+// Search nav se HATA (13 Aug directive): properties ab Order → Find Properties
+// se dhundi jati hain. Standalone search /search pe zinda hai (paste-link flow
+// wahi ka wahi), sirf primary entry point nahi raha. Root / ab dashboard pe jata hai.
 const nav = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/orders', label: 'Orders' },
   { href: '/leads', label: 'Leads' },
   { href: '/properties', label: 'Properties' },
-  { href: '/', label: 'Search' },
   { href: '/outreach', label: 'Outreach' },
   { href: '/map', label: 'Map' },
   { href: '/settings', label: 'Settings' },

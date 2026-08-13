@@ -33,14 +33,14 @@ export default async function ListingDetail({ params }) {
   if (!l) {
     return (
       <div style={{ maxWidth: 560, padding: '20px 0' }}>
-        <Link href="/" style={{ color: 'var(--mist)', fontSize: 13, textDecoration: 'none' }}>← Back</Link>
+        <Link href="/search" style={{ color: 'var(--mist)', fontSize: 13, textDecoration: 'none' }}>← Back</Link>
         <h1 style={{ fontSize: 22, margin: '16px 0 8px', fontWeight: 600 }}>This listing isn&apos;t saved yet</h1>
         <p className="text-muted" style={{ fontSize: 13.5, lineHeight: 1.6 }}>
           Detail pages only exist for listings the bot has saved. Search results open on the
           portal directly. Once this search is saved and the bot runs it, the property shows up here.
         </p>
         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Link href="/" className="btn-brass" style={{ textDecoration: 'none', fontSize: 13 }}>Back to Search</Link>
+          <Link href="/search" className="btn-brass" style={{ textDecoration: 'none', fontSize: 13 }}>Back to Search</Link>
           <Link href="/outreach" className="text-muted" style={{ fontSize: 13, alignSelf: 'center', textDecoration: 'none' }}>Go to Outreach →</Link>
         </div>
       </div>
@@ -171,15 +171,22 @@ export default async function ListingDetail({ params }) {
             </p>
           )}
 
-          <a
-            href={l.url}
-            target="_blank"
-            rel="noreferrer"
-            className="btn-brass"
-            style={{ display: 'block', textAlign: 'center', textDecoration: 'none', fontSize: 13.5, marginTop: 16 }}
-          >
-            Open on {portal} ↗
-          </a>
+          {/* url persisted listing se — na ho to broken link nahi dete */}
+          {l.url ? (
+            <a
+              href={l.url}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-brass"
+              style={{ display: 'block', textAlign: 'center', textDecoration: 'none', fontSize: 13.5, marginTop: 16 }}
+            >
+              Open on {portal} ↗
+            </a>
+          ) : (
+            <p className="text-muted" style={{ fontSize: 12.5, textAlign: 'center', marginTop: 16 }}>
+              Listing URL unavailable
+            </p>
+          )}
         </div>
       </div>
     </div>

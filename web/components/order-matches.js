@@ -10,6 +10,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { sourceLabel } from '@/components/crm-bits';
 
 export function OrderMatches({ order, matches, canProfit }) {
   const router = useRouter();
@@ -250,6 +251,13 @@ function MatchCard({ m, order, busy, onShortlist }) {
           {[l.beds != null && `${l.beds} bed`, l.baths != null && `${l.baths} bath`, l.epc && `EPC ${l.epc}`].filter(Boolean).join(' · ') || '—'}
         </div>
 
+        {/* Source alag, URL alag — "Source: OpenRent" naam hai, link neeche
+            View listing button hai (persisted l.url — original listing page). */}
+        <div className="text-muted" style={{ fontSize: 11.5 }}>
+          Source: <span style={{ color: 'var(--paper)', fontWeight: 600 }}>{sourceLabel(l.source)}</span>
+          {!l.url && <span> · Listing URL unavailable</span>}
+        </div>
+
         {/* Reasons — "clear reasons for the score" (MVP #6) */}
         {reasons.length > 0 && (
           <div className="text-muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
@@ -311,7 +319,7 @@ function MatchCard({ m, order, busy, onShortlist }) {
               className="seg"
               style={{ fontSize: 12, padding: '7px 12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
             >
-              View property
+              View listing ↗
             </a>
           )}
           {/* Pehle ye disabled "Outreach" tha (Phase 3 note ke sath). Ab har

@@ -111,7 +111,7 @@ export default async function SearchFolderPage({ searchParams }) {
             scraped this one yet.
           </div>
           <Link
-            href="/"
+            href="/search"
             style={{ display: 'inline-block', marginTop: 14, fontSize: 12.5, color: 'var(--brass)', textDecoration: 'none' }}
           >
             Want to see it live now? Paste the link on Search →

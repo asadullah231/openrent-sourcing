@@ -126,6 +126,12 @@ export function ListingCard({ l, rank = 1, sent = false, preview = false }) {
           {meta || '—'}
         </div>
 
+        {/* Source ka naam — card ka click hi listing/detail kholta hai, is
+            liye yahan sirf label (Source alag cheez hai, URL alag). */}
+        <div className="text-muted" style={{ fontSize: 11.5 }}>
+          Source: <span style={{ color: 'var(--paper)', fontWeight: 600 }}>{l.source === 'rightmove' ? 'Rightmove' : 'OpenRent'}</span>
+        </div>
+
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 2 }}>
           <span className="font-mono" style={{ fontSize: 15, fontWeight: 600 }}>
             £{Number(l.price ?? 0).toLocaleString('en-GB')}
