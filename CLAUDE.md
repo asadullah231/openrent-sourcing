@@ -249,3 +249,31 @@ Naye modules (bot ke protected files CHHUE NAHI):
    Har run coverage JAMA hoti hai (Bromley: run 1 = 2 verified, run 4 = 4/4
    verified + 106 junk yaadasht me). Listing OpenRent se hate to stale-cleanup
    row khud urata hai (shortlisted kabhi nahi urti).
+
+## CRM Foundation — Sourcing Leads (13 Aug)
+
+Phase 1 ke upar CRM lens (commit `5a2ced8`). Product ab "OpenRent Sourcing CRM":
+
+- **Sourcing Lead = `order_properties` row hi** — koi nayi table nahi. 4 nayi
+  columns: `lead_status` (12-stage pipeline: new→matched→shortlisted→
+  ready_to_contact→contacted→awaiting_response→interested→viewing→negotiation→
+  deal→won/lost), `outreach_status`, `next_action_date`, `loss_reason`.
+  `shortlist_status` purana lens hai — `lib/leads.js` dono sync rakhta hai.
+  Lead ref derived: `OP-{rowId}` (column nahi).
+- **`openrent_activities`** (`NOCODB_OR_ACTIVITIES_TABLE_ID=m5drw7uwh378vi3`) —
+  SIRF insaani kaam store hota hai (outreach log, status change, note,
+  shortlist, per-run search summary). "Property discovered / Match calculated"
+  store NAHI hote — `derivedLeadEvents()` lead row se banata hai (warna har
+  Find run 100+ kachra rows likhta).
+- **Outreach = OpenRent ke andar, manually.** Email composer jaan-boojh kar
+  nahi banaya — "Open OpenRent" kholta hai, user wahan message bhejta hai,
+  phir "Log outreach" yahan record karta hai (type/notes/next follow-up).
+  Automated send abhi bhi Phase 3 hai.
+- Pages: `/dashboard` (funnel + priority actions), `/leads` (CRM table,
+  over-budget default hidden), `/leads/[id]` (workbench), `/properties`
+  (dedupe by listing_id — ek property kai orders se match ho sakti hai),
+  order detail pe funnel strip.
+- Lib: `web/lib/leads.js` (model + funnel counts), `web/lib/activities.js`.
+  APIs: `/api/leads/[id]` (PATCH), `/[id]/outreach`, `/[id]/note`.
+- Phase 2 me banenge: Landlords/Agents records, Kanban, tasks table.
+  Khali placeholder pages nav me NAHI rakhe.
