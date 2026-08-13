@@ -71,7 +71,7 @@ export async function POST() {
   } catch (err) {
     // timeout ya net — button ko batao ke shuru to ho gaya
     const msg = err?.name === 'TimeoutError'
-      ? 'Batch chal rahi hai (background me) — Outreach page pe thodi der me natija.'
+      ? 'Batch chal rahi hai (background me). Outreach page pe thodi der me natija.'
       : `Trigger nahi hua: ${err.message}`;
     return Response.json({ ok: false, error: msg }, { status: 502 });
   }

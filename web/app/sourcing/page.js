@@ -30,7 +30,7 @@ export default async function SourcingPage({ searchParams }) {
         <div>
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Sourcing</h1>
           <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
-            Every property being sourced for an order — with match, margin and what to do next.
+            Every property being sourced for an order, with match, margin and what to do next.
           </p>
         </div>
         <Link href="/orders" className="seg" style={{ marginLeft: 'auto', textDecoration: 'none' }}>

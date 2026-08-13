@@ -204,7 +204,7 @@ export function SearchToggles() {
           textAlign: 'center',
         }}
       >
-        No folders yet. Paste a link on the Search page and hit “Save &amp; start outreach” — it shows up here as a folder.
+        No folders yet. Paste a link on the Search page and hit “Save &amp; start outreach” and it shows up here as a folder.
       </div>
     );
   }
@@ -379,7 +379,7 @@ export function SearchToggles() {
 
       {status === 'error' && (
         <div style={{ fontSize: 12, color: 'var(--rust)', marginTop: 10 }}>
-          Couldn&apos;t save that change — try again.
+          Couldn&apos;t save that change. Try again.
         </div>
       )}
     </div>

@@ -66,7 +66,7 @@ export function deentity(s) {
 }
 
 export function money(v) {
-  return v == null ? '—' : `£${Number(v).toLocaleString('en-GB')}`;
+  return v == null ? '-' : `£${Number(v).toLocaleString('en-GB')}`;
 }
 
 /** Source ka display naam — data me 'openrent'/'rightmove' hai, UI me proper naam. */

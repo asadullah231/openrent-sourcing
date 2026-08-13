@@ -83,7 +83,7 @@ export function SearchBar() {
       else setRes(j);
     } catch {
       // fetch khud fail ho (net gaya, ya route 30s me na nipta)
-      setErr("Search didn't run — try again.");
+      setErr("Search didn't run. Try again.");
     }
     setBusy(false);
   }
@@ -108,7 +108,7 @@ export function SearchBar() {
         return;
       }
     } catch {
-      setSaved("Couldn't save — try again.");
+      setSaved("Couldn't save. Try again.");
       return;
     }
 
@@ -129,7 +129,7 @@ export function SearchBar() {
       <div style={{ display: 'flex', gap: 8 }}>
         <input
           className="field"
-          placeholder="Paste an OpenRent or Rightmove search link — results show instantly"
+          placeholder="Paste an OpenRent or Rightmove search link, results show instantly"
           value={url}
           onChange={(e) => {
             setUrl(e.target.value);
@@ -229,14 +229,14 @@ export function SearchBar() {
                 href="/outreach"
                 style={{ fontSize: 12.5, color: 'var(--green)', flexShrink: 0, textDecoration: 'none' }}
               >
-                ✓ Outreach started — see it on Outreach ↗
+                ✓ Outreach started, see it on Outreach ↗
               </a>
             ) : saved === 'saved-only' ? (
               <a
                 href="/outreach"
                 style={{ fontSize: 12.5, color: 'var(--green)', flexShrink: 0, textDecoration: 'none' }}
               >
-                ✓ Saved — bot runs it on its next batch ↗
+                ✓ Saved, the bot runs it on its next batch ↗
               </a>
             ) : (
               <button
@@ -284,7 +284,7 @@ export function SearchBar() {
                     NA ke "sab purani". Dono ko ek jaisa dikhana jhoot hai —
                     ye bug NocoDB ke ek timeout pe saamne aaya (22 Jul). */}
                 {res.fresh == null
-                  ? "Couldn't check the store — new/seen unknown"
+                  ? "Couldn't check the store (new/seen unknown)"
                   : res.fresh > 0
                     ? 'New ones first'
                     : 'All already in the store'}

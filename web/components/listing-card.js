@@ -123,7 +123,7 @@ export function ListingCard({ l, rank = 1, sent = false, preview = false }) {
         </div>
 
         <div className="text-muted" style={{ fontSize: 13, lineHeight: 1.4 }}>
-          {meta || '—'}
+          {meta || '-'}
         </div>
 
         {/* Source ka naam — card ka click hi listing/detail kholta hai, is

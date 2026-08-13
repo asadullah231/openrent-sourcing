@@ -16,7 +16,7 @@ import { buildUrl } from './search-url.js';
  */
 export function orderToSearch(order) {
   const location = String(order?.area || '').trim();
-  if (!location) return { ok: false, error: 'Order has no area — add one before searching.' };
+  if (!location) return { ok: false, error: 'Order has no area. Add one before searching.' };
 
   const slug = location.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   if (!slug) return { ok: false, error: 'Order area did not resolve to a searchable location.' };

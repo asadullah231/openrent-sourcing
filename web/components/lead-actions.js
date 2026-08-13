@@ -267,7 +267,7 @@ export function LeadActions({ lead }) {
           <textarea
             className="field"
             rows={3}
-            placeholder="Notes (optional) — what they said, viewing times offered…"
+            placeholder="Notes (optional): what they said, viewing times offered…"
             value={rNotes}
             onChange={(e) => setRNotes(e.target.value)}
           />

@@ -31,7 +31,7 @@ export function SendBatchButton() {
         setState('error');
       }
     } catch {
-      setErr("Couldn't trigger — try again.");
+      setErr("Couldn't trigger. Try again.");
       setState('error');
     }
   }
@@ -49,7 +49,7 @@ export function SendBatchButton() {
 
       {state === 'running' && (
         <div className="text-muted" style={{ fontSize: 12.5, marginTop: 10 }}>
-          The bot is running — scraping and sending. Takes 30-60 seconds.
+          The bot is running: scraping and sending. Takes 30-60 seconds.
         </div>
       )}
 

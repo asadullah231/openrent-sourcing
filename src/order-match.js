@@ -56,7 +56,7 @@ export function hardFilterListing(l, order) {
   const maxRent = num(order.max_rent);
   if (maxRent != null) {
     if (l.price == null) {
-      rejections.push('Rent unknown — cannot verify against budget');
+      rejections.push('Rent unknown, cannot verify against budget');
     } else if (l.price > maxRent) {
       budgetFail = true;
       rejections.push(`Rent £${l.price} is £${l.price - maxRent} over the £${maxRent} maximum`);
@@ -71,16 +71,16 @@ export function hardFilterListing(l, order) {
   // 2) Minimum bedrooms — hard
   const bedsMin = num(order.bedrooms);
   if (bedsMin != null && l.beds != null && l.beds < bedsMin) {
-    rejections.push(`${l.beds} bedroom${l.beds === 1 ? '' : 's'} — order needs ${bedsMin}+`);
+    rejections.push(`${l.beds} bedroom${l.beds === 1 ? '' : 's'}, order needs ${bedsMin}+`);
   }
   const bedsMax = num(order.bedrooms_max);
   if (bedsMax != null && l.beds != null && l.beds > bedsMax) {
-    rejections.push(`${l.beds} bedrooms — order max is ${bedsMax}`);
+    rejections.push(`${l.beds} bedrooms, order max is ${bedsMax}`);
   }
 
   // 3) Shared room — kabhi eligible nahi (beds pass ho tab bhi)
   if (l.title && SHARED_ROOM_RE.test(l.title)) {
-    rejections.push('Room in a shared property — not a whole property');
+    rejections.push('Room in a shared property, not a whole property');
   }
 
   // 4) Property type — hard WHERE SPECIFIED aur jahan listing ka type maloom ho
@@ -88,7 +88,7 @@ export function hardFilterListing(l, order) {
   if (wantType && wantType !== 'any') {
     const got = listingType(l);
     if (got && got !== wantType) {
-      rejections.push(`Property is a ${got} — order needs a ${wantType}`);
+      rejections.push(`Property is a ${got}, order needs a ${wantType}`);
     }
     // got == null → type abhi maloom nahi (enrich pending) → reject nahi,
     // score me "type unverified" penalty milegi.
@@ -110,7 +110,7 @@ export function hardFilterListing(l, order) {
   if (needBy != null && l.available_from_days != null) {
     const daysUntilNeeded = Math.ceil((needBy - Date.now()) / 86400000);
     if (l.available_from_days > daysUntilNeeded + 7) {
-      rejections.push(`Available in ${l.available_from_days} days — order needs it by ${new Date(needBy).toLocaleDateString('en-GB')}`);
+      rejections.push(`Available in ${l.available_from_days} days, order needs it by ${new Date(needBy).toLocaleDateString('en-GB')}`);
     }
   }
 

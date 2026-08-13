@@ -108,9 +108,9 @@ export function OrdersTable({ orders }) {
                         </span>
                       )}
                     </td>
-                    <td style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.council_client || '—'}</td>
+                    <td style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.council_client || '-'}</td>
                     <td style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {[o.area, o.postcodes].filter(Boolean).join(' · ') || '—'}
+                      {[o.area, o.postcodes].filter(Boolean).join(' · ') || '-'}
                     </td>
                     <td className="text-muted" style={{ fontSize: 12.5 }}>
                       {[
@@ -120,7 +120,7 @@ export function OrdersTable({ orders }) {
                       ].filter(Boolean).join(' · ') || 'Any'}
                     </td>
                     <td className="font-mono" style={{ textAlign: 'right' }}>
-                      {o.max_rent != null ? `£${Number(o.max_rent).toLocaleString('en-GB')}` : '—'}
+                      {o.max_rent != null ? `£${Number(o.max_rent).toLocaleString('en-GB')}` : '-'}
                     </td>
                     <td className="font-mono" style={{ textAlign: 'right' }}>{c.matches}</td>
                     <td className="font-mono" style={{ textAlign: 'right', color: c.shortlisted ? 'var(--brass)' : undefined }}>{c.shortlisted}</td>

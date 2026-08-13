@@ -26,7 +26,7 @@ export async function POST(req, { params }) {
     const row = await setShortlist(id, listingId, !!body.shortlisted, body.next_action);
     if (!row) {
       return Response.json(
-        { error: 'This property is not linked to the order — run Find Properties first.' },
+        { error: 'This property is not linked to the order. Run Find Properties first.' },
         { status: 404 }
       );
     }

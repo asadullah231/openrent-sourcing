@@ -70,10 +70,10 @@ export const LOSS_REASONS = [
 ];
 
 export function leadStatusLabel(key) {
-  return LEAD_STATUSES.find((s) => s.key === key)?.label || key || '—';
+  return LEAD_STATUSES.find((s) => s.key === key)?.label || key || '-';
 }
 export function outreachStatusLabel(key) {
-  return OUTREACH_STATUSES.find((s) => s.key === key)?.label || key || '—';
+  return OUTREACH_STATUSES.find((s) => s.key === key)?.label || key || '-';
 }
 
 /** Lead ka insaani number — row Id se, order ki tarah derived (alag column nahi). */

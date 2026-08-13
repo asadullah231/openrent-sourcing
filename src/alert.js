@@ -29,7 +29,7 @@ function buildDealsHtml(listings) {
     <h2 style="margin:0 0 4px;">🏠 ${listings.length} new listing${listings.length > 1 ? 's' : ''} worth a look</h2>
     <p style="color:#666;margin:0 0 16px;">Fresh on OpenRent, sorted by score.</p>
     <table style="width:100%;border-collapse:collapse;">${rows}</table>
-    <p style="color:#999;font-size:12px;margin-top:16px;">Score = response rate + freshness + distance + price fit. First viewing request wins — move fast.</p>
+    <p style="color:#999;font-size:12px;margin-top:16px;">Score = response rate + freshness + distance + price fit. First viewing request wins, move fast.</p>
   </div>`;
 }
 

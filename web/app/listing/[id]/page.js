@@ -16,7 +16,7 @@ function placeName(l) {
 
 // Ek fact — value ho tabhi dikhta hai (null/empty ghayab, "null ·" jaisa kachra nahi).
 function Fact({ label, value }) {
-  if (value == null || value === '' || value === '—') return null;
+  if (value == null || value === '' || value === '—' || value === '-') return null;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <span className="text-muted" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>

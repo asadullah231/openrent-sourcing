@@ -80,7 +80,7 @@ function LeadRow({ lead, actions, engine }) {
   const today = new Date().toISOString().slice(0, 10);
   const engineNote =
     engine?.viewing_status === 'queued'
-      ? 'Queued — the bot sends it next run'
+      ? 'Queued, the bot sends it next run'
       : engine?.viewing_status === 'draft'
         ? 'Draft prepared (preview mode)'
         : null;
@@ -218,7 +218,7 @@ export default async function OutreachPage({ searchParams }) {
         <div>
           <h1 style={{ fontSize: 30, margin: 0, fontWeight: 700, letterSpacing: '-0.02em' }}>Outreach</h1>
           <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
-            The outreach funnel — who to contact, who replied, and what needs a follow-up.
+            The outreach funnel: who to contact, who replied, and what needs a follow-up.
           </p>
         </div>
         <span
@@ -282,7 +282,7 @@ export default async function OutreachPage({ searchParams }) {
           >
             {tab === 'ready' && 'Nothing waiting for outreach. Shortlist properties on an order to fill this list.'}
             {tab === 'followups' && 'No follow-ups due. Set a follow-up date when you log outreach.'}
-            {tab === 'all' && 'Nothing here yet — run Find Properties on an order first.'}
+            {tab === 'all' && 'Nothing here yet. Run Find Properties on an order first.'}
             {!['ready', 'followups', 'all'].includes(tab) && 'Nothing here yet.'}
           </div>
         ) : (
@@ -304,7 +304,7 @@ export default async function OutreachPage({ searchParams }) {
       <section style={{ borderTop: '1px solid var(--mist-line)', paddingTop: 26 }}>
         <h2 style={{ fontSize: 18, margin: '0 0 4px', fontWeight: 600 }}>Sending engine</h2>
         <p className="text-muted" style={{ fontSize: 12.5, margin: '0 0 16px', lineHeight: 1.6 }}>
-          All messages go out through the bot on the OpenRent account — with the daily cap, human pacing and one-message-per-property protection.
+          All messages go out through the bot on the OpenRent account, with the daily cap, human pacing and one-message-per-property protection.
         </p>
 
         <div className="metric-strip" style={{ marginBottom: 10 }}>

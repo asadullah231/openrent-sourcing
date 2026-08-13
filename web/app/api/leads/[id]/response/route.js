@@ -36,31 +36,31 @@ export async function POST(req, { params }) {
       patch.outreach_status = 'interested';
       if (before('interested')) patch.lead_status = 'interested';
       patch.next_action = 'Arrange viewing';
-      title = 'Landlord replied — interested';
+      title = 'Landlord replied: interested';
       break;
     case 'not_interested':
       patch.outreach_status = 'not_interested';
       patch.lead_status = 'lost';
       patch.loss_reason = 'landlord_declined';
-      title = 'Landlord replied — not interested';
+      title = 'Landlord replied: not interested';
       break;
     case 'needs_info':
       patch.outreach_status = 'needs_info';
       if (before('contacted')) patch.lead_status = 'contacted';
       patch.next_action = 'Send the requested information';
-      title = 'Landlord replied — needs more information';
+      title = 'Landlord replied: needs more information';
       break;
     case 'property_unavailable':
       patch.outreach_status = 'replied';
       patch.lead_status = 'lost';
       patch.loss_reason = 'property_unavailable';
-      title = 'Landlord replied — property unavailable';
+      title = 'Landlord replied: property unavailable';
       break;
     case 'already_let':
       patch.outreach_status = 'replied';
       patch.lead_status = 'lost';
       patch.loss_reason = 'property_unavailable';
-      title = 'Landlord replied — already let';
+      title = 'Landlord replied: already let';
       break;
     default: // other
       patch.outreach_status = 'replied';

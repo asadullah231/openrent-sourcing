@@ -107,7 +107,7 @@ export default async function SearchFolderPage({ searchParams }) {
         >
           <div className="text-muted" style={{ lineHeight: 1.7 }}>
             This folder fills up on the bot&apos;s next run. The bot scrapes saved
-            searches on a schedule and saves the results here — it hasn&apos;t
+            searches on a schedule and saves the results here; it hasn&apos;t
             scraped this one yet.
           </div>
           <Link

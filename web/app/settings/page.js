@@ -79,7 +79,7 @@ export default function SettingsPage() {
                 : {}
             }
           >
-            {v.autopilot === 'on' ? 'On' : 'Off — paused'}
+            {v.autopilot === 'on' ? 'On' : 'Off (paused)'}
           </button>
         </div>
 
@@ -98,7 +98,7 @@ export default function SettingsPage() {
             {live ? 'Live' : 'Shadow'}
           </span>
           <span className="text-muted" style={{ fontSize: 12 }}>
-            Locked — ask your developer to change this.
+            Locked. Ask your developer to change this.
           </span>
         </div>
         {live && (

@@ -105,7 +105,7 @@ export function PropertyMap({ listings, height = 340, interactive = false, onPic
       for (const l of pts) {
         const sent = l.viewing_status === 'requested';
         const color = sent ? GREEN : BRASS;
-        const text = l.price != null ? money(l.price) : '—';
+        const text = l.price != null ? money(l.price) : '-';
 
         // Rent ki chaudai mukhtalif hoti hai, is liye pill (gol dabba) — pehle
         // fixed 30px ka teardrop tha jis me "£2.7k" fit hi nahi hota tha.

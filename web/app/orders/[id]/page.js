@@ -26,7 +26,7 @@ function Fact({ label, children, strong = false }) {
         {label}
       </div>
       <div className={strong ? 'font-mono' : ''} style={{ fontSize: strong ? 15 : 13.5, fontWeight: strong ? 700 : 500, marginTop: 3 }}>
-        {children ?? '—'}
+        {children ?? '-'}
       </div>
     </div>
   );
@@ -111,7 +111,7 @@ export default async function OrderDetailPage({ params }) {
         <Fact label="Type">{order.property_type && order.property_type !== 'any' ? order.property_type : 'Any'}</Fact>
         <Fact label="Max rent" strong>£{Number(order.max_rent ?? 0).toLocaleString('en-GB')}</Fact>
         <Fact label="Order rate" strong>
-          {order.order_rate != null ? `£${Number(order.order_rate).toLocaleString('en-GB')}` : '—'}
+          {order.order_rate != null ? `£${Number(order.order_rate).toLocaleString('en-GB')}` : '-'}
         </Fact>
         <Fact label="Availability">{order.availability || 'ASAP'}</Fact>
         <Fact label="Furnished">{order.furnished || 'Any'}</Fact>

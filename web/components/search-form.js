@@ -127,7 +127,7 @@ export function SearchForm() {
         setMsg(`Saved "${j.name}". The bot will scrape it on its next run and only keep ${describeRange(j.filters)}.`);
       }
     } catch {
-      setOk(false); setMsg("Couldn't save — try again.");
+      setOk(false); setMsg("Couldn't save. Try again.");
     }
     setBusy(false);
   }
@@ -147,7 +147,7 @@ export function SearchForm() {
           <label style={labelStyle}>Location</label>
           <input
             style={inputStyle}
-            placeholder="Start typing — e.g. Bexley, Bromley, SE9"
+            placeholder="Start typing, e.g. Bexley, Bromley, SE9"
             value={location}
             autoComplete="off"
             onChange={(e) => setLocation(e.target.value)}
@@ -234,7 +234,7 @@ export function SearchForm() {
         <div style={{ border: '1px dashed var(--mist-line)', borderRadius: 10, padding: '12px 14px', marginBottom: 14, background: 'var(--bg)' }}>
           <div className="text-muted" style={{ fontSize: 11.5, marginBottom: 10, lineHeight: 1.5 }}>
             Enter the borough&apos;s LHA rate and the council incentive for this bed size.
-            Max rent is worked out for you — you can still edit it after.
+            Max rent is worked out for you. You can still edit it after.
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <div style={{ flex: '1 1 130px' }}>
@@ -249,7 +249,7 @@ export function SearchForm() {
               <label style={labelStyle}>Max rent</label>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <div className="font-mono" style={{ fontSize: 18, fontWeight: 700, minWidth: 70 }}>
-                  {suggested != null ? `£${suggested.toLocaleString('en-GB')}` : '—'}
+                  {suggested != null ? `£${suggested.toLocaleString('en-GB')}` : '-'}
                 </div>
                 <button
                   type="button"

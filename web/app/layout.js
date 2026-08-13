@@ -19,7 +19,7 @@ document.documentElement.setAttribute('data-theme','light');}})();`;
 // Brand directive (13 Aug): customer-facing naam sirf "Social Housing".
 export const metadata = {
   title: 'Social Housing',
-  description: 'Social Housing — property sourcing platform',
+  description: 'Social Housing: property sourcing platform',
 };
 
 // Asad ka faisla (23 Jul): sirf 4 pages nav me. New&pending / Requested / Queue

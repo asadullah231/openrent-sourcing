@@ -103,11 +103,11 @@ export async function POST(req) {
         triggered = res.ok;
       } catch (e) {
         triggerMsg = e?.name === 'TimeoutError'
-          ? 'Queued — bot is sending in the background.'
+          ? 'Queued. The bot is sending in the background.'
           : `Queued, but trigger failed: ${e.message}`;
       }
     } else {
-      triggerMsg = 'Queued — will send on the next scheduled run (trigger URL not set).';
+      triggerMsg = 'Queued. It will send on the next scheduled run (trigger URL not set).';
     }
 
     return Response.json({
@@ -117,7 +117,7 @@ export async function POST(req) {
       skipped,
       triggered,
       message: triggerMsg || (skipped > 0
-        ? `Queued ${queued} to send now. ${skipped} skipped (daily cap) — they’ll go next.`
+        ? `Queued ${queued} to send now. ${skipped} skipped (daily cap), they’ll go next.`
         : `Queued ${queued} to send from Mo’s account.`),
     });
   }

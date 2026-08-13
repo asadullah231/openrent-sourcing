@@ -110,15 +110,15 @@ export default async function PropertyDetailPage({ params }) {
                       <Link href={`/orders/${lead.order.Id}`} style={{ color: 'var(--paper)', textDecoration: 'none' }}>
                         {lead.order.order_number || `ORD-${String(lead.order.Id).padStart(4, '0')}`}
                       </Link>
-                    ) : '—'}
+                    ) : '-'}
                   </td>
-                  <td className="font-mono" style={{ textAlign: 'right' }}>{lead.match_score != null ? `${lead.match_score}%` : '—'}</td>
+                  <td className="font-mono" style={{ textAlign: 'right' }}>{lead.match_score != null ? `${lead.match_score}%` : '-'}</td>
                   <td className="font-mono" style={{ textAlign: 'right' }}>
-                    {lead.net_monthly_margin != null ? `${money(lead.net_monthly_margin)}/mo` : '—'}
+                    {lead.net_monthly_margin != null ? `${money(lead.net_monthly_margin)}/mo` : '-'}
                   </td>
                   <td><OutreachBadge status={lead.outreach_status} size={10.5} /></td>
                   <td><LeadStatusBadge status={lead.status} size={10.5} /></td>
-                  <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.next_action || '—'}</td>
+                  <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.next_action || '-'}</td>
                 </tr>
               ))}
             </tbody>

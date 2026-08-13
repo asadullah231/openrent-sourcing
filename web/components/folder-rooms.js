@@ -59,7 +59,7 @@ const SAVED_VIEWS_KEY = 'openrent.savedViews.v1';
 
 function fmtGBP(n) {
   const v = Number(n);
-  return Number.isFinite(v) && v > 0 ? `£${v.toLocaleString('en-GB')}` : '—';
+  return Number.isFinite(v) && v > 0 ? `£${v.toLocaleString('en-GB')}` : '-';
 }
 
 function timeAgo(iso) {
@@ -313,7 +313,7 @@ export function FolderRooms({ rooms, notes: notesInit = {}, activity = {}, healt
         setNote(j.ok ? '' : (j.error || 'Move failed.'));
       }
     } catch {
-      setNote('Something went wrong — try again.');
+      setNote('Something went wrong. Try again.');
     } finally {
       setBusy(false);
     }

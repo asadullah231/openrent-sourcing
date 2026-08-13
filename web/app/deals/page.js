@@ -10,7 +10,7 @@ import { money, leadPropertyLine } from '@/components/crm-bits';
 export const dynamic = 'force-dynamic';
 
 function DealRow({ l, extra, extraColor }) {
-  const orderLabel = l.order?.order_number || (l.order_id != null ? `ORD-${String(l.order_id).padStart(4, '0')}` : '—');
+  const orderLabel = l.order?.order_number || (l.order_id != null ? `ORD-${String(l.order_id).padStart(4, '0')}` : '-');
   return (
     <div className="work-row">
       <span style={{ fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 200px' }}>
@@ -18,7 +18,7 @@ function DealRow({ l, extra, extraColor }) {
       </span>
       <span className="font-mono" style={{ flexShrink: 0, fontSize: 12.5 }}>{money(l.listing?.price)}</span>
       <span className="font-mono" style={{ flexShrink: 0, fontSize: 12.5, color: l.net_monthly_margin != null ? (l.net_monthly_margin >= 0 ? 'var(--green)' : 'var(--rust)') : 'var(--mist)' }}>
-        {l.net_monthly_margin != null ? `${money(l.net_monthly_margin)}/mo` : '—'}
+        {l.net_monthly_margin != null ? `${money(l.net_monthly_margin)}/mo` : '-'}
       </span>
       <span className="font-mono text-muted" style={{ flexShrink: 0, fontSize: 12 }}>{orderLabel}</span>
       {extra && <span style={{ flexShrink: 0, fontSize: 12, color: extraColor || 'var(--mist)' }}>{extra}</span>}
@@ -77,7 +77,7 @@ export default async function DealsPage() {
       <div>
         <h1 style={{ margin: 0 }}>Deals</h1>
         <p className="text-muted" style={{ margin: '3px 0 0' }}>
-          Where opportunities ended up — in negotiation, won, or lost and why.
+          Where opportunities ended up: in negotiation, won, or lost and why.
         </p>
       </div>
 
@@ -102,7 +102,7 @@ export default async function DealsPage() {
         </div>
       </div>
 
-      <Group title="In progress" count={inProgress.length} empty="Nothing in negotiation right now — deals start from interested landlords after a viewing.">
+      <Group title="In progress" count={inProgress.length} empty="Nothing in negotiation right now. Deals start from interested landlords after a viewing.">
         {inProgress.map((l) => (
           <DealRow key={l.Id} l={l} extra={l.status === 'negotiation' ? 'Negotiation' : 'Deal agreed'} extraColor="var(--brass)" />
         ))}
@@ -114,7 +114,7 @@ export default async function DealsPage() {
         ))}
       </Group>
 
-      <Group title="Lost" count={lost.length} empty="Nothing lost yet — loss reasons will show here so patterns are visible.">
+      <Group title="Lost" count={lost.length} empty="Nothing lost yet. Loss reasons will show here so patterns are visible.">
         {lost.map((l) => (
           <DealRow
             key={l.Id}

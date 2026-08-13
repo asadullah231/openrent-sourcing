@@ -27,7 +27,7 @@ export default async function ViewingsPage() {
       <div>
         <h1 style={{ margin: 0 }}>Viewings</h1>
         <p className="text-muted" style={{ margin: '3px 0 0' }}>
-          Properties at the viewing stage — confirm, attend, then move them to negotiation or log the outcome.
+          Properties at the viewing stage: confirm, attend, then move them to negotiation or log the outcome.
         </p>
       </div>
 
@@ -48,7 +48,7 @@ export default async function ViewingsPage() {
       ) : (
         <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', background: 'var(--surface)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
           {rows.map((l) => {
-            const orderLabel = l.order?.order_number || (l.order_id != null ? `ORD-${String(l.order_id).padStart(4, '0')}` : '—');
+            const orderLabel = l.order?.order_number || (l.order_id != null ? `ORD-${String(l.order_id).padStart(4, '0')}` : '-');
             const due = l.next_action_date && l.next_action_date <= today;
             return (
               <div key={l.Id} className="work-row">
@@ -58,7 +58,7 @@ export default async function ViewingsPage() {
                 <span className="font-mono" style={{ flexShrink: 0, fontSize: 12.5 }}>{money(l.listing?.price)}</span>
                 <span className="font-mono text-muted" style={{ flexShrink: 0, fontSize: 12 }}>{orderLabel}</span>
                 <span className="text-muted" style={{ flexShrink: 0, fontSize: 12 }}>
-                  {l.listing?.landlord_name || '—'}
+                  {l.listing?.landlord_name || '-'}
                 </span>
                 <span style={{ flexShrink: 0 }}><OutreachBadge status={l.outreach_status} /></span>
                 <span style={{ flexShrink: 0, fontSize: 12, color: due ? 'var(--rust)' : 'var(--mist)' }}>

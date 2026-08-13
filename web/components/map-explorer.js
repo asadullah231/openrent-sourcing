@@ -23,7 +23,7 @@ const PropertyMap = dynamic(() => import('./property-map').then((m) => m.Propert
   ),
 });
 
-const money = (p) => (p == null ? '—' : `£${Number(p).toLocaleString('en-GB')}`);
+const money = (p) => (p == null ? '-' : `£${Number(p).toLocaleString('en-GB')}`);
 
 export function MapExplorer({ listings }) {
   const [beds, setBeds] = useState('');
@@ -181,7 +181,7 @@ export function MapExplorer({ listings }) {
 
       {noCoords > 0 && (
         <div className="text-muted" style={{ fontSize: 11.5, marginTop: 10 }}>
-          {noCoords} listing{noCoords > 1 ? 's' : ''} not on the map — no location found.
+          {noCoords} listing{noCoords > 1 ? 's' : ''} not on the map (no location found).
         </div>
       )}
     </div>

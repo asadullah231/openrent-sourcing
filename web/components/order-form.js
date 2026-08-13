@@ -28,8 +28,8 @@ export function OrderForm() {
   async function submit(e) {
     e.preventDefault();
     setError('');
-    if (!f.area.trim()) return setError('Area is required — the property search runs on it.');
-    if (!f.max_rent || Number(f.max_rent) <= 0) return setError('Maximum rent is required — it is the hard budget ceiling.');
+    if (!f.area.trim()) return setError('Area is required. The property search runs on it.');
+    if (!f.max_rent || Number(f.max_rent) <= 0) return setError('Maximum rent is required. It is the hard budget ceiling.');
     setBusy(true);
     try {
       const res = await fetch('/api/orders', {

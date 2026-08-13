@@ -23,7 +23,7 @@ export default function SearchesPage() {
         <h2 style={{ fontSize: 18, margin: '0 0 4px', fontWeight: 600 }}>Start outreach</h2>
         <p className="text-muted" style={{ marginTop: 0, marginBottom: 16, fontSize: 12.5, lineHeight: 1.6 }}>
           The bot scrapes these searches and sends one batch of requests. The cron
-          still runs on its own schedule — this is for running it right now.
+          still runs on its own schedule; this is for running it right now.
         </p>
         <SendBatchButton />
       </div>

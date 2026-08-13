@@ -25,7 +25,7 @@ export async function POST(req, { params }) {
   const l = lead.listing || {};
   if ((l.source || 'openrent') !== 'openrent') {
     return Response.json(
-      { error: 'Outreach goes through OpenRent only — this listing is on another portal.' },
+      { error: 'Outreach goes through OpenRent only: this listing is on another portal.' },
       { status: 400 }
     );
   }
@@ -52,7 +52,7 @@ export async function POST(req, { params }) {
     return Response.json({
       ok: false,
       already: true,
-      error: 'Outreach already went to this landlord — OpenRent allows one message per property.',
+      error: 'Outreach already went to this landlord. OpenRent allows one message per property.',
     });
   }
 
@@ -66,7 +66,7 @@ export async function POST(req, { params }) {
     queuedNow = await addListingToStore(l, { score: 0 });
   }
   if (!queuedNow) {
-    return Response.json({ error: 'Could not queue this listing — try again.' }, { status: 500 });
+    return Response.json({ error: 'Could not queue this listing. Try again.' }, { status: 500 });
   }
 
   // Bot trigger — wahi webhook jo baqi dashboard use karta hai.
@@ -82,17 +82,17 @@ export async function POST(req, { params }) {
       triggered = res.ok;
     } catch (e) {
       triggerMsg = e?.name === 'TimeoutError'
-        ? 'Queued — the bot is sending in the background.'
+        ? 'Queued. The bot is sending in the background.'
         : `Queued, but trigger failed: ${e.message}`;
     }
   } else {
-    triggerMsg = 'Queued — it will send on the next scheduled run.';
+    triggerMsg = 'Queued. It will send on the next scheduled run.';
   }
 
   // Lead pipeline: queue hua to kam az kam READY_TO_CONTACT. CONTACTED abhi
   // NAHI — wo sirf tab jab engine sach me bhej de (sync us waqt karta hai).
   const order = LEAD_STATUSES.map((s) => s.key);
-  const patch = { next_action: 'Outreach queued — waiting for the bot to send' };
+  const patch = { next_action: 'Outreach queued, waiting for the bot to send' };
   if (order.indexOf(lead.status) < order.indexOf('ready_to_contact')) patch.lead_status = 'ready_to_contact';
   try { await updateLead(lead.Id, patch); } catch {}
 
@@ -116,7 +116,7 @@ export async function POST(req, { params }) {
     message:
       triggerMsg ||
       (health.mode === 'live'
-        ? 'Queued — the bot sends it from the account with all safety limits.'
-        : 'Queued — preview mode is on, so a draft is prepared instead of a real send.'),
+        ? 'Queued. The bot sends it from the account with all safety limits.'
+        : 'Queued. Preview mode is on, so a draft is prepared instead of a real send.'),
   });
 }

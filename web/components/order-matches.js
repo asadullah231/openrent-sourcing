@@ -108,7 +108,7 @@ export function OrderMatches({ order, matches, canProfit }) {
 
       {!canProfit && (
         <div className="text-muted" style={{ fontSize: 12.5, border: '1px solid var(--mist-line)', borderRadius: 'var(--r-ctrl)', padding: '10px 14px' }}>
-          No order rate set — matches can be found and scored, but margins cannot be calculated. Add an order rate to see profitability.
+          No order rate set. Matches can be found and scored, but margins cannot be calculated. Add an order rate to see profitability.
         </div>
       )}
 
@@ -116,7 +116,7 @@ export function OrderMatches({ order, matches, canProfit }) {
       <Section
         title="Shortlisted"
         count={shortlisted.length}
-        empty={matches.length ? 'Nothing shortlisted yet — shortlist the strongest matches below.' : null}
+        empty={matches.length ? 'Nothing shortlisted yet. Shortlist the strongest matches below.' : null}
       >
         {shortlisted.map((m) => (
           <MatchCard key={m.listing_id} m={m} order={order} busy={rowBusy === m.listing_id} onShortlist={shortlist} />
@@ -130,7 +130,7 @@ export function OrderMatches({ order, matches, canProfit }) {
         empty={
           matches.length
             ? 'No other eligible matches right now.'
-            : 'No results yet. Click “Find properties” — the search runs on this order’s exact requirements and budget.'
+            : 'No results yet. Click “Find properties”: the search runs on this order’s exact requirements and budget.'
         }
       >
         {eligible.map((m) => (
@@ -151,11 +151,11 @@ export function OrderMatches({ order, matches, canProfit }) {
         </div>
         {overBudget.length === 0 ? (
           <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
-            {matches.length ? 'Nothing over budget from the last search.' : '—'}
+            {matches.length ? 'Nothing over budget from the last search.' : '-'}
           </p>
         ) : !showOverBudget ? (
           <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
-            {overBudget.length} propert{overBudget.length === 1 ? 'y' : 'ies'} above the £{order.max_rent} ceiling — hidden from normal matches by the budget rule.
+            {overBudget.length} propert{overBudget.length === 1 ? 'y' : 'ies'} above the £{order.max_rent} ceiling, hidden from normal matches by the budget rule.
           </p>
         ) : (
           <div className="presult-grid">
@@ -260,7 +260,7 @@ function MatchCard({ m, order, busy, onShortlist }) {
                 ...reasons.slice(0, 3),
                 l.baths != null && `${l.baths} bath`,
                 l.epc && `EPC ${l.epc}`,
-              ].filter(Boolean).join(' · ') || '—'}
+              ].filter(Boolean).join(' · ') || '-'}
         </div>
 
         {/* line 4: source + actions */}
@@ -288,7 +288,7 @@ function MatchCard({ m, order, busy, onShortlist }) {
                 href={`/sourcing/${m.Id}`}
                 className="seg"
                 style={{ fontSize: 11.5, padding: '5px 10px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-                title="Open the sourcing record — outreach, status and timeline live there."
+                title="Open the sourcing record: outreach, status and timeline live there."
               >
                 Open
               </a>

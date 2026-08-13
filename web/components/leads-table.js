@@ -129,7 +129,7 @@ export function LeadsTable({ leads, initialTab }) {
           className="seg"
           style={showOverBudget ? { color: 'var(--paper)', borderColor: 'var(--rust)' } : undefined}
           onClick={() => setShowOverBudget((v) => !v)}
-          title="Over-budget properties are negotiation research — hidden from the working list by default."
+          title="Over-budget properties are negotiation research, hidden from the working list by default."
         >
           Include over budget
         </button>
@@ -171,19 +171,19 @@ export function LeadsTable({ leads, initialTab }) {
                     )}
                   </td>
                   <td className="font-mono" style={{ fontSize: 12 }}>
-                    {l.order?.order_number || (l.order_id != null ? `ORD-${String(l.order_id).padStart(4, '0')}` : '—')}
+                    {l.order?.order_number || (l.order_id != null ? `ORD-${String(l.order_id).padStart(4, '0')}` : '-')}
                   </td>
                   <td className="font-mono" style={{ textAlign: 'right' }}>
-                    {l.match_score != null ? `${l.match_score}%` : '—'}
+                    {l.match_score != null ? `${l.match_score}%` : '-'}
                   </td>
                   <td className="font-mono" style={{ textAlign: 'right' }}>{money(l.listing?.price)}</td>
                   <td className="font-mono" style={{ textAlign: 'right', color: l.net_monthly_margin != null ? (l.net_monthly_margin >= 0 ? 'var(--green)' : 'var(--rust)') : undefined }}>
-                    {l.net_monthly_margin != null ? `${money(l.net_monthly_margin)}/mo` : '—'}
+                    {l.net_monthly_margin != null ? `${money(l.net_monthly_margin)}/mo` : '-'}
                   </td>
                   <td><LeadStatusBadge status={l.status} /></td>
                   <td><OutreachBadge status={l.outreach_status} /></td>
                   <td style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {l.next_action || '—'}
+                    {l.next_action || '-'}
                     {l.next_action_date && (
                       <span className="text-muted" style={{ marginLeft: 6, fontSize: 11.5 }}>
                         {l.next_action_date <= today ? <b style={{ color: 'var(--rust)' }}>{l.next_action_date}</b> : l.next_action_date}
@@ -211,13 +211,13 @@ export function LeadsTable({ leads, initialTab }) {
 function LeadDrawer({ lead, onClose }) {
   const l = lead.listing || {};
   const o = lead.order;
-  const orderLabel = o?.order_number || (lead.order_id != null ? `ORD-${String(lead.order_id).padStart(4, '0')}` : '—');
+  const orderLabel = o?.order_number || (lead.order_id != null ? `ORD-${String(lead.order_id).padStart(4, '0')}` : '-');
   const today = new Date().toISOString().slice(0, 10);
 
   const Row = ({ label, children }) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12.5, padding: '7px 0', borderBottom: '1px solid var(--mist-line)' }}>
       <span className="text-muted" style={{ flexShrink: 0 }}>{label}</span>
-      <span style={{ textAlign: 'right', minWidth: 0 }}>{children ?? '—'}</span>
+      <span style={{ textAlign: 'right', minWidth: 0 }}>{children ?? '-'}</span>
     </div>
   );
 
@@ -264,7 +264,7 @@ function LeadDrawer({ lead, onClose }) {
             </a>
             {o?.council_client ? <span className="text-muted"> · {o.council_client}</span> : null}
           </Row>
-          <Row label="Order budget">{o?.max_rent != null ? money(o.max_rent) : '—'}</Row>
+          <Row label="Order budget">{o?.max_rent != null ? money(o.max_rent) : '-'}</Row>
           <Row label="Landlord">{l.landlord_name || 'Not known yet'}</Row>
           <Row label="Outreach"><OutreachBadge status={lead.outreach_status} /></Row>
           <Row label="Attempts">{lead.contact_attempts || 0}</Row>
@@ -274,7 +274,7 @@ function LeadDrawer({ lead, onClose }) {
               : 'Not yet'}
           </Row>
           <Row label="Next action">
-            {lead.next_action || '—'}
+            {lead.next_action || '-'}
             {lead.next_action_date && (
               <span className="text-muted"> · {lead.next_action_date}{lead.next_action_date <= today && <b style={{ color: 'var(--rust)' }}> due</b>}</span>
             )}

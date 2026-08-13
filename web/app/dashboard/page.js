@@ -28,7 +28,7 @@ function Metric({ label, value, color, href }) {
 // Reason column batata hai ye row list me KYUN hai (follow-up due / reply / …).
 function WorkRow({ lead, reason, reasonColor }) {
   const l = lead.listing || {};
-  const orderLabel = lead.order?.order_number || (lead.order_id != null ? `ORD-${String(lead.order_id).padStart(4, '0')}` : '—');
+  const orderLabel = lead.order?.order_number || (lead.order_id != null ? `ORD-${String(lead.order_id).padStart(4, '0')}` : '-');
   return (
     <div className="work-row">
       <span style={{ width: 7, height: 7, borderRadius: 999, background: reasonColor || 'var(--mist)', flexShrink: 0 }} />
@@ -37,7 +37,7 @@ function WorkRow({ lead, reason, reasonColor }) {
       </span>
       <span className="font-mono" style={{ flexShrink: 0, fontSize: 12.5 }}>{money(l.price)}</span>
       <span className="font-mono text-muted" style={{ flexShrink: 0, fontSize: 12, width: 42, textAlign: 'right' }}>
-        {lead.match_score != null ? `${lead.match_score}%` : '—'}
+        {lead.match_score != null ? `${lead.match_score}%` : '-'}
       </span>
       <span className="font-mono text-muted" style={{ flexShrink: 0, fontSize: 12 }}>{orderLabel}</span>
       <span style={{ flexShrink: 0 }}><LeadStatusBadge status={lead.status} /></span>
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
       <div>
         <h1 style={{ margin: 0 }}>Dashboard</h1>
         <p className="text-muted" style={{ margin: '3px 0 0' }}>
-          Today&apos;s sourcing work — what needs attention and what to do next.
+          Today&apos;s sourcing work: what needs attention and what to do next.
         </p>
       </div>
 
@@ -132,7 +132,7 @@ export default async function DashboardPage() {
         </h2>
         {work.length === 0 ? (
           <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
-            Nothing waiting — no follow-ups due, no unread responses, nothing ready to contact.
+            Nothing waiting: no follow-ups due, no unread responses, nothing ready to contact.
           </p>
         ) : (
           <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', background: 'var(--surface)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
@@ -151,7 +151,7 @@ export default async function DashboardPage() {
       {/* ── Recent activity ── */}
       <div>
         <h2 style={{ margin: '0 0 10px' }}>Recent activity</h2>
-        <ActivityTimeline activities={activities} emptyText="No activity yet — it starts once orders find properties and they move through the funnel." />
+        <ActivityTimeline activities={activities} emptyText="No activity yet. It starts once orders find properties and they move through the funnel." />
       </div>
     </div>
   );

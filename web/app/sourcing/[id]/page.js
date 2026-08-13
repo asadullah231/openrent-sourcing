@@ -34,7 +34,7 @@ function Fact({ label, children, strong = false }) {
         {label}
       </div>
       <div className={strong ? 'font-mono' : ''} style={{ fontSize: strong ? 14.5 : 13, fontWeight: strong ? 700 : 500, marginTop: 2 }}>
-        {children ?? '—'}
+        {children ?? '-'}
       </div>
     </div>
   );
@@ -80,7 +80,7 @@ export default async function SourcingDetailPage({ params }) {
 
   const l = lead.listing || {};
   const o = lead.order;
-  const orderLabel = o?.order_number || (lead.order_id != null ? `ORD-${String(lead.order_id).padStart(4, '0')}` : '—');
+  const orderLabel = o?.order_number || (lead.order_id != null ? `ORD-${String(lead.order_id).padStart(4, '0')}` : '-');
   const statusColor = { good: 'var(--green)', ok: 'var(--brass)', low: 'var(--mist)', loss: 'var(--rust)' }[lead.profitability_status] || 'var(--mist)';
   const statusLabel = { good: 'Good deal', ok: 'Fair margin', low: 'Low margin', loss: 'Loss' }[lead.profitability_status] || null;
 
@@ -115,7 +115,7 @@ export default async function SourcingDetailPage({ params }) {
         </div>
         {lead.status === 'lost' && lead.loss_reason && (
           <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--rust)' }}>
-            Lost — {lead.loss_reason.replace(/_/g, ' ')}
+            Lost: {lead.loss_reason.replace(/_/g, ' ')}
           </div>
         )}
       </div>
@@ -138,11 +138,11 @@ export default async function SourcingDetailPage({ params }) {
             )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, flex: 1 }}>
               <Fact label="Rent" strong>{money(l.price)}</Fact>
-              <Fact label="Bedrooms">{l.beds ?? '—'}</Fact>
-              <Fact label="Bathrooms">{l.baths ?? '—'}</Fact>
-              <Fact label="EPC">{l.epc || '—'}</Fact>
-              <Fact label="Furnishing">{l.furnishing || (l.furnished === true ? 'Furnished' : l.furnished === false ? 'Unfurnished' : '—')}</Fact>
-              <Fact label="Available">{l.available_from_days != null ? (l.available_from_days <= 0 ? 'Now' : `In ${l.available_from_days} days`) : '—'}</Fact>
+              <Fact label="Bedrooms">{l.beds ?? '-'}</Fact>
+              <Fact label="Bathrooms">{l.baths ?? '-'}</Fact>
+              <Fact label="EPC">{l.epc || '-'}</Fact>
+              <Fact label="Furnishing">{l.furnishing || (l.furnished === true ? 'Furnished' : l.furnished === false ? 'Unfurnished' : '-')}</Fact>
+              <Fact label="Available">{l.available_from_days != null ? (l.available_from_days <= 0 ? 'Now' : `In ${l.available_from_days} days`) : '-'}</Fact>
             </div>
           </div>
           {(l.address || l.title) && (
@@ -189,7 +189,7 @@ export default async function SourcingDetailPage({ params }) {
           ) : (
             <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
               {lead.over_budget
-                ? `No match score — over the order's budget. ${lead.rejections[0] || ''}`
+                ? `No match score: over the order's budget. ${lead.rejections[0] || ''}`
                 : 'No match score recorded.'}
             </p>
           )}
@@ -227,7 +227,7 @@ export default async function SourcingDetailPage({ params }) {
             </div>
           ) : (
             <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
-              Margin not available — the order has no rate set.
+              Margin not available. The order has no rate set.
             </p>
           )}
         </Card>
@@ -243,7 +243,7 @@ export default async function SourcingDetailPage({ params }) {
                   {orderLabel}
                 </Link>
               </Fact>
-              <Fact label="Client">{o.council_client || '—'}</Fact>
+              <Fact label="Client">{o.council_client || '-'}</Fact>
               <Fact label="Area">{[o.area, o.postcodes].filter(Boolean).join(' · ')}</Fact>
               <Fact label="Requirement">
                 {[o.bedrooms != null && `${o.bedrooms}${o.bedrooms_max ? `–${o.bedrooms_max}` : '+'} bed`, o.property_type !== 'any' && o.property_type].filter(Boolean).join(' ') || 'Any'}
@@ -259,12 +259,12 @@ export default async function SourcingDetailPage({ params }) {
         <Card title="Landlord / agent">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <Fact label="Name">{l.landlord_name || 'Not known yet'}</Fact>
-            <Fact label="Response rate">{l.response_rate != null ? `${l.response_rate}%` : '—'}</Fact>
+            <Fact label="Response rate">{l.response_rate != null ? `${l.response_rate}%` : '-'}</Fact>
             <Fact label="Source">{sourceLabel(l.source)}</Fact>
             <Fact label="Contact">Via {sourceLabel(l.source)} listing</Fact>
           </div>
           <p className="text-muted" style={{ margin: '10px 0 0', fontSize: 12, lineHeight: 1.5 }}>
-            All contact happens inside OpenRent — open the listing and message the landlord there, then log it here.
+            All contact happens inside OpenRent: open the listing and message the landlord there, then log it here.
           </p>
         </Card>
 
@@ -277,22 +277,22 @@ export default async function SourcingDetailPage({ params }) {
                 : 'Not yet'}
             </Fact>
             <Fact label="Next follow-up">
-              {lead.next_action_date || '—'}
+              {lead.next_action_date || '-'}
               {lead.next_action_date && lead.next_action_date <= new Date().toISOString().slice(0, 10) && (
                 <b style={{ color: 'var(--rust)', marginLeft: 6 }}>due</b>
               )}
             </Fact>
-            <Fact label="Last result">{lead.last_outreach_result ? lead.last_outreach_result.replace(/_/g, ' ') : '—'}</Fact>
+            <Fact label="Last result">{lead.last_outreach_result ? lead.last_outreach_result.replace(/_/g, ' ') : '-'}</Fact>
           </div>
           {/* Engine ki halat — queued/draft dikhao taake pata ho bot kya karne wala hai */}
           {engine && engine.viewing_status === 'queued' && (
             <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--brass)' }}>
-              Queued — the bot sends this on its next run (within the daily cap).
+              Queued. The bot sends this on its next run (within the daily cap).
             </p>
           )}
           {engine && engine.viewing_status === 'draft' && (
             <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--brass)' }}>
-              Draft prepared — preview mode is on, so nothing was actually sent.
+              Draft prepared. Preview mode is on, so nothing was actually sent.
             </p>
           )}
         </Card>
@@ -312,7 +312,7 @@ export default async function SourcingDetailPage({ params }) {
             </div>
           ) : (
             <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
-              No next action set — use the controls above to add one.
+              No next action set. Use the controls above to add one.
             </p>
           )}
         </Card>

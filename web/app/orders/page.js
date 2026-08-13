@@ -41,7 +41,7 @@ export default async function OrdersPage() {
         <div>
           <h1 style={{ margin: 0 }}>Orders</h1>
           <p className="text-muted" style={{ margin: '3px 0 0' }}>
-            Council and client requirements — each order drives its own property search.
+            Council and client requirements. Each order drives its own property search.
           </p>
         </div>
         <Link href="/orders/new" className="btn-brass" style={{ marginLeft: 'auto', textDecoration: 'none' }}>
@@ -57,7 +57,7 @@ export default async function OrdersPage() {
         <div style={{ border: '1px dashed var(--mist-line-2)', borderRadius: 'var(--r-card)', padding: '48px 24px', textAlign: 'center' }}>
           <p style={{ margin: 0, fontSize: 14.5, fontWeight: 600 }}>No orders yet</p>
           <p className="text-muted" style={{ margin: '6px 0 16px', fontSize: 13 }}>
-            Create the first order with its area, requirements and maximum budget — then find matching properties in one click.
+            Create the first order with its area, requirements and maximum budget, then find matching properties in one click.
           </p>
           <Link href="/orders/new" className="btn-brass" style={{ textDecoration: 'none' }}>
             Create an order

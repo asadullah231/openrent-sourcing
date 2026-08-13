@@ -16,7 +16,7 @@ export default async function Queue() {
           className="font-mono"
           style={{ fontSize: 12, color: live ? 'var(--rust)' : 'var(--brass)' }}
         >
-          {live ? 'LIVE — sending' : 'SHADOW — drafts only'}
+          {live ? 'LIVE: sending' : 'SHADOW: drafts only'}
         </span>
       </div>
       <p className="text-muted" style={{ marginTop: 0, marginBottom: 28, fontSize: 13 }}>

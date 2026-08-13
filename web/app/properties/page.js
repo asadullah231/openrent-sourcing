@@ -33,7 +33,7 @@ export default async function PropertiesPage() {
         <div>
           <h1 style={{ margin: 0 }}>Properties</h1>
           <p className="text-muted" style={{ margin: '3px 0 0' }}>
-            Every property in sourcing — one record per property, even when it matches several orders.
+            Every property in sourcing: one record per property, even when it matches several orders.
           </p>
         </div>
         {/* Map primary nav se nikla (redesign directive) — yahan se milta hai */}
@@ -50,7 +50,7 @@ export default async function PropertiesPage() {
         <div style={{ border: '1px dashed var(--mist-line-2)', borderRadius: 'var(--r-card)', padding: '48px 24px', textAlign: 'center' }}>
           <p style={{ margin: 0, fontSize: 14.5, fontWeight: 600 }}>No properties yet</p>
           <p className="text-muted" style={{ margin: '6px 0 16px', fontSize: 13 }}>
-            Run “Find properties” on an order — matches appear here automatically.
+            Run “Find properties” on an order, matches appear here automatically.
           </p>
           <Link href="/orders" className="btn-brass" style={{ textDecoration: 'none' }}>Go to orders</Link>
         </div>
@@ -88,7 +88,7 @@ export default async function PropertiesPage() {
                   <span className="font-mono" style={{ marginLeft: 'auto', fontSize: 14.5, fontWeight: 600, flexShrink: 0 }}>{money(l.price)}</span>
                 </div>
                 <div className="text-muted" style={{ fontSize: 12.5 }}>
-                  {[l.beds != null && `${l.beds} bed`, l.baths != null && `${l.baths} bath`, l.epc && `EPC ${l.epc}`].filter(Boolean).join(' · ') || '—'}
+                  {[l.beds != null && `${l.beds} bed`, l.baths != null && `${l.baths} bath`, l.epc && `EPC ${l.epc}`].filter(Boolean).join(' · ') || '-'}
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 12 }}>
                   <span><b className="font-mono">{p.leads.length}</b> <span className="text-muted">order{p.leads.length === 1 ? '' : 's'}</span></span>

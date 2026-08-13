@@ -21,7 +21,7 @@ export function SearchesManager() {
     fetch('/api/settings')
       .then((r) => r.json())
       .then(setSettings)
-      .catch(() => setMsg('Could not load settings — refresh.'));
+      .catch(() => setMsg('Could not load settings. Refresh.'));
   }, []);
 
   if (!settings) {
@@ -61,7 +61,7 @@ export function SearchesManager() {
         setMsg(why);
       }
     } catch {
-      setMsg("Couldn't save — try again.");
+      setMsg("Couldn't save. Try again.");
     }
     setSaving(false);
   }
@@ -76,7 +76,7 @@ export function SearchesManager() {
         </button>
         {unsaved && !saving && (
           <span className="text-muted" style={{ fontSize: 12.5 }}>
-            New search added — Save so the bot uses it.
+            New search added. Save so the bot uses it.
           </span>
         )}
         {msg && (
