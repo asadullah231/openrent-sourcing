@@ -214,3 +214,38 @@ works, `typecheck` does not exist.
 - **Session re-login every run**, not verified before a batch; an expired/blocked
   session surfaces as a mid-run failure, not a clean `needs_reauth` pause.
 - **Repo root littered** with `run-*.log` debug files committed to git.
+
+## Phase 1 — Orders (sourcing platform, 13 Aug)
+
+PRD ka Foundation phase: **Order system ka markaz hai, property nahi.**
+NocoDB pe hi (koi Postgres/Prisma NAHI — Asad ka faisla, migration baad me).
+
+Do nayi tables (base py6zb9g3mctigb1):
+- `openrent_orders` (m3jsbx9q3isf7yf) — council/client requirement + budget + rate
+- `openrent_order_properties` (mfw5ojxvcub97uy) — order↔listing match rows:
+  score breakdown, profitability, shortlist_status, `rejected` (yaadasht flag),
+  `listing_snapshot` (JSON — Find ke results BOT KE STORE ME NAHI jate, /api/search
+  wala usool; snapshot yahin rehta hai)
+
+Naye env vars (root .env + web/.env.local + **Vercel me add karna lazmi**):
+`NOCODB_OR_ORDERS_TABLE_ID`, `NOCODB_OR_ORDER_PROPS_TABLE_ID`
+
+Naye modules (bot ke protected files CHHUE NAHI):
+- `src/order-match.js` — hard filters. Usool: sirf CONFIRMED violation pe reject;
+  unknown data (enrich pending) pass hota hai, score me "unverified" penalty.
+  Over-budget = alag lane, normal match score KABHI nahi (PRD hard rule).
+- `src/score.js` — `scoreAgainstOrder()` ADD hua (scoreListing untouched).
+  PRD weights: budget 30 / location 25 / beds 15 / type 10 / avail 10 / furn 5 / EPC 5.
+- `src/profitability.js` — rate − rent − agent_fee − other_costs. Costs order me
+  na hon to 0 + `costs_specified:false` → UI "before costs" dikhata hai.
+- `src/order-search.js` — order → OpenRent search object (save-filter wala pattern).
+- `web/lib/orders.js` + `/api/orders*` + `/orders` pages.
+
+**Enrich strategy (mehnga sabaq, Bromley test):** sab se sasti "2-4 bed" listings
+(£500-900) taqreeban SAB "Room in a Shared House" nikleen. Is liye:
+1. Enrich order = budget ke QAREEB pehle (price DESC), junk aakhir me.
+2. Enrich-discovered rejects `rejected:true` row ke tor pe SAVE hote hain —
+   agli run title prior-merge se utha kar pehle pass me reject karti hai.
+   Har run coverage JAMA hoti hai (Bromley: run 1 = 2 verified, run 4 = 4/4
+   verified + 106 junk yaadasht me). Listing OpenRent se hate to stale-cleanup
+   row khud urata hai (shortlisted kabhi nahi urti).
