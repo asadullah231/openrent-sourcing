@@ -158,7 +158,7 @@ export function OrderMatches({ order, matches, canProfit }) {
             {overBudget.length} propert{overBudget.length === 1 ? 'y' : 'ies'} above the £{order.max_rent} ceiling — hidden from normal matches by the budget rule.
           </p>
         ) : (
-          <div className="grid-cards">
+          <div className="presult-grid">
             {overBudget.map((m) => (
               <MatchCard key={m.listing_id} m={m} order={order} busy={rowBusy === m.listing_id} onShortlist={shortlist} />
             ))}
@@ -180,16 +180,16 @@ function Section({ title, count, empty, children }) {
       {count === 0 ? (
         empty ? <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>{empty}</p> : null
       ) : (
-        <div className="grid-cards">{items}</div>
+        <div className="presult-grid">{items}</div>
       )}
     </div>
   );
 }
 
-// ── Match card ──────────────────────────────────────────────────────────────
-// Card ka sawal-jawab tarteeb (PRD): fit? → budget? → kitna acha match? →
-// kitne paise? → ab kya karun? Photo upar (listing-card pattern), neeche
-// match/margin block, aakhir me actions.
+// ── Compact property result ─────────────────────────────────────────────────
+// Redesign directive: property cards huge NAHI. Thumbnail left (sirf pehchan),
+// facts right: place + rent → match/budget checks → margin → actions.
+// Sawal wahi hai: fit? budget? kitne paise? ab kya karun? — bas ek nazar me.
 
 function MatchCard({ m, order, busy, onShortlist }) {
   const l = m.listing || {};
@@ -199,143 +199,101 @@ function MatchCard({ m, order, busy, onShortlist }) {
   const rejections = m.rejections || [];
   const shortlisted = m.shortlist_status === 'shortlisted';
   const beforeCosts = m.costs_estimated; // costs order me nahi diye gaye thay
+  const underBudget = !m.over_budget && order.max_rent != null && l.price != null
+    ? Number(order.max_rent) - Number(l.price)
+    : null;
 
   const statusColor = { good: 'var(--green)', ok: 'var(--brass)', low: 'var(--mist)', loss: 'var(--rust)' }[m.profitability_status] || 'var(--mist)';
-  const statusLabel = { good: 'Good deal', ok: 'Fair margin', low: 'Low margin', loss: 'Loss' }[m.profitability_status] || null;
 
   return (
-    <div
-      className="gcard"
-      style={{
-        display: 'flex', flexDirection: 'column', gap: 8,
-        opacity: busy ? 0.6 : 1,
-      }}
-    >
-      <div className="gcard-photo">
+    <div className="presult" style={{ opacity: busy ? 0.6 : 1 }}>
+      <div className="presult-thumb">
         {l.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={l.image} alt="" loading="lazy" />
         ) : (
-          <div className="text-muted" style={{ display: 'grid', placeItems: 'center', height: '100%', fontSize: 12 }}>
+          <div className="text-muted" style={{ display: 'grid', placeItems: 'center', height: '100%', fontSize: 11 }}>
             no photo
           </div>
         )}
-        {/* Match % — photo pe sab se qeemti jagah. Over-budget pe % hota hi
-            nahi (PRD rule), wahan rust badge. */}
-        {m.over_budget ? (
-          <span style={{ position: 'absolute', top: 12, right: 12, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 999, background: 'var(--rust)', color: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,.3)' }}>
-            Over budget
-          </span>
-        ) : m.match_score != null ? (
-          <span style={{ position: 'absolute', top: 12, right: 12, fontSize: 11.5, fontWeight: 700, padding: '5px 10px', borderRadius: 999, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(6px)', color: '#fff' }}>
-            {m.match_score}% match
-          </span>
-        ) : null}
-        {shortlisted && (
-          <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 999, background: 'var(--green)', color: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,.3)' }}>
-            Shortlisted
-          </span>
-        )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {/* line 1: pehchan + rent */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {place}
+          <span style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+            {[l.beds != null && `${l.beds} bed`, place].filter(Boolean).join(' · ')}
           </span>
-          <span className="font-mono" style={{ marginLeft: 'auto', fontSize: 14.5, fontWeight: 600, flexShrink: 0 }}>
-            £{Number(l.price ?? 0).toLocaleString('en-GB')}
+          <span className="font-mono" style={{ marginLeft: 'auto', fontSize: 13.5, fontWeight: 700, flexShrink: 0 }}>
+            £{Number(l.price ?? 0).toLocaleString('en-GB')} pcm
           </span>
         </div>
-        <div className="text-muted" style={{ fontSize: 12.5 }}>
-          {[l.beds != null && `${l.beds} bed`, l.baths != null && `${l.baths} bath`, l.epc && `EPC ${l.epc}`].filter(Boolean).join(' · ') || '—'}
+
+        {/* line 2: match + budget position + margin — faislay ke numbers */}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: 12, alignItems: 'baseline' }}>
+          {m.over_budget ? (
+            <span style={{ fontWeight: 700, color: 'var(--rust)' }}>Over budget</span>
+          ) : m.match_score != null ? (
+            <span className="font-mono" style={{ fontWeight: 700 }}>{m.match_score}% match</span>
+          ) : null}
+          {underBudget != null && underBudget > 0 && (
+            <span style={{ color: 'var(--green)' }}>£{underBudget.toLocaleString('en-GB')} under budget</span>
+          )}
+          {m.net_monthly_margin != null ? (
+            <span className="font-mono" style={{ fontWeight: 700, color: statusColor }}>
+              £{Number(m.net_monthly_margin).toLocaleString('en-GB')}/mo
+              {beforeCosts && <span className="text-muted" style={{ fontWeight: 400 }}> before costs</span>}
+            </span>
+          ) : (
+            <span className="text-muted">no rate set</span>
+          )}
+          {shortlisted && (
+            <span className="badge"><span className="badge-dot" style={{ background: 'var(--brass)' }} />Shortlisted</span>
+          )}
         </div>
 
-        {/* Source alag, URL alag — "Source: OpenRent" naam hai, link neeche
-            View listing button hai (persisted l.url — original listing page). */}
-        <div className="text-muted" style={{ fontSize: 11.5 }}>
-          Source: <span style={{ color: 'var(--paper)', fontWeight: 600 }}>{sourceLabel(l.source)}</span>
-          {!l.url && <span> · Listing URL unavailable</span>}
+        {/* line 3: reasons/checks + baths/epc */}
+        <div className="text-muted" style={{ fontSize: 11.5, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {m.over_budget && rejections.length > 0
+            ? rejections[0]
+            : [
+                ...reasons.slice(0, 3),
+                l.baths != null && `${l.baths} bath`,
+                l.epc && `EPC ${l.epc}`,
+              ].filter(Boolean).join(' · ') || '—'}
         </div>
 
-        {/* Reasons — "clear reasons for the score" (MVP #6) */}
-        {reasons.length > 0 && (
-          <div className="text-muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
-            {reasons.slice(0, 4).join(' · ')}
-          </div>
-        )}
-        {m.over_budget && rejections.length > 0 && (
-          <div style={{ fontSize: 12, color: 'var(--rust)', lineHeight: 1.5 }}>{rejections[0]}</div>
-        )}
-
-        {/* Margin block — order rate se seedha hisaab */}
-        {m.net_monthly_margin != null ? (
-          <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-ctrl)', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 3, marginTop: 2 }}>
-            <div style={{ display: 'flex', fontSize: 12, justifyContent: 'space-between' }}>
-              <span className="text-muted">Order rate £{Number(order.order_rate).toLocaleString('en-GB')}</span>
-              <span className="text-muted">Spread £{Number(m.gross_spread).toLocaleString('en-GB')}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-              <span className="font-mono" style={{ fontSize: 14.5, fontWeight: 700, color: statusColor }}>
-                £{Number(m.net_monthly_margin).toLocaleString('en-GB')}/mo
-                {beforeCosts && <span className="text-muted" style={{ fontWeight: 400, fontSize: 11 }}> before costs</span>}
-              </span>
-              {statusLabel && (
-                <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: statusColor }}>
-                  {statusLabel}
-                </span>
-              )}
-            </div>
-            <div className="text-muted" style={{ fontSize: 11 }}>
-              £{Number(m.annual_margin).toLocaleString('en-GB')}/yr{m.margin_percentage != null ? ` · ${m.margin_percentage}% of rate` : ''}
-            </div>
-          </div>
-        ) : (
-          <div className="text-muted" style={{ fontSize: 11.5, marginTop: 2 }}>
-            Margin not available — order has no council rate.
-          </div>
-        )}
-
-        {/* Next action — shortlisted pe (MVP #8) */}
-        {shortlisted && m.next_action && (
-          <div style={{ fontSize: 12, color: 'var(--brass)', fontWeight: 600 }}>Next: {m.next_action}</div>
-        )}
-
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-          <button
-            className={shortlisted ? 'seg' : 'btn-brass'}
-            style={{ fontSize: 12, padding: '7px 12px' }}
-            disabled={busy}
-            onClick={() => onShortlist(m.listing_id, !shortlisted)}
-          >
-            {busy ? '…' : shortlisted ? 'Remove from shortlist' : 'Shortlist'}
-          </button>
-          {l.url && (
-            <a
-              href={l.url}
-              target="_blank"
-              rel="noreferrer"
-              className="seg"
-              style={{ fontSize: 12, padding: '7px 12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-            >
-              View listing ↗
-            </a>
+        {/* line 4: source + actions */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span className="text-muted" style={{ fontSize: 11.5 }}>{sourceLabel(l.source)}</span>
+          {shortlisted && m.next_action && (
+            <span style={{ fontSize: 11.5, color: 'var(--brass)', fontWeight: 600 }}>Next: {m.next_action}</span>
           )}
-          {/* Pehle ye disabled "Outreach" tha (Phase 3 note ke sath). Ab har
-              match ek Sourcing Lead hai — outreach logging lead page pe LIVE
-              hai, is liye seedha wahan le jate hain. (Automated OpenRent
-              send abhi bhi Phase 3 hai.) */}
-          {m.Id != null && (
-            <a
-              href={`/sourcing/${m.Id}`}
-              className="seg"
-              style={{ fontSize: 12, padding: '7px 12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-              title="Open the sourcing record — outreach, status and timeline live there."
+          <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+            <button
+              className={shortlisted ? 'seg' : 'btn-brass'}
+              style={{ fontSize: 11.5, padding: '5px 10px' }}
+              disabled={busy}
+              onClick={() => onShortlist(m.listing_id, !shortlisted)}
             >
-              Open in Sourcing
-            </a>
-          )}
+              {busy ? '…' : shortlisted ? 'Remove' : 'Shortlist'}
+            </button>
+            {l.url && (
+              <a href={l.url} target="_blank" rel="noreferrer" className="seg" style={{ fontSize: 11.5, padding: '5px 10px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+                View listing ↗
+              </a>
+            )}
+            {m.Id != null && (
+              <a
+                href={`/sourcing/${m.Id}`}
+                className="seg"
+                style={{ fontSize: 11.5, padding: '5px 10px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+                title="Open the sourcing record — outreach, status and timeline live there."
+              >
+                Open
+              </a>
+            )}
+          </span>
         </div>
       </div>
     </div>

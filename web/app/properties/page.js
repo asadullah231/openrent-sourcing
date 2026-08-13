@@ -29,11 +29,17 @@ export default async function PropertiesPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Properties</h1>
-        <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
-          Every property in sourcing — one record per property, even when it matches several orders.
-        </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div>
+          <h1 style={{ margin: 0 }}>Properties</h1>
+          <p className="text-muted" style={{ margin: '3px 0 0' }}>
+            Every property in sourcing — one record per property, even when it matches several orders.
+          </p>
+        </div>
+        {/* Map primary nav se nikla (redesign directive) — yahan se milta hai */}
+        <Link href="/map" className="seg" style={{ marginLeft: 'auto', textDecoration: 'none' }}>
+          Map view
+        </Link>
       </div>
 
       {loadError ? (

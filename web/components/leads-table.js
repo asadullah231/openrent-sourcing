@@ -1,13 +1,27 @@
 'use client';
 
-// Sourcing table — search / status / order / needs-action filters + column
-// sorting. Row click → /sourcing/[id]. Data server se aata hai (page.js), yahan
-// sirf dikhane ki chhanai hoti hai — koi fetch nahi, koi apni copy nahi.
+// Sourcing workspace — redesign directive:
+//  - tabs (To Review → … → Interested) jo pipeline ki tarteeb me hain
+//  - dense table
+//  - row click => contextual DRAWER (Twenty ka side-panel pattern) — poora
+//    page chhore baghair property ka jaiza; full record ek click aur.
+// Data server se aata hai (page.js); yahan sirf dikhane ki chhanai — koi
+// fetch nahi, koi apni copy nahi.
 
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { LEAD_STATUSES } from '@/lib/leads';
-import { LeadStatusBadge, OutreachBadge, money, leadPropertyLine } from '@/components/crm-bits';
+import { useEffect, useMemo, useState } from 'react';
+import { LeadStatusBadge, OutreachBadge, money, leadPropertyLine, deentity, sourceLabel, SourceListingLine } from '@/components/crm-bits';
+
+// Tabs = pipeline lens. "To Review" me new+matched dono — user ke liye ye ek
+// hi kaam hai (naya maal jaanchna); alag Matched tab sirf confusion hota.
+const TABS = [
+  { key: 'all', label: 'All', match: () => true },
+  { key: 'review', label: 'To Review', match: (l) => l.status === 'new' || l.status === 'matched' },
+  { key: 'shortlisted', label: 'Shortlisted', match: (l) => l.status === 'shortlisted' },
+  { key: 'ready', label: 'Ready to Contact', match: (l) => l.status === 'ready_to_contact' || ((l.status === 'shortlisted') && l.outreach_status === 'not_contacted') },
+  { key: 'contacted', label: 'Contacted', match: (l) => l.status === 'contacted' },
+  { key: 'awaiting', label: 'Awaiting Response', match: (l) => l.status === 'awaiting_response' || l.outreach_status === 'awaiting_response' },
+  { key: 'interested', label: 'Interested', match: (l) => l.status === 'interested' || l.outreach_status === 'interested' },
+];
 
 const SORTS = {
   updated: (a, b) => new Date(b.UpdatedAt || b.CreatedAt || 0) - new Date(a.UpdatedAt || a.CreatedAt || 0),
@@ -16,16 +30,22 @@ const SORTS = {
   rent: (a, b) => (a.listing?.price ?? 9e9) - (b.listing?.price ?? 9e9),
 };
 
-export function LeadsTable({ leads }) {
-  const router = useRouter();
+export function LeadsTable({ leads, initialTab }) {
+  const [tab, setTab] = useState(TABS.some((t) => t.key === initialTab) ? initialTab : 'all');
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
   const [orderId, setOrderId] = useState('');
-  const [needsAction, setNeedsAction] = useState(false);
   const [showOverBudget, setShowOverBudget] = useState(false);
   const [sort, setSort] = useState('updated');
+  const [open, setOpen] = useState(null); // drawer me khula lead
 
-  // Order filter ki choices — leads me jo orders hain unse hi banti hain
+  // Esc se drawer band — keyboard-friendly (DESIGN.md)
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   const orders = useMemo(() => {
     const m = new Map();
     for (const l of leads) {
@@ -34,25 +54,27 @@ export function LeadsTable({ leads }) {
     return [...m.entries()];
   }, [leads]);
 
+  // Over-budget default band (negotiation research hai, pipeline kaam nahi) —
+  // magar jis pe kaam shuru ho chuka wo hamesha dikhta hai.
+  const base = useMemo(
+    () => leads.filter((l) => showOverBudget || !l.over_budget || (l.status !== 'new' && l.status !== 'matched')),
+    [leads, showOverBudget]
+  );
+
+  const counts = useMemo(() => {
+    const c = {};
+    for (const t of TABS) c[t.key] = base.filter(t.match).length;
+    return c;
+  }, [base]);
+
   const today = new Date().toISOString().slice(0, 10);
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return leads
+    const t = TABS.find((x) => x.key === tab) || TABS[0];
+    return base
       .filter((l) => {
-        // Over-budget rows negotiation research hain, pipeline kaam nahi —
-        // default me chhupi rehti hain. Jis pe kaam shuru ho chuka (status
-        // matched se aage) wo lead ban chuki hai, wo hamesha dikhti hai.
-        if (!showOverBudget && l.over_budget && (l.status === 'new' || l.status === 'matched')) return false;
-        if (status && l.status !== status) return false;
+        if (!t.match(l)) return false;
         if (orderId && String(l.order_id) !== orderId) return false;
-        if (needsAction) {
-          const due = l.next_action_date && l.next_action_date <= today;
-          const uncontacted =
-            (l.status === 'shortlisted' || l.status === 'ready_to_contact') &&
-            l.outreach_status === 'not_contacted';
-          if (!due && !uncontacted) return false;
-          if (l.status === 'won' || l.status === 'lost') return false;
-        }
         if (needle) {
           const hay = [
             l.ref, l.listing?.address, l.listing?.area, l.listing?.title,
@@ -64,7 +86,7 @@ export function LeadsTable({ leads }) {
         return true;
       })
       .sort(SORTS[sort] || SORTS.updated);
-  }, [leads, q, status, orderId, needsAction, showOverBudget, sort, today]);
+  }, [base, tab, q, orderId, sort]);
 
   const TH = ({ id, children, align }) => (
     <th
@@ -78,7 +100,16 @@ export function LeadsTable({ leads }) {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* ── Tabs ── */}
+      <div className="tabbar">
+        {TABS.map((t) => (
+          <button key={t.key} className={t.key === tab ? 'tab active' : 'tab'} onClick={() => setTab(t.key)}>
+            {t.label}<span className="count">{counts[t.key]}</span>
+          </button>
+        ))}
+      </div>
+
       {/* ── Filter bar ── */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         <input
@@ -88,25 +119,12 @@ export function LeadsTable({ leads }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <select className="field" style={{ maxWidth: 180 }} value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">All statuses</option>
-          {LEAD_STATUSES.map((s) => (
-            <option key={s.key} value={s.key}>{s.label}</option>
-          ))}
-        </select>
         <select className="field" style={{ maxWidth: 160 }} value={orderId} onChange={(e) => setOrderId(e.target.value)}>
           <option value="">All orders</option>
           {orders.map(([id, label]) => (
             <option key={id} value={id}>{label}</option>
           ))}
         </select>
-        <button
-          className="seg"
-          style={needsAction ? { color: 'var(--paper)', borderColor: 'var(--accent)' } : undefined}
-          onClick={() => setNeedsAction((v) => !v)}
-        >
-          Needs action today
-        </button>
         <button
           className="seg"
           style={showOverBudget ? { color: 'var(--paper)', borderColor: 'var(--rust)' } : undefined}
@@ -116,38 +134,35 @@ export function LeadsTable({ leads }) {
           Include over budget
         </button>
         <span className="text-muted" style={{ fontSize: 12.5, marginLeft: 'auto' }}>
-          {shown.length} of {leads.length}
+          {shown.length} of {base.length}
         </span>
       </div>
 
       {/* ── Table ── */}
       {shown.length === 0 ? (
         <div className="text-muted" style={{ border: '1px dashed var(--mist-line-2)', borderRadius: 'var(--r-card)', padding: '36px 24px', textAlign: 'center', fontSize: 13 }}>
-          No properties match these filters.
+          Nothing in this view.
         </div>
       ) : (
         <div className="crm-wrap">
           <table className="crm-table">
             <thead>
               <tr>
-                <th>Ref</th>
                 <th>Property</th>
                 <th>Order</th>
-                <th>Landlord</th>
-                <TH id="rent" align="right">Rent</TH>
                 <TH id="match" align="right">Match</TH>
-                <TH id="margin" align="right">Net margin</TH>
-                <th>Outreach</th>
+                <TH id="rent" align="right">Rent</TH>
+                <TH id="margin" align="right">Margin</TH>
                 <th>Status</th>
+                <th>Outreach</th>
                 <th>Next action</th>
                 <TH id="updated">Updated</TH>
               </tr>
             </thead>
             <tbody>
               {shown.map((l) => (
-                <tr key={l.Id} onClick={() => router.push(`/sourcing/${l.Id}`)}>
-                  <td className="font-mono" style={{ fontWeight: 700, fontSize: 12.5 }}>{l.ref}</td>
-                  <td style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <tr key={l.Id} onClick={() => setOpen(l)}>
+                  <td style={{ maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600 }}>
                     {leadPropertyLine(l)}
                     {l.over_budget && (
                       <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--rust)' }}>
@@ -158,19 +173,16 @@ export function LeadsTable({ leads }) {
                   <td className="font-mono" style={{ fontSize: 12 }}>
                     {l.order?.order_number || (l.order_id != null ? `ORD-${String(l.order_id).padStart(4, '0')}` : '—')}
                   </td>
-                  <td style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {l.listing?.landlord_name || '—'}
-                  </td>
-                  <td className="font-mono" style={{ textAlign: 'right' }}>{money(l.listing?.price)}</td>
                   <td className="font-mono" style={{ textAlign: 'right' }}>
                     {l.match_score != null ? `${l.match_score}%` : '—'}
                   </td>
+                  <td className="font-mono" style={{ textAlign: 'right' }}>{money(l.listing?.price)}</td>
                   <td className="font-mono" style={{ textAlign: 'right', color: l.net_monthly_margin != null ? (l.net_monthly_margin >= 0 ? 'var(--green)' : 'var(--rust)') : undefined }}>
                     {l.net_monthly_margin != null ? `${money(l.net_monthly_margin)}/mo` : '—'}
                   </td>
-                  <td><OutreachBadge status={l.outreach_status} size={10.5} /></td>
-                  <td><LeadStatusBadge status={l.status} size={10.5} /></td>
-                  <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <td><LeadStatusBadge status={l.status} /></td>
+                  <td><OutreachBadge status={l.outreach_status} /></td>
+                  <td style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {l.next_action || '—'}
                     {l.next_action_date && (
                       <span className="text-muted" style={{ marginLeft: 6, fontSize: 11.5 }}>
@@ -187,6 +199,103 @@ export function LeadsTable({ leads }) {
           </table>
         </div>
       )}
+
+      {/* ── Contextual drawer ── */}
+      {open && <LeadDrawer lead={open} onClose={() => setOpen(null)} />}
     </div>
+  );
+}
+
+// Drawer = fauri jaiza: kya hai, kitne ka hai, kis order ke liye, kya halat,
+// agla qadam. Poori kahani (timeline, actions) full record pe.
+function LeadDrawer({ lead, onClose }) {
+  const l = lead.listing || {};
+  const o = lead.order;
+  const orderLabel = o?.order_number || (lead.order_id != null ? `ORD-${String(lead.order_id).padStart(4, '0')}` : '—');
+  const today = new Date().toISOString().slice(0, 10);
+
+  const Row = ({ label, children }) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12.5, padding: '7px 0', borderBottom: '1px solid var(--mist-line)' }}>
+      <span className="text-muted" style={{ flexShrink: 0 }}>{label}</span>
+      <span style={{ textAlign: 'right', minWidth: 0 }}>{children ?? '—'}</span>
+    </div>
+  );
+
+  return (
+    <>
+      <div className="drawer-overlay" onClick={onClose} />
+      <div className="drawer" role="dialog" aria-label="Property record">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <span className="font-mono" style={{ fontSize: 12.5, fontWeight: 700 }}>{lead.ref}</span>
+          <LeadStatusBadge status={lead.status} />
+          <button className="seg" onClick={onClose} style={{ marginLeft: 'auto', fontSize: 12, padding: '4px 10px' }} aria-label="Close">
+            ✕
+          </button>
+        </div>
+
+        {l.image && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={l.image} alt="" style={{ width: '100%', height: 170, objectFit: 'cover', borderRadius: 8, background: 'var(--skeleton)', display: 'block', marginBottom: 12 }} />
+        )}
+
+        <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>{leadPropertyLine(lead)}</div>
+        {(l.title || l.address) && (
+          <div className="text-muted" style={{ fontSize: 12, marginTop: 3, lineHeight: 1.5 }}>
+            {deentity(l.address || l.title)}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, margin: '10px 0 4px', flexWrap: 'wrap' }}>
+          <span className="font-mono" style={{ fontSize: 16, fontWeight: 700 }}>{money(l.price)} pcm</span>
+          {lead.match_score != null && (
+            <span className="font-mono" style={{ fontSize: 13, fontWeight: 600 }}>{lead.match_score}% match</span>
+          )}
+          {lead.net_monthly_margin != null && (
+            <span className="font-mono" style={{ fontSize: 13, fontWeight: 700, color: lead.net_monthly_margin >= 0 ? 'var(--green)' : 'var(--rust)' }}>
+              {money(lead.net_monthly_margin)}/mo{lead.costs_estimated ? ' before costs' : ''}
+            </span>
+          )}
+        </div>
+
+        <div style={{ margin: '10px 0 14px' }}>
+          <Row label="Order">
+            <a href={o ? `/orders/${o.Id}` : '#'} className="font-mono" style={{ color: 'var(--accent)', textDecoration: 'none' }}>
+              {orderLabel}
+            </a>
+            {o?.council_client ? <span className="text-muted"> · {o.council_client}</span> : null}
+          </Row>
+          <Row label="Order budget">{o?.max_rent != null ? money(o.max_rent) : '—'}</Row>
+          <Row label="Landlord">{l.landlord_name || 'Not known yet'}</Row>
+          <Row label="Outreach"><OutreachBadge status={lead.outreach_status} /></Row>
+          <Row label="Attempts">{lead.contact_attempts || 0}</Row>
+          <Row label="Last contacted">
+            {lead.last_contacted_at
+              ? new Date(lead.last_contacted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+              : 'Not yet'}
+          </Row>
+          <Row label="Next action">
+            {lead.next_action || '—'}
+            {lead.next_action_date && (
+              <span className="text-muted"> · {lead.next_action_date}{lead.next_action_date <= today && <b style={{ color: 'var(--rust)' }}> due</b>}</span>
+            )}
+          </Row>
+          <Row label="Source">{sourceLabel(l.source)}</Row>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a href={`/sourcing/${lead.Id}`} className="btn-brass" style={{ textDecoration: 'none', fontSize: 12.5 }}>
+            Open full record
+          </a>
+          {l.url && (
+            <a href={l.url} target="_blank" rel="noreferrer" className="seg" style={{ textDecoration: 'none', fontSize: 12.5, display: 'inline-flex', alignItems: 'center' }}>
+              View original listing ↗
+            </a>
+          )}
+        </div>
+        <div style={{ marginTop: 10 }}>
+          <SourceListingLine listing={l} size={11.5} />
+        </div>
+      </div>
+    </>
   );
 }

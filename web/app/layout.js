@@ -31,15 +31,19 @@ export const metadata = {
 // wahi ka wahi), sirf primary entry point nahi raha. Root / ab dashboard pe jata hai.
 // "Leads" nav se HATA (13 Aug directive): Lead = order↔property relationship,
 // user ko ye lafz kabhi nahi dikhna chahiye. Wahi workspace ab "Sourcing" hai
-// (/sourcing) — data model wahi ka wahi, sirf naam badla. Nav ki tarteeb
-// workflow ki tarteeb hai: Order → Sourcing → Outreach.
+// (/sourcing) — data model wahi ka wahi, sirf naam badla.
+// Redesign directive (13 Aug, raat): nav EXACT ye tarteeb — Dashboard, Orders,
+// Properties, Sourcing, Outreach, Viewings, Deals, Settings. Viewings/Deals
+// alag pages hain (wahi lead data, pipeline-end lens). Map primary nav se
+// bahar — /map route zinda hai, Properties page se link milta hai.
 const nav = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/orders', label: 'Orders' },
+  { href: '/properties', label: 'Properties' },
   { href: '/sourcing', label: 'Sourcing' },
   { href: '/outreach', label: 'Outreach' },
-  { href: '/properties', label: 'Properties' },
-  { href: '/map', label: 'Map' },
+  { href: '/viewings', label: 'Viewings' },
+  { href: '/deals', label: 'Deals' },
   { href: '/settings', label: 'Settings' },
 ];
 

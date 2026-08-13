@@ -61,25 +61,13 @@ function daysSince(iso) {
   return d >= 0 ? d : null;
 }
 
+// Metric-strip cell (globals.css) — alag stat cards nahi (DESIGN.md).
 function Stat({ value, label, accent = false, hint }) {
   return (
-    <div
-      style={{
-        flex: '1 1 118px',
-        padding: '13px 15px',
-        border: '1px solid var(--mist-line)',
-        borderRadius: 'var(--r-card)',
-        background: 'var(--surface)',
-        boxShadow: 'var(--shadow-card)',
-      }}
-    >
-      <div className="font-mono" style={{ fontSize: 24, fontWeight: 700, lineHeight: 1, color: accent ? 'var(--brass)' : 'var(--paper)' }}>
-        {value}
-      </div>
-      <div className="text-muted" style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 6 }}>
-        {label}
-      </div>
-      {hint && <div className="text-muted" style={{ fontSize: 11, marginTop: 3 }}>{hint}</div>}
+    <div className="metric">
+      <div className="metric-value" style={accent ? { color: 'var(--brass)' } : undefined}>{value}</div>
+      <div className="metric-label">{label}</div>
+      {hint && <div className="text-muted" style={{ fontSize: 11, marginTop: 2 }}>{hint}</div>}
     </div>
   );
 }
@@ -258,7 +246,7 @@ export default async function OutreachPage({ searchParams }) {
       )}
 
       {/* ── FUNNEL METRICS ── */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 22 }}>
+      <div className="metric-strip" style={{ marginBottom: 20 }}>
         <Stat value={countFor('ready')} label="Ready to contact" accent />
         <Stat value={countFor('contacted')} label="Contacted" />
         <Stat value={countFor('awaiting')} label="Awaiting response" />
@@ -268,8 +256,8 @@ export default async function OutreachPage({ searchParams }) {
         <Stat value={funnel.deals} label="Deals" />
       </div>
 
-      {/* ── FUNNEL TABS ── */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 0 }}>
+      {/* ── FUNNEL TABS — wahi tabbar jo Sourcing pe hai (ek system) ── */}
+      <div className="tabbar">
         {TABS.map((t) => {
           const active = t.key === tab;
           const n = countFor(t.key);
@@ -277,21 +265,9 @@ export default async function OutreachPage({ searchParams }) {
             <Link
               key={t.key}
               href={t.key === 'all' ? '/outreach' : `/outreach?tab=${t.key}`}
-              style={{
-                fontSize: 12.5,
-                fontWeight: 600,
-                padding: '7px 13px',
-                borderRadius: 'var(--r-ctrl)',
-                textDecoration: 'none',
-                border: `1px solid ${active ? 'var(--accent)' : 'var(--mist-line)'}`,
-                color: active ? 'var(--paper)' : 'var(--mist)',
-                background: active ? 'var(--surface)' : 'transparent',
-              }}
+              className={active ? 'tab active' : 'tab'}
             >
-              {t.label}
-              <span className="font-mono" style={{ marginLeft: 7, fontSize: 11, color: n > 0 ? 'var(--brass)' : 'var(--mist)' }}>
-                {n}
-              </span>
+              {t.label}<span className="count">{n}</span>
             </Link>
           );
         })}
@@ -331,7 +307,7 @@ export default async function OutreachPage({ searchParams }) {
           All messages go out through the bot on the OpenRent account — with the daily cap, human pacing and one-message-per-property protection.
         </p>
 
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
+        <div className="metric-strip" style={{ marginBottom: 10 }}>
           <Stat value={sent} label="Sent today" accent />
           <Stat value={left} label="Left today" hint={`of ${cap} daily cap`} />
           <Stat value={health.autopilot === 'on' ? 'On' : 'Off'} label="Autopilot" />

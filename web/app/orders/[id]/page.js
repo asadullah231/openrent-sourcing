@@ -120,15 +120,16 @@ export default async function OrderDetailPage({ params }) {
              kitni mili → kitni strong → kis se baat hui → kahan tak pahunchi ── */}
       {matches.length > 0 && (() => {
         const f = leadFunnel(matches.map((m) => toLead(m, order)));
+        // Redesign directive ke exact pipeline stages:
+        // Found → Matched → Shortlisted → Contacted → Interested → Viewing → Deal
         const cells = [
-          ['Eligible', f.eligible],
-          ['Strong matches', f.strong],
+          ['Found', matches.length],
+          ['Matched', f.eligible],
           ['Shortlisted', f.shortlisted],
           ['Contacted', f.contacted],
-          ['Awaiting response', f.awaiting],
           ['Interested', f.interested],
-          ['Viewings', f.viewings],
-          ['Deals', f.deals],
+          ['Viewing', f.viewings],
+          ['Deal', f.deals],
         ];
         return (
           <div

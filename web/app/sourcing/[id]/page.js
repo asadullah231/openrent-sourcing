@@ -123,8 +123,11 @@ export default async function SourcingDetailPage({ params }) {
       {/* ── Actions + pipeline controls (client) ── */}
       <LeadActions lead={lead} />
 
-      {/* ── Record cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+      {/* ── Record — do columns (redesign directive):
+             LEFT = property ki apni cheezein (photos, match, financials)
+             RIGHT = context rail (order, landlord, outreach, next, activity) ── */}
+      <div className="detail-cols">
+        <div className="detail-col">
         <Card title="Property">
           <div style={{ display: 'flex', gap: 14 }}>
             {l.image && (
@@ -152,39 +155,6 @@ export default async function SourcingDetailPage({ params }) {
           <div style={{ marginTop: 10 }}>
             <SourceListingLine listing={l} size={12.5} />
           </div>
-        </Card>
-
-        <Card title="Order">
-          {o ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <Fact label="Order">
-                <Link href={`/orders/${o.Id}`} style={{ color: 'var(--accent)', textDecoration: 'none' }} className="font-mono">
-                  {orderLabel}
-                </Link>
-              </Fact>
-              <Fact label="Client">{o.council_client || '—'}</Fact>
-              <Fact label="Area">{[o.area, o.postcodes].filter(Boolean).join(' · ')}</Fact>
-              <Fact label="Requirement">
-                {[o.bedrooms != null && `${o.bedrooms}${o.bedrooms_max ? `–${o.bedrooms_max}` : '+'} bed`, o.property_type !== 'any' && o.property_type].filter(Boolean).join(' ') || 'Any'}
-              </Fact>
-              <Fact label="Max rent" strong>{money(o.max_rent)}</Fact>
-              <Fact label="Order rate" strong>{money(o.order_rate)}</Fact>
-            </div>
-          ) : (
-            <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>Order {orderLabel} could not be loaded.</p>
-          )}
-        </Card>
-
-        <Card title="Landlord / agent">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <Fact label="Name">{l.landlord_name || 'Not known yet'}</Fact>
-            <Fact label="Response rate">{l.response_rate != null ? `${l.response_rate}%` : '—'}</Fact>
-            <Fact label="Source">{sourceLabel(l.source)}</Fact>
-            <Fact label="Contact">Via {sourceLabel(l.source)} listing</Fact>
-          </div>
-          <p className="text-muted" style={{ margin: '10px 0 0', fontSize: 12, lineHeight: 1.5 }}>
-            All contact happens inside OpenRent — open the listing and message the landlord there, then log it here.
-          </p>
         </Card>
 
         <Card title="Match">
@@ -262,6 +232,42 @@ export default async function SourcingDetailPage({ params }) {
           )}
         </Card>
 
+        </div>
+
+        <div className="detail-col">
+        <Card title="Order">
+          {o ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <Fact label="Order">
+                <Link href={`/orders/${o.Id}`} style={{ color: 'var(--accent)', textDecoration: 'none' }} className="font-mono">
+                  {orderLabel}
+                </Link>
+              </Fact>
+              <Fact label="Client">{o.council_client || '—'}</Fact>
+              <Fact label="Area">{[o.area, o.postcodes].filter(Boolean).join(' · ')}</Fact>
+              <Fact label="Requirement">
+                {[o.bedrooms != null && `${o.bedrooms}${o.bedrooms_max ? `–${o.bedrooms_max}` : '+'} bed`, o.property_type !== 'any' && o.property_type].filter(Boolean).join(' ') || 'Any'}
+              </Fact>
+              <Fact label="Max rent" strong>{money(o.max_rent)}</Fact>
+              <Fact label="Order rate" strong>{money(o.order_rate)}</Fact>
+            </div>
+          ) : (
+            <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>Order {orderLabel} could not be loaded.</p>
+          )}
+        </Card>
+
+        <Card title="Landlord / agent">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Fact label="Name">{l.landlord_name || 'Not known yet'}</Fact>
+            <Fact label="Response rate">{l.response_rate != null ? `${l.response_rate}%` : '—'}</Fact>
+            <Fact label="Source">{sourceLabel(l.source)}</Fact>
+            <Fact label="Contact">Via {sourceLabel(l.source)} listing</Fact>
+          </div>
+          <p className="text-muted" style={{ margin: '10px 0 0', fontSize: 12, lineHeight: 1.5 }}>
+            All contact happens inside OpenRent — open the listing and message the landlord there, then log it here.
+          </p>
+        </Card>
+
         <Card title="Outreach">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <Fact label="Attempts" strong>{lead.contact_attempts || 0}</Fact>
@@ -310,6 +316,13 @@ export default async function SourcingDetailPage({ params }) {
             </p>
           )}
         </Card>
+
+        {/* Activity context rail me hi rehti hai (directive: RIGHT = activity) */}
+        <div>
+          <h2 style={{ margin: '4px 0 10px' }}>Activity</h2>
+          <ActivityTimeline activities={activities} derived={derivedLeadEvents(lead)} />
+        </div>
+        </div>
       </div>
 
       {/* ── Message history — exact message + kab + attempt + result. Audit ke
@@ -352,11 +365,6 @@ export default async function SourcingDetailPage({ params }) {
         );
       })()}
 
-      {/* ── Timeline ── */}
-      <div>
-        <h2 style={{ margin: '4px 0 12px', fontSize: 15, fontWeight: 600 }}>Activity</h2>
-        <ActivityTimeline activities={activities} derived={derivedLeadEvents(lead)} />
-      </div>
     </div>
   );
 }

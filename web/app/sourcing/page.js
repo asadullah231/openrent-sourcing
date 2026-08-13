@@ -14,7 +14,8 @@ import { LeadsTable } from '@/components/leads-table';
 
 export const dynamic = 'force-dynamic';
 
-export default async function SourcingPage() {
+export default async function SourcingPage({ searchParams }) {
+  const sp = await searchParams;
   let leads = [];
   let loadError = null;
   try {
@@ -52,7 +53,7 @@ export default async function SourcingPage() {
           </Link>
         </div>
       ) : (
-        <LeadsTable leads={leads} />
+        <LeadsTable leads={leads} initialTab={sp?.tab} />
       )}
     </div>
   );

@@ -1,36 +1,46 @@
 // Orders list — PRD: "The Order is the centre of the system".
-// Har order = ek requirement jis pe sourcing chalti hai. Card pe wahi jo
-// faislay ke liye chahiye: kaun sa council, kahan, kitne beds, budget,
-// rate, aur ab tak kitne matches/shortlist.
+// Redesign directive: orders TABLE ke roop me (cards nahi) — compact rows,
+// search/filter/sort, row click → detail. Counts leads se ek pass me.
 
 import Link from 'next/link';
-import { getOrders, getMatchCounts } from '@/lib/orders';
+import { getOrders } from '@/lib/orders';
+import { getLeads } from '@/lib/leads';
+import { OrdersTable } from '@/components/orders-table';
 
 export const dynamic = 'force-dynamic';
 
-const STATUS_COLOR = {
-  active: 'var(--green)',
-  paused: 'var(--brass)',
-  fulfilled: 'var(--accent)',
-  closed: 'var(--mist)',
-};
-
 export default async function OrdersPage() {
   let orders = [];
-  let counts = {};
+  let leads = [];
   let loadError = null;
   try {
-    [orders, counts] = await Promise.all([getOrders(), getMatchCounts()]);
+    [orders, leads] = await Promise.all([getOrders(), getLeads()]);
   } catch (e) {
     loadError = e.message;
   }
 
+  // Har order ke operational numbers: matches (eligible), shortlisted,
+  // contacted — table columns ke liye. Ek hi pass, koi extra fetch nahi.
+  const counts = new Map();
+  for (const l of leads) {
+    const k = String(l.order_id);
+    const c = counts.get(k) || { matches: 0, shortlisted: 0, contacted: 0 };
+    if (!l.over_budget) c.matches++;
+    if (l.shortlist_status === 'shortlisted') c.shortlisted++;
+    if (l.outreach_status !== 'not_contacted' || l.last_contacted_at) c.contacted++;
+    counts.set(k, c);
+  }
+  const withCounts = orders.map((o) => ({
+    ...o,
+    _c: counts.get(String(o.Id)) || { matches: 0, shortlisted: 0, contacted: 0 },
+  }));
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Orders</h1>
-          <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 13 }}>
+          <h1 style={{ margin: 0 }}>Orders</h1>
+          <p className="text-muted" style={{ margin: '3px 0 0' }}>
             Council and client requirements — each order drives its own property search.
           </p>
         </div>
@@ -54,67 +64,7 @@ export default async function OrdersPage() {
           </Link>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-          {orders.map((o) => {
-            const c = counts[String(o.Id)] || { eligible: 0, overBudget: 0, shortlisted: 0 };
-            return (
-              <Link
-                key={o.Id}
-                href={`/orders/${o.Id}`}
-                className="row-hover"
-                style={{
-                  display: 'flex', flexDirection: 'column', gap: 10,
-                  background: 'var(--surface)', border: '1px solid var(--mist-line)',
-                  borderRadius: 'var(--r-card)', padding: 18,
-                  textDecoration: 'none', color: 'var(--paper)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="font-mono" style={{ fontSize: 13, fontWeight: 700 }}>
-                    {o.order_number || `ORD-${String(o.Id).padStart(4, '0')}`}
-                  </span>
-                  {o.priority && o.priority !== 'normal' && (
-                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--rust)' }}>
-                      {o.priority}
-                    </span>
-                  )}
-                  <span
-                    style={{
-                      marginLeft: 'auto', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase',
-                      letterSpacing: '0.05em', color: STATUS_COLOR[o.status] || 'var(--mist)',
-                    }}
-                  >
-                    {o.status || 'active'}
-                  </span>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: 14.5, fontWeight: 600 }}>{o.council_client || 'No client set'}</div>
-                  <div className="text-muted" style={{ fontSize: 13, marginTop: 2 }}>
-                    {[o.area, o.postcodes].filter(Boolean).join(' · ')}
-                  </div>
-                </div>
-
-                <div className="text-muted" style={{ fontSize: 12.5 }}>
-                  {[
-                    o.bedrooms != null && `${o.bedrooms}${o.bedrooms_max ? `–${o.bedrooms_max}` : '+'} bed`,
-                    o.property_type && o.property_type !== 'any' && o.property_type,
-                    o.max_rent != null && `max £${Number(o.max_rent).toLocaleString('en-GB')}`,
-                    o.order_rate != null && `rate £${Number(o.order_rate).toLocaleString('en-GB')}`,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </div>
-
-                <div style={{ display: 'flex', gap: 14, fontSize: 12, borderTop: '1px solid var(--mist-line)', paddingTop: 10 }}>
-                  <span><b className="font-mono">{c.eligible}</b> <span className="text-muted">eligible</span></span>
-                  <span><b className="font-mono">{c.shortlisted}</b> <span className="text-muted">shortlisted</span></span>
-                  <span><b className="font-mono">{c.overBudget}</b> <span className="text-muted">over budget</span></span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <OrdersTable orders={withCounts} />
       )}
     </div>
   );
