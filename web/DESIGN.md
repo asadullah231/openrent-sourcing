@@ -4,10 +4,16 @@ Read this before building or restyling ANY screen in web/.
 
 ## What this app should feel like
 
-A premium internal property-sourcing operating system.
-Think **"Linear + Twenty + modern real-estate software"** — NOT a generic
+A polished, production-ready **real-estate sourcing platform**.
+**PRIMARY visual reference (13 Aug directive): microRealEstate** — clean,
+light-first real-estate SaaS: soft-gray canvas, white cards with subtle
+shadows, hairline borders, blue primary, tinted status pills, readable
+typography. Linear/Twenty still set the density and IA bar — NOT a generic
 Tailwind dashboard, NOT an AI-generated SaaS template, NOT a clone of any
 single reference.
+
+Theme: LIGHT is the default (`:root` in globals.css); dark stays available
+on the toggle. Never hard-code hex in components.
 
 ## Reference system (each for a specific purpose)
 

@@ -42,7 +42,7 @@ function Group({ title, count, children, empty }) {
       {count === 0 ? (
         <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>{empty}</p>
       ) : (
-        <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', background: 'var(--surface)', overflow: 'hidden' }}>
+        <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', background: 'var(--surface)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
           {children}
         </div>
       )}

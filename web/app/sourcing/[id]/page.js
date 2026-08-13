@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 
 function Card({ title, children, style }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', padding: '16px 18px', ...style }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', boxShadow: 'var(--shadow-card)', padding: '16px 18px', ...style }}>
       <div className="text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
         {title}
       </div>

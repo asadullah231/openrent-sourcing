@@ -46,7 +46,7 @@ export default async function ViewingsPage() {
           </Link>
         </div>
       ) : (
-        <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', background: 'var(--surface)', overflow: 'hidden' }}>
+        <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', background: 'var(--surface)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
           {rows.map((l) => {
             const orderLabel = l.order?.order_number || (l.order_id != null ? `ORD-${String(l.order_id).padStart(4, '0')}` : '—');
             const due = l.next_action_date && l.next_action_date <= today;

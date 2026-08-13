@@ -126,8 +126,8 @@ export function OrdersTable({ orders }) {
                     <td className="font-mono" style={{ textAlign: 'right', color: c.shortlisted ? 'var(--brass)' : undefined }}>{c.shortlisted}</td>
                     <td className="font-mono" style={{ textAlign: 'right', color: c.contacted ? 'var(--accent)' : undefined }}>{c.contacted}</td>
                     <td>
-                      <span className="badge">
-                        <span className="badge-dot" style={{ background: STATUS_COLOR[o.status || 'active'] || 'var(--mist)' }} />
+                      <span className="badge" style={{ '--badge-c': STATUS_COLOR[o.status || 'active'] || 'var(--mist)' }}>
+                        <span className="badge-dot" />
                         {(o.status || 'active').replace(/^./, (ch) => ch.toUpperCase())}
                       </span>
                     </td>

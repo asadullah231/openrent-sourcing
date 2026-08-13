@@ -15,63 +15,64 @@
      1. Surfaces/text — dono modes me poori tarah alag
      2. Signal rang (green/rust/accent) — light me thoda gehra, kyunke
         white pe wahi rang jo black pe chamakta hai, dhundla lagta hai. */
+/* microRealEstate redesign (13 Aug): LIGHT ab DEFAULT hai — clean real-estate
+   SaaS feel: soft-gray canvas, white cards, subtle shadows, blue primary.
+   Dark mode toggle pe zinda hai (neeche), magar product light-first hai. */
 :root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --ink: #f1f2f4; /* app canvas — soft neutral gray (cards is pe tairte hain) */
+  --surface: #ffffff; /* card surface */
+  --surface-2: #f6f7f8; /* elevated (hover, inputs, table headers) */
+  --ink-raise: #f6f7f8;
+
+  --paper: #1f2430; /* primary text — deep slate, kaala nahi */
+  --paper-2: #555d6b;
+  --mist: #6f7683;
+  --mist-line: #e7e9ec; /* hairline border — bohat halki, shadow ke sath */
+  --mist-line-2: #d5d8dd;
+
+  --brass: #b45309; /* warm accent (score/attention) — amber, calm */
+  --brass-dim: #d9a054;
+  --accent: #2563eb; /* primary action — professional blue */
+  --green: #16824e;
+  --rust: #c0361c;
+
+  --on-photo: #ffffff;
+  --photo-veil: linear-gradient(to top, rgba(0, 0, 0, 0.4), transparent 45%);
+  --skeleton: #eceef0;
+
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.07);
+  --shadow-lift: 0 8px 24px rgba(16, 24, 40, 0.14);
+}
+
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --ink: #0a0b0d; /* app background — near-black, slight cool */
-  --surface: #141518; /* card surface */
-  --surface-2: #1c1e22; /* elevated (hover, inputs) */
-  --ink-raise: #141518; /* alias (older refs) */
+  --ink: #0a0b0d;
+  --surface: #141518;
+  --surface-2: #1c1e22;
+  --ink-raise: #141518;
 
-  --paper: #ededef; /* primary text — crisp off-white */
-  --paper-2: #a1a1aa; /* secondary text */
-  --mist: #71717a; /* muted / tertiary */
-  --mist-line: #26272b; /* hairline border */
-  --mist-line-2: #34353a; /* stronger border (hover) */
+  --paper: #ededef;
+  --paper-2: #a1a1aa;
+  --mist: #71717a;
+  --mist-line: #26272b;
+  --mist-line-2: #34353a;
 
-  --brass: #e0a94e; /* score accent — warm gold, kept for the Seal identity */
+  --brass: #e0a94e;
   --brass-dim: #8a6d34;
-  --accent: #4f8ff7; /* primary action — modern blue */
-  --green: #3fb27f; /* positive / requested */
-  --rust: #f0623c; /* live / danger */
+  --accent: #4f8ff7;
+  --green: #3fb27f;
+  --rust: #f0623c;
 
-  /* photo ke upar hamesha gehra parda — dono modes me photo dark hi hoti hai */
   --on-photo: #ffffff;
   --photo-veil: linear-gradient(to top, rgba(10, 11, 13, 0.6), transparent 45%);
   --skeleton: #1c1e22;
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15);
   --shadow-lift: 0 8px 28px rgba(0, 0, 0, 0.4);
-}
-
-:root[data-theme='light'] {
-  color-scheme: light;
-
-  --ink: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #f7f7f7;
-  --ink-raise: #f7f7f7;
-
-  --paper: #222222; /* Airbnb ka text kaala nahi, 222 hai — narm lagta hai */
-  --paper-2: #5e5e5e;
-  --mist: #717171;
-  --mist-line: #e4e4e4;
-  --mist-line-2: #c9c9c9;
-
-  /* white pe ye teenon gehre karne pare, warna contrast gir jata hai */
-  --brass: #a8720f;
-  --brass-dim: #c79a4a;
-  --accent: #1668d6;
-  --green: #1a7f56;
-  --rust: #c4351a;
-
-  --on-photo: #ffffff;
-  --photo-veil: linear-gradient(to top, rgba(0, 0, 0, 0.4), transparent 45%);
-  --skeleton: #ebebeb;
-
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.08);
-  --shadow-lift: 0 6px 20px rgba(0, 0, 0, 0.14);
 }
 
 :root {
@@ -112,21 +113,21 @@ h1, h2, h3 {
    Har page apna h1 inline likhta hai — ye ek jagah se sab ko Linear-jaisi
    compact scale pe le aata hai. !important jaan-boojh kar: inline styles
    ko override karna hai bina 12 files chhue. Naye pages inline size na dein. */
+/* microRealEstate feel: page title khula aur saaf (MRE ke gray "Properties"
+   jaisa), sections normal-case readable — micro-uppercase labels nahi. */
 main h1 {
-  font-size: 17px !important;
+  font-size: 21px !important;
   font-weight: 600 !important;
   letter-spacing: -0.015em;
 }
 main h1 + p {
-  font-size: 12.5px !important;
+  font-size: 13px !important;
 }
-/* Section headings — chhote, uppercase, muted (Linear ke section labels) */
 main h2 {
-  font-size: 11.5px !important;
+  font-size: 13.5px !important;
   font-weight: 600 !important;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--mist);
+  letter-spacing: -0.005em;
+  color: var(--paper);
 }
 
 .font-mono {
@@ -179,11 +180,10 @@ select {
   background: var(--surface-2);
   color: var(--paper) !important;
 }
-/* current route — operator ko pata ho wo kahan hai (DESIGN.md: selected states) */
+/* current route — MRE-style tinted selection (inset bar ki jagah) */
 .nav-link.active {
-  background: var(--surface-2);
-  color: var(--paper) !important;
-  box-shadow: inset 2px 0 0 var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent) !important;
 }
 
 /* gallery grid — gap 16 se 24 kiya, Airbnb ke cards khule khule saans lete hain */
@@ -258,20 +258,21 @@ select {
   border-color: var(--mist-line-2);
 }
 
-/* primary button */
+/* primary button — solid blue, halki shadow (MRE/modern SaaS) */
 .btn-brass {
   background: var(--accent);
   color: #fff;
   border: none;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: var(--r-ctrl);
   padding: 9px 16px;
   cursor: pointer;
   font-size: 13.5px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12);
   transition: filter 0.15s ease, transform 0.1s ease;
 }
 .btn-brass:hover {
-  filter: brightness(1.1);
+  filter: brightness(0.94);
 }
 /* Outreach sent-list rows — subtle hover lift */
 .row-hover {
@@ -296,16 +297,22 @@ select {
   padding: 9px 12px;
   font-size: 13.5px;
 }
+/* secondary button — white, halki border+shadow (MRE secondary) */
 .seg {
   padding: 8px 16px;
   border-radius: var(--r-ctrl);
-  border: 1px solid var(--mist-line);
-  background: var(--surface-2);
-  color: var(--mist);
+  border: 1px solid var(--mist-line-2);
+  background: var(--surface);
+  color: var(--paper-2);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
+  box-shadow: 0 1px 1px rgba(16, 24, 40, 0.05);
   transition: all 0.15s ease;
+}
+.seg:hover {
+  color: var(--paper);
+  background: var(--surface-2);
 }
 
 /* The Score Seal — signature element */
@@ -405,25 +412,29 @@ select {
    Ek hi badge shakal poori app me: rang wala dot + neutral text, halki
    border. Rang sirf dot me — text kabhi signal-rang me nahi chillata.
    (Linear ka status pattern.) */
+/* MRE redesign: badge ab tinted pill hai — halka rang ka background + usi
+   rang ka text (SaaS standard). Rang --badge-c se aata hai (component set
+   karta hai); na mile to neutral. Chillati hui solid pills nahi. */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  font-weight: 500;
-  color: var(--paper-2);
-  border: 1px solid var(--mist-line);
-  background: var(--surface);
-  border-radius: 6px;
-  padding: 2px 8px;
+  font-weight: 600;
+  color: var(--badge-c, var(--paper-2));
+  background: color-mix(in srgb, var(--badge-c, var(--mist)) 11%, transparent);
+  border: none;
+  border-radius: 999px;
+  padding: 3px 9px;
   white-space: nowrap;
   line-height: 1.5;
 }
 .badge-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
   flex-shrink: 0;
+  background: var(--badge-c, var(--mist));
 }
 
 /* ── Metric strip (DESIGN.md: "colorful statistic cards" avoid) ───────
@@ -436,6 +447,7 @@ select {
   border-radius: var(--r-card);
   background: var(--surface);
   overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 .metric {
   flex: 1 1 auto;
@@ -475,6 +487,7 @@ a.metric:hover {
   border-radius: var(--r-card);
   background: var(--surface);
   overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 .action-row {
   display: flex;
@@ -617,9 +630,12 @@ a.metric:hover {
   border: 1px solid var(--mist-line);
   border-radius: var(--r-card);
   background: var(--surface);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 .presult:hover {
   border-color: var(--mist-line-2);
+  box-shadow: var(--shadow-lift);
 }
 .presult-thumb {
   width: 120px;
@@ -657,6 +673,7 @@ a.metric:hover {
   border: 1px solid var(--mist-line);
   border-radius: var(--r-card);
   background: var(--surface);
+  box-shadow: var(--shadow-card);
 }
 .crm-table {
   width: 100%;
@@ -666,11 +683,12 @@ a.metric:hover {
 }
 .crm-table th {
   text-align: left;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: var(--mist);
+  background: var(--surface-2); /* MRE/SaaS table header — halka gray band */
   padding: 10px 12px;
   border-bottom: 1px solid var(--mist-line);
   white-space: nowrap;

@@ -135,7 +135,7 @@ export default async function DashboardPage() {
             Nothing waiting — no follow-ups due, no unread responses, nothing ready to contact.
           </p>
         ) : (
-          <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', background: 'var(--surface)', overflow: 'hidden' }}>
+          <div style={{ border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', background: 'var(--surface)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
             {work.slice(0, 20).map(({ lead, reason, color }) => (
               <WorkRow key={lead.Id} lead={lead} reason={reason} reasonColor={color} />
             ))}

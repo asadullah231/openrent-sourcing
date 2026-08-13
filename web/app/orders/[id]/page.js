@@ -100,6 +100,7 @@ export default async function OrderDetailPage({ params }) {
       <div
         style={{
           background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--shadow-card)',
           padding: '18px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 16,
         }}
       >
@@ -135,6 +136,7 @@ export default async function OrderDetailPage({ params }) {
           <div
             style={{
               background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)',
+              boxShadow: 'var(--shadow-card)',
               padding: '14px 20px', display: 'flex', gap: 26, flexWrap: 'wrap', alignItems: 'center',
             }}
           >

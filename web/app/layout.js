@@ -8,10 +8,12 @@ import { NavLinks } from '@/components/nav-links';
 // hum React ka intezaar karein to dark mode wale ko har refresh pe aadhe
 // second ka SAFED FLASH dikhta hai — aankhon me chubhta hai. Ye script paint
 // se pehle data-theme laga deti hai, is liye flash hota hi nahi.
-const NO_FLASH = `(function(){try{var t=localStorage.getItem('theme');
-if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
+// microRealEstate redesign: product ka default LIGHT hai (real-estate SaaS
+// light-first hota hai) — system preference nahi dekhte, sirf user ka apna
+// toggle yaad rehta hai.
+const NO_FLASH = `(function(){try{var t=localStorage.getItem('theme')||'light';
 document.documentElement.setAttribute('data-theme',t);}catch(e){
-document.documentElement.setAttribute('data-theme','dark');}})();`;
+document.documentElement.setAttribute('data-theme','light');}})();`;
 
 export const metadata = {
   title: 'Social Housing — Sourcing',
@@ -80,8 +82,8 @@ export default async function RootLayout({ children }) {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 10px 24px' }}>
-              {/* flat mark — gradient/shadow hataya (DESIGN.md: no gradients) */}
-              <span style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--brass)', display: 'grid', placeItems: 'center', color: '#1a1204', fontWeight: 700, fontSize: 11 }}>SH</span>
+              {/* flat mark — primary blue (MRE redesign), no gradients */}
+              <span style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--accent)', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 700, fontSize: 11 }}>SH</span>
               <span style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: '-0.02em' }}>Social Housing</span>
             </div>
 

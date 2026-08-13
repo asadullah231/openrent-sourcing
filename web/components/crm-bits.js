@@ -37,8 +37,8 @@ export const OUTREACH_STATUS_COLOR = {
 export function LeadStatusBadge({ status }) {
   const color = LEAD_STATUS_COLOR[status] || 'var(--mist)';
   return (
-    <span className="badge">
-      <span className="badge-dot" style={{ background: color }} />
+    <span className="badge" style={{ '--badge-c': color }}>
+      <span className="badge-dot" />
       {leadStatusLabel(status)}
     </span>
   );
@@ -47,8 +47,8 @@ export function LeadStatusBadge({ status }) {
 export function OutreachBadge({ status }) {
   const color = OUTREACH_STATUS_COLOR[status] || 'var(--mist)';
   return (
-    <span className="badge">
-      <span className="badge-dot" style={{ background: color }} />
+    <span className="badge" style={{ '--badge-c': color }}>
+      <span className="badge-dot" />
       {outreachStatusLabel(status)}
     </span>
   );

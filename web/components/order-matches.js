@@ -248,7 +248,7 @@ function MatchCard({ m, order, busy, onShortlist }) {
             <span className="text-muted">no rate set</span>
           )}
           {shortlisted && (
-            <span className="badge"><span className="badge-dot" style={{ background: 'var(--brass)' }} />Shortlisted</span>
+            <span className="badge" style={{ '--badge-c': 'var(--brass)' }}><span className="badge-dot" />Shortlisted</span>
           )}
         </div>
 
