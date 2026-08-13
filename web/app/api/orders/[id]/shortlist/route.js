@@ -1,4 +1,5 @@
 import { setShortlist } from '@/lib/orders';
+import { logActivity } from '@/lib/activities';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,18 @@ export async function POST(req, { params }) {
         { status: 404 }
       );
     }
+    // Timeline entry — fail ho to shortlist phir bhi ho chuki hai, isliye
+    // best-effort (log ke liye user ka kaam wapas nahi rolte).
+    try {
+      await logActivity({
+        order_id: id,
+        listing_id: listingId,
+        lead_row_id: row.Id,
+        type: body.shortlisted ? 'shortlisted' : 'unshortlisted',
+        title: body.shortlisted ? 'Lead shortlisted' : 'Removed from shortlist',
+        detail: row.match_score != null ? `Match score: ${row.match_score}%` : null,
+      });
+    } catch {}
     return Response.json({ ok: true, row });
   } catch (e) {
     return Response.json({ error: `Could not update the shortlist: ${e.message}` }, { status: 502 });

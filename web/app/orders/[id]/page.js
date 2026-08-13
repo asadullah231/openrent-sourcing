@@ -7,6 +7,7 @@
 
 import Link from 'next/link';
 import { getOrder, getOrderMatches } from '@/lib/orders';
+import { toLead, leadFunnel } from '@/lib/leads';
 import { OrderMatches } from '@/components/order-matches';
 
 export const dynamic = 'force-dynamic';
@@ -114,6 +115,40 @@ export default async function OrderDetailPage({ params }) {
         <Fact label="Availability">{order.availability || 'ASAP'}</Fact>
         <Fact label="Furnished">{order.furnished || 'Any'}</Fact>
       </div>
+
+      {/* ── Sourcing funnel (CRM) — order operational dashboard hai:
+             kitni mili → kitni strong → kis se baat hui → kahan tak pahunchi ── */}
+      {matches.length > 0 && (() => {
+        const f = leadFunnel(matches.map((m) => toLead(m, order)));
+        const cells = [
+          ['Eligible', f.eligible],
+          ['Strong matches', f.strong],
+          ['Shortlisted', f.shortlisted],
+          ['Contacted', f.contacted],
+          ['Awaiting response', f.awaiting],
+          ['Interested', f.interested],
+          ['Viewings', f.viewings],
+          ['Deals', f.deals],
+        ];
+        return (
+          <div
+            style={{
+              background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)',
+              padding: '14px 20px', display: 'flex', gap: 26, flexWrap: 'wrap', alignItems: 'center',
+            }}
+          >
+            {cells.map(([label, v]) => (
+              <div key={label}>
+                <div className="font-mono" style={{ fontSize: 17, fontWeight: 700, color: v > 0 ? 'var(--paper)' : 'var(--mist)' }}>{v}</div>
+                <div className="text-muted" style={{ fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+              </div>
+            ))}
+            <Link href="/leads" className="seg" style={{ marginLeft: 'auto', textDecoration: 'none', fontSize: 12 }}>
+              View as leads
+            </Link>
+          </div>
+        );
+      })()}
 
       {(order.special_requirements || order.notes) && (
         <div className="text-muted" style={{ fontSize: 13, lineHeight: 1.6 }}>

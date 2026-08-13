@@ -22,8 +22,15 @@ export const metadata = {
 // hata diye — Search hi ab home hai (pehle khali, link paste karo → gallery).
 // /sent aur /queue routes zinda hain (detail links unhe use karte hain), bas
 // nav se nikaal diye.
+// CRM phase (13 Aug): Dashboard/Leads/Properties add hue — ab ye sourcing CRM
+// hai, sirf scraper dashboard nahi. Landlords/Agents/Viewings/Deals ke alag
+// pages Phase 2 me banenge (abhi wo pipeline statuses ke andar hi jeete hain —
+// khali placeholder pages nav me rakhna user ko dead-ends dena hota).
 const nav = [
-  { href: '/orders', label: 'Orders' }, // Phase 1: Order = system ka markaz (PRD)
+  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/orders', label: 'Orders' },
+  { href: '/leads', label: 'Leads' },
+  { href: '/properties', label: 'Properties' },
   { href: '/', label: 'Search' },
   { href: '/outreach', label: 'Outreach' },
   { href: '/map', label: 'Map' },

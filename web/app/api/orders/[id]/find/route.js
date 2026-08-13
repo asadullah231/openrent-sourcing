@@ -6,6 +6,7 @@ import { scoreAgainstOrder } from '@bot/score.js';
 import { computeProfitability } from '@bot/profitability.js';
 import { getOrder, updateOrder, saveOrderMatches, getOrderMatches } from '@/lib/orders';
 import { getListings } from '@/lib/data';
+import { logActivity } from '@/lib/activities';
 
 export const dynamic = 'force-dynamic';
 // Scrape (~7s) + enrich batch (~5s) + NocoDB saves. /api/search ki tarah
@@ -210,6 +211,18 @@ export async function POST(req, { params }) {
   try {
     saved = await saveOrderMatches(order.Id, [...scoredEligible, ...overBudgetRows, ...rejectedRows]);
     await updateOrder(order.Id, { last_search_at: new Date().toISOString() });
+    // Order timeline pe EK row per run (per-listing nahi — activities lib ka
+    // usool: machine events lead rows se derive hote hain, spam nahi likhte).
+    try {
+      await logActivity({
+        order_id: order.Id,
+        type: 'search_run',
+        title: 'Property search run',
+        detail: `${totalFound} found · ${scoredEligible.length} eligible · ${overBudgetRows.length} over budget`,
+        actor: 'System',
+        meta: { totalFound, eligible: scoredEligible.length, overBudget: overBudgetRows.length, saved },
+      });
+    } catch {}
   } catch (e) {
     // Save fail ho to results phir bhi dikha do — magar chupke se nahi
     return Response.json({

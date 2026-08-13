@@ -191,11 +191,19 @@ export async function setShortlist(orderId, listingId, shortlisted, nextAction) 
   const rows = await fetchAll(T.orderProps, `&where=${encodeURIComponent(`(order_id,eq,${orderId})`)}`);
   const row = rows.find((r) => String(r.listing_id) === String(listingId));
   if (!row) return null;
+  // lead_status sync (CRM lens): shortlist ON = pipeline me 'shortlisted' —
+  // magar aage barh chuke lead (contacted/viewing...) ko PEECHHE nahi ghasitte.
+  // OFF sirf tab 'matched' pe girata hai jab lead abhi shortlisted hi tha.
+  const EARLY = [null, undefined, '', 'new', 'matched', 'ready_to_contact'];
+  let lead_status = row.lead_status;
+  if (shortlisted && EARLY.includes(row.lead_status)) lead_status = 'shortlisted';
+  if (!shortlisted && (row.lead_status === 'shortlisted' || EARLY.includes(row.lead_status))) lead_status = 'matched';
   const patch = {
     Id: row.Id,
     shortlist_status: shortlisted ? 'shortlisted' : null,
+    lead_status,
     // Default next action — MVP criteria #8: "see the next action needed".
-    next_action: shortlisted ? (nextAction || row.next_action || 'Review & contact landlord') : null,
+    next_action: shortlisted ? (nextAction || row.next_action || 'Contact landlord on OpenRent') : null,
   };
   const res = await fetch(`${BASE}/api/v2/tables/${T.orderProps}/records`, {
     method: 'PATCH', headers: H, body: JSON.stringify([patch]),

@@ -314,14 +314,20 @@ function MatchCard({ m, order, busy, onShortlist }) {
               View property
             </a>
           )}
-          <button
-            className="seg"
-            style={{ fontSize: 12, padding: '7px 12px', opacity: 0.5, cursor: 'default' }}
-            title="Outreach comes in Phase 3 — it will use the existing viewing-request engine."
-            disabled
-          >
-            Outreach
-          </button>
+          {/* Pehle ye disabled "Outreach" tha (Phase 3 note ke sath). Ab har
+              match ek Sourcing Lead hai — outreach logging lead page pe LIVE
+              hai, is liye seedha wahan le jate hain. (Automated OpenRent
+              send abhi bhi Phase 3 hai.) */}
+          {m.Id != null && (
+            <a
+              href={`/leads/${m.Id}`}
+              className="seg"
+              style={{ fontSize: 12, padding: '7px 12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+              title="Open the lead — outreach, status and timeline live there."
+            >
+              Open lead
+            </a>
+          )}
         </div>
       </div>
     </div>
