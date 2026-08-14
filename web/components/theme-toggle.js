@@ -11,12 +11,12 @@ import { useEffect, useState } from 'react';
 // Isi liye `ready` — jab tak client pe theme pata nahi chalta, icon khali
 // rehta hai (jagah phir bhi ghairi rehti hai, taake rail hile na).
 export function ThemeToggle() {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('light');
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     // layout ki script pehle hi data-theme laga chuki hoti hai — wahi sach hai
-    setTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+    setTheme(document.documentElement.getAttribute('data-theme') || 'light');
     setReady(true);
   }, []);
 
@@ -25,7 +25,8 @@ export function ThemeToggle() {
     setTheme(next);
     document.documentElement.setAttribute('data-theme', next);
     try {
-      localStorage.setItem('theme', next);
+      // 'sh-theme': nayi key (layout.js dekho) — purani 'theme' ab nahi parhi jati
+      localStorage.setItem('sh-theme', next);
     } catch {
       // private mode / storage band — theme phir bhi is tab me chalega,
       // bas agli baar yaad nahi rahega. Isi liye crash nahi karate.

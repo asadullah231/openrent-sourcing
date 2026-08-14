@@ -12,7 +12,11 @@ import { BrandLogo } from '@/components/brand';
 // microRealEstate redesign: product ka default LIGHT hai (real-estate SaaS
 // light-first hota hai) — system preference nahi dekhte, sirf user ka apna
 // toggle yaad rehta hai.
-const NO_FLASH = `(function(){try{var t=localStorage.getItem('theme')||'light';
+// Key 'sh-theme' hai (purani 'theme' NAHI): dark-default zamane ki saved
+// 'dark' values sab ke browsers me pari hain — nayi key se wo ek dafa
+// ignore ho jati hain aur har user light pe aa jata hai. Toggle ab isi
+// nayi key me yaad rakhta hai.
+const NO_FLASH = `(function(){try{var t=localStorage.getItem('sh-theme')||'light';
 document.documentElement.setAttribute('data-theme',t);}catch(e){
 document.documentElement.setAttribute('data-theme','light');}})();`;
 
