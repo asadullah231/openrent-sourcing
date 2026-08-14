@@ -87,6 +87,42 @@ export async function updateOrder(id, patch) {
   return getOrder(id);
 }
 
+/**
+ * Order delete — sath uski saari matched/shortlisted properties bhi delete
+ * hoti hain (13 Aug faisla: cascade, orphan rows nahi chhorte). Activities
+ * bhi saaf hoti hain warna timeline me deleted order ke reference reh jate.
+ * Tarteeb zaroori hai: pehle bachche (order_properties, activities), phir
+ * order khud — warna beech me fail ho to orphan rows reh jate.
+ */
+export async function deleteOrder(id) {
+  const orderId = Number(id);
+
+  const props = await fetchAll(T.orderProps, `&where=${encodeURIComponent(`(order_id,eq,${orderId})`)}`);
+  for (let i = 0; i < props.length; i += 25) {
+    await fetch(`${BASE}/api/v2/tables/${T.orderProps}/records`, {
+      method: 'DELETE', headers: H,
+      body: JSON.stringify(props.slice(i, i + 25).map((r) => ({ Id: r.Id }))),
+    });
+  }
+
+  const actTable = process.env.NOCODB_OR_ACTIVITIES_TABLE_ID;
+  if (actTable) {
+    const acts = await fetchAll(actTable, `&where=${encodeURIComponent(`(order_id,eq,${orderId})`)}`);
+    for (let i = 0; i < acts.length; i += 25) {
+      await fetch(`${BASE}/api/v2/tables/${actTable}/records`, {
+        method: 'DELETE', headers: H,
+        body: JSON.stringify(acts.slice(i, i + 25).map((r) => ({ Id: r.Id }))),
+      });
+    }
+  }
+
+  const res = await fetch(`${BASE}/api/v2/tables/${T.orders}/records`, {
+    method: 'DELETE', headers: H, body: JSON.stringify([{ Id: orderId }]),
+  });
+  if (!res.ok) throw new Error(`Order delete failed (${res.status})`);
+  return { deletedProperties: props.length };
+}
+
 // ── Order ↔ property match rows ────────────────────────────────────────────
 
 /** Row → page-friendly shape (snapshot JSON khol kar `listing` bana do). */

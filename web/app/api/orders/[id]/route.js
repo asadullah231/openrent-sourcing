@@ -1,4 +1,4 @@
-import { getOrder, updateOrder } from '@/lib/orders';
+import { getOrder, updateOrder, deleteOrder } from '@/lib/orders';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,5 +53,19 @@ export async function PATCH(req, { params }) {
     return Response.json({ ok: true, order });
   } catch (e) {
     return Response.json({ error: `Could not update the order: ${e.message}` }, { status: 502 });
+  }
+}
+
+/** Order delete — matched/shortlisted properties aur activities bhi sath jate hain (cascade). */
+export async function DELETE(_req, { params }) {
+  const { id } = await params;
+  const existing = await getOrder(id);
+  if (!existing) return Response.json({ error: 'Order not found.' }, { status: 404 });
+
+  try {
+    const result = await deleteOrder(id);
+    return Response.json({ ok: true, ...result });
+  } catch (e) {
+    return Response.json({ error: `Could not delete the order: ${e.message}` }, { status: 502 });
   }
 }

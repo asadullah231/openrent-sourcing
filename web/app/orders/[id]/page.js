@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { getOrder, getOrderMatches } from '@/lib/orders';
 import { toLead, leadFunnel } from '@/lib/leads';
 import { OrderMatches } from '@/components/order-matches';
+import { OrderDetailActions } from '@/components/order-detail-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,6 +91,7 @@ export default async function OrderDetailPage({ params }) {
           {order.deadline && (
             <span className="text-muted" style={{ fontSize: 12.5 }}>Deadline {order.deadline}</span>
           )}
+          <OrderDetailActions order={{ ...order, _matchCount: matches.length }} />
         </div>
         {order.council_client && (
           <p style={{ margin: '4px 0 0', fontSize: 14 }}>{order.council_client}</p>

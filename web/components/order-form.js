@@ -13,16 +13,32 @@ import { useRouter } from 'next/navigation';
 const L = { display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--mist)', marginBottom: 5 };
 const ROW = { display: 'grid', gap: 14 };
 
-export function OrderForm() {
+// `order` diya ho to EDIT mode: fields usi se prefill, submit PATCH karta
+// hai (13 Aug: "order edit nahi kar sakte" — same form, do moods).
+export function OrderForm({ order }) {
   const router = useRouter();
+  const editing = !!order;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [f, setF] = useState({
-    council_client: '', area: '', postcodes: '', property_type: '',
-    bedrooms: '2', bedrooms_max: '', min_rent: '', max_rent: '', order_rate: '',
-    availability: 'ASAP', furnished: '', priority: 'normal', deadline: '',
-    special_requirements: '', notes: '', agent_fee: '', other_costs: '',
-  });
+  const str = (v) => (v == null ? '' : String(v));
+  const [f, setF] = useState(() =>
+    editing
+      ? {
+          council_client: str(order.council_client), area: str(order.area), postcodes: str(order.postcodes),
+          property_type: str(order.property_type), bedrooms: str(order.bedrooms), bedrooms_max: str(order.bedrooms_max),
+          min_rent: str(order.min_rent), max_rent: str(order.max_rent), order_rate: str(order.order_rate),
+          availability: str(order.availability) || 'ASAP', furnished: str(order.furnished),
+          priority: str(order.priority) || 'normal', deadline: str(order.deadline),
+          special_requirements: str(order.special_requirements), notes: str(order.notes),
+          agent_fee: str(order.agent_fee), other_costs: str(order.other_costs),
+        }
+      : {
+          council_client: '', area: '', postcodes: '', property_type: '',
+          bedrooms: '2', bedrooms_max: '', min_rent: '', max_rent: '', order_rate: '',
+          availability: 'ASAP', furnished: '', priority: 'normal', deadline: '',
+          special_requirements: '', notes: '', agent_fee: '', other_costs: '',
+        }
+  );
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   // ── Paste an OpenRent search link → fields fill khud (13 Aug directive) ──
@@ -68,14 +84,15 @@ export function OrderForm() {
     if (!f.max_rent || Number(f.max_rent) <= 0) return setError('Maximum rent is required. It is the hard budget ceiling.');
     setBusy(true);
     try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
+      const res = await fetch(editing ? `/api/orders/${order.Id}` : '/api/orders', {
+        method: editing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(f),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || `Failed (${res.status})`);
-      router.push(`/orders/${j.order.Id}`);
+      router.push(`/orders/${editing ? order.Id : j.order.Id}`);
+      router.refresh();
     } catch (err) {
       setError(err.message);
       setBusy(false);
@@ -84,36 +101,38 @@ export function OrderForm() {
 
   return (
     <form onSubmit={submit} style={{ maxWidth: 720, display: 'flex', flexDirection: 'column', gap: 22 }}>
-      {/* ── Paste a link ── */}
-      <section style={{ background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', boxShadow: 'var(--shadow-card)', padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Paste an OpenRent search link</h2>
-        <p className="text-muted" style={{ margin: 0, fontSize: 12 }}>
-          Build a search on OpenRent (area, beds, max price), copy the address bar link, paste it here.
-          Area, bedrooms and max rent fill in below, ready to check and create.
-        </p>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input
-            className="field"
-            style={{ flex: '1 1 320px' }}
-            placeholder="https://www.openrent.co.uk/properties-to-rent/..."
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-          />
-          <button type="button" className="btn-brass" onClick={parseLink} disabled={linkBusy}>
-            {linkBusy ? 'Reading…' : 'Fill from link'}
-          </button>
-        </div>
-        {linkError && (
-          <div style={{ border: '1px solid var(--rust)', color: 'var(--rust)', borderRadius: 'var(--r-ctrl)', padding: '8px 12px', fontSize: 12.5 }}>
-            {linkError}
+      {/* ── Paste a link (create mode only — editing ke liye confusing hota) ── */}
+      {!editing && (
+        <section style={{ background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', boxShadow: 'var(--shadow-card)', padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Paste an OpenRent search link</h2>
+          <p className="text-muted" style={{ margin: 0, fontSize: 12 }}>
+            Build a search on OpenRent (area, beds, max price), copy the address bar link, paste it here.
+            Area, bedrooms and max rent fill in below, ready to check and create.
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input
+              className="field"
+              style={{ flex: '1 1 320px' }}
+              placeholder="https://www.openrent.co.uk/properties-to-rent/..."
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+            />
+            <button type="button" className="btn-brass" onClick={parseLink} disabled={linkBusy}>
+              {linkBusy ? 'Reading…' : 'Fill from link'}
+            </button>
           </div>
-        )}
-        {linkOk && !linkError && (
-          <div style={{ color: 'var(--green)', fontSize: 12.5 }}>
-            Filled in below. Check the area, bedrooms and max rent, then add a council rate if you have one.
-          </div>
-        )}
-      </section>
+          {linkError && (
+            <div style={{ border: '1px solid var(--rust)', color: 'var(--rust)', borderRadius: 'var(--r-ctrl)', padding: '8px 12px', fontSize: 12.5 }}>
+              {linkError}
+            </div>
+          )}
+          {linkOk && !linkError && (
+            <div style={{ color: 'var(--green)', fontSize: 12.5 }}>
+              Filled in below. Check the area, bedrooms and max rent, then add a council rate if you have one.
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ── Requirement ── */}
       <section style={{ background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -236,9 +255,9 @@ export function OrderForm() {
 
       <div style={{ display: 'flex', gap: 10 }}>
         <button type="submit" className="btn-brass" disabled={busy}>
-          {busy ? 'Creating…' : 'Create order'}
+          {busy ? (editing ? 'Saving…' : 'Creating…') : editing ? 'Save changes' : 'Create order'}
         </button>
-        <button type="button" className="seg" onClick={() => router.push('/orders')} disabled={busy}>
+        <button type="button" className="seg" onClick={() => router.push(editing ? `/orders/${order.Id}` : '/orders')} disabled={busy}>
           Cancel
         </button>
       </div>
