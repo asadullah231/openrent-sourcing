@@ -25,6 +25,42 @@ export function OrderForm() {
   });
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
+  // ── Paste an OpenRent search link → fields fill khud (13 Aug directive) ──
+  const [link, setLink] = useState('');
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [linkError, setLinkError] = useState('');
+  const [linkOk, setLinkOk] = useState(false);
+
+  async function parseLink() {
+    setLinkError('');
+    setLinkOk(false);
+    if (!link.trim()) return setLinkError('Paste an OpenRent search link first.');
+    setLinkBusy(true);
+    try {
+      const res = await fetch('/api/orders/parse-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: link.trim() }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || `Could not read that link (${res.status})`);
+      setF((p) => ({
+        ...p,
+        area: j.order.area || p.area,
+        bedrooms: j.order.bedrooms !== '' ? String(j.order.bedrooms) : p.bedrooms,
+        bedrooms_max: j.order.bedrooms_max !== '' ? String(j.order.bedrooms_max) : p.bedrooms_max,
+        max_rent: j.order.max_rent !== '' ? String(j.order.max_rent) : p.max_rent,
+        min_rent: j.order.min_rent !== '' ? String(j.order.min_rent) : p.min_rent,
+        notes: [p.notes, j.order.notes].filter(Boolean).join('\n'),
+      }));
+      setLinkOk(true);
+    } catch (err) {
+      setLinkError(err.message);
+    } finally {
+      setLinkBusy(false);
+    }
+  }
+
   async function submit(e) {
     e.preventDefault();
     setError('');
@@ -48,6 +84,37 @@ export function OrderForm() {
 
   return (
     <form onSubmit={submit} style={{ maxWidth: 720, display: 'flex', flexDirection: 'column', gap: 22 }}>
+      {/* ── Paste a link ── */}
+      <section style={{ background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', boxShadow: 'var(--shadow-card)', padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Paste an OpenRent search link</h2>
+        <p className="text-muted" style={{ margin: 0, fontSize: 12 }}>
+          Build a search on OpenRent (area, beds, max price), copy the address bar link, paste it here.
+          Area, bedrooms and max rent fill in below, ready to check and create.
+        </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input
+            className="field"
+            style={{ flex: '1 1 320px' }}
+            placeholder="https://www.openrent.co.uk/properties-to-rent/..."
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+          />
+          <button type="button" className="btn-brass" onClick={parseLink} disabled={linkBusy}>
+            {linkBusy ? 'Reading…' : 'Fill from link'}
+          </button>
+        </div>
+        {linkError && (
+          <div style={{ border: '1px solid var(--rust)', color: 'var(--rust)', borderRadius: 'var(--r-ctrl)', padding: '8px 12px', fontSize: 12.5 }}>
+            {linkError}
+          </div>
+        )}
+        {linkOk && !linkError && (
+          <div style={{ color: 'var(--green)', fontSize: 12.5 }}>
+            Filled in below. Check the area, bedrooms and max rent, then add a council rate if you have one.
+          </div>
+        )}
+      </section>
+
       {/* ── Requirement ── */}
       <section style={{ background: 'var(--surface)', border: '1px solid var(--mist-line)', borderRadius: 'var(--r-card)', padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Requirement</h2>
